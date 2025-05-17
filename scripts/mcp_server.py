@@ -1,7 +1,7 @@
 # use stdio_client function to spwan a process in client.py
 from mcp.server.fastmcp import FastMCP
 #from gpiozero import
-from oledeyes.roboeyes import *
+from roboeyes import *
 from roboeyes_thread import roboeyes
 from roboeyes_thread import run as run_roboeyes, join as join_roboeyes
 

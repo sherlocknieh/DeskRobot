@@ -17,18 +17,22 @@ dependencies = [
     "opencv-python>=4.11.0.86",
     "packaging==25.0",
     "pigpio==1.78",
-    "pillow==11.2.1",
     "pyparsing==3.2.3",
     "python-dateutil==2.9.0.post0",
     "python-dotenv>=1.1.0",
+    "roboeyes>=0.1.0",
     "rpi-lgpio==0.6",
     "six==1.17.0",
 ]
 
 
+[tool.uv.sources]
+roboeyes = { git = "https://github.com/Xe111/Roboeyes-python" }
+
+
+
+
 [[tool.uv.index]]
 url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
 default = true
-
-[tool.uv.sources]
 

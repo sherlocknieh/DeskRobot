@@ -1,6 +1,6 @@
 from config import SIMULATE_OLED,OLED_FRAMERATE, OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT
 from threading import Thread
-from oledeyes.roboeyes import *
+from roboeyes import *
 
 roboeyes = RoboEyes(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, OLED_FRAMERATE)
 
