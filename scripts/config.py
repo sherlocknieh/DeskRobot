@@ -1,0 +1,10 @@
+
+OLED_SCREEN_WIDTH = 128
+OLED_SCREEN_HEIGHT = 64
+OLED_FRAMERATE = 10
+
+SIMULATE_OLED = True
+
+PROJECT_ROOT = "/home/xe/Documents/code/final_project/DeskRobot"
+SERVER_SCRIPT_PATH = PROJECT_ROOT+"/scripts/mcp_server.py"
+DOTENV_PATH = PROJECT_ROOT+"/.env"
