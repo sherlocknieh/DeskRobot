@@ -25,3 +25,10 @@ uv run python scripts/main.py
 source .venv/bin/activate
 python scripts/main.py
 ```
+
+
+
+
+## tmp
+
+wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz

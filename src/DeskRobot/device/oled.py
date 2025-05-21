@@ -17,18 +17,29 @@ from util.config import (
     PROJECT_ROOT,
 )
 
+# 全局单例实例
+_instance = None
+
 
 class OLEDDisplay:
     """
     OLED显示设备控制类
     负责OLED显示屏的初始化、显示和清理
     支持实际硬件和CV模拟两种模式
+    实现为单例模式，确保全局只有一个显示设备实例
     """
 
     def __init__(self):
         """初始化OLED显示设备"""
+        global _instance
+        if _instance is not None:
+            raise RuntimeError(
+                "尝试创建OLEDDisplay的多个实例。请使用get_instance()方法获取实例。"
+            )
+
         self.i2c = None
         self.oled = None
+        _instance = self
         self.is_simulation = OLED_CV_SIMULATION
 
         # 如果不是模拟模式，初始化实际硬件
@@ -38,6 +49,19 @@ class OLEDDisplay:
                 OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, self.i2c, addr=OLED_I2C_ADDRESS
             )
             self.clear_display()
+
+    @staticmethod
+    def get_instance():
+        """
+        获取OLEDDisplay的单例实例
+
+        Returns:
+            OLEDDisplay: 单例实例
+        """
+        global _instance
+        if _instance is None:
+            _instance = OLEDDisplay()
+        return _instance
 
     def __del__(self):
         """清理OLED显示设备"""
