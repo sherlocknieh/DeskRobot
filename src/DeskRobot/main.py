@@ -1,9 +1,52 @@
-from .config import SERVER_SRC_PATH
-from .mcp_client import run_mcp_client
-def main():
-    run_mcp_client(SERVER_SRC_PATH)
-    print("no blocked")
+import asyncio
+import threading
+import time
 
+from agent import Agent
+from control.roboeyes_controller import RoboEyesController
+from util.config import config
+
+
+def main():
+    config()
+    try:
+        # 创建控制器和代理实例
+        rbe_controller = RoboEyesController()
+        agent = Agent()
+
+        # 创建适配器函数来在线程中运行异步函数
+        def run_rbe_controller():
+            asyncio.run(rbe_controller.run())
+
+        def run_agent():
+            asyncio.run(agent.run())
+
+        # 创建两个线程
+        rbe_thread = threading.Thread(target=run_rbe_controller, name="RoboEyes")
+        agent_thread = threading.Thread(target=run_agent, name="Agent")
+
+        # 设置为守护线程，这样主线程结束时它们会自动终止
+        rbe_thread.daemon = True
+        agent_thread.daemon = True
+
+        # 启动线程
+        print("Starting RoboEyes controller...")
+        rbe_thread.start()
+
+        print("Starting Agent...")
+        agent_thread.start()
+
+        # 主线程等待，这里可以添加其他逻辑
+        while True:
+            time.sleep(0.1)
+
+    except KeyboardInterrupt:
+        print("\n接收到中断信号，正在退出...")
+        return
+
+    except Exception as e:
+        print(f"错误: {e}")
+        return
 
 
 if __name__ == "__main__":

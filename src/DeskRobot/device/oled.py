@@ -1,0 +1,90 @@
+"""
+OLED显示设备模块，用于初始化和控制OLED显示屏
+"""
+
+import adafruit_ssd1306
+import board
+import busio
+import cv2
+import numpy as np
+from util.config import (
+    # from ..util.config import (
+    # from util.config import (
+    OLED_CV_SIMULATION,
+    OLED_I2C_ADDRESS,
+    OLED_SCREEN_HEIGHT,
+    OLED_SCREEN_WIDTH,
+    PROJECT_ROOT,
+)
+
+
+class OLEDDisplay:
+    """
+    OLED显示设备控制类
+    负责OLED显示屏的初始化、显示和清理
+    支持实际硬件和CV模拟两种模式
+    """
+
+    def __init__(self):
+        """初始化OLED显示设备"""
+        self.i2c = None
+        self.oled = None
+        self.is_simulation = OLED_CV_SIMULATION
+
+        # 如果不是模拟模式，初始化实际硬件
+        if not self.is_simulation:
+            self.i2c = busio.I2C(board.SCL, board.SDA)
+            self.oled = adafruit_ssd1306.SSD1306_I2C(
+                OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, self.i2c, addr=OLED_I2C_ADDRESS
+            )
+            self.clear_display()
+
+    def __del__(self):
+        """清理OLED显示设备"""
+        self.__cleanup()
+
+    def clear_display(self):
+        """清除显示"""
+        if not self.is_simulation and self.oled:
+            self.oled.fill(0)
+            self.oled.show()
+
+    def display_image(self, image):
+        """
+        显示图像
+
+        Args:
+            image: PIL图像对象
+        """
+        if image:
+            if self.is_simulation:
+                # CV模拟模式，将图像保存为文件
+                cv_image = np.array(image)
+                cv_image = cv_image * 255  # 将0/1图像转换为0/255
+                cv_image = cv_image.astype(np.uint8)
+
+                scale_factor = 4
+                width = int(cv_image.shape[1] * scale_factor)
+                height = int(cv_image.shape[0] * scale_factor)
+                dim = (width, height)
+                resized_cv_image = cv2.resize(
+                    cv_image, dim, interpolation=cv2.INTER_NEAREST
+                )
+                # cv2.imshow("RoboEyes Animation Sequence", resized_cv_image)
+                cv2.imwrite(PROJECT_ROOT + "/roboeyes.png", resized_cv_image)
+            else:
+                # 实际硬件模式，显示到OLED
+                if self.oled:
+                    self.oled.image(image)
+                    self.oled.show()
+
+    def __cleanup(self):
+        """清理资源"""
+        if not self.is_simulation:
+            if self.oled:
+                self.clear_display()
+                if hasattr(self.oled, "deinit"):
+                    self.oled.deinit()
+            if self.i2c and hasattr(self.i2c, "deinit"):
+                self.i2c.deinit()
+            print("OLED资源已清理")

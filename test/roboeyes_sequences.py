@@ -1,8 +1,9 @@
 import time
+
 import cv2
 import numpy as np
+from roboeyes import DEFAULT, HAPPY, TIRED, RoboEyes
 
-from roboeyes import RoboEyes,DEFAULT, HAPPY, TIRED,N
 
 def main():
     screen_width = 128

@@ -1,12 +1,19 @@
-from os import path
 import sys
+from os import path
+
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from scripts.config import OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, OLED_I2C_ADDRESS
+import asyncio
+
+import adafruit_ssd1306
 import board
 import busio
-import adafruit_ssd1306
 import roboeyes
-import asyncio
+
+from src.DeskRobot.util.config import (
+    OLED_I2C_ADDRESS,
+    OLED_SCREEN_HEIGHT,
+    OLED_SCREEN_WIDTH,
+)
 
 
 async def draw_roboeyes():
@@ -16,7 +23,9 @@ async def draw_roboeyes():
         rbe.set_idle_mode(True, 3, 2)
 
         i2c = busio.I2C(board.SCL, board.SDA)
-        oled = adafruit_ssd1306.SSD1306_I2C(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, i2c, addr=OLED_I2C_ADDRESS)
+        oled = adafruit_ssd1306.SSD1306_I2C(
+            OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, i2c, addr=OLED_I2C_ADDRESS
+        )
         oled.fill(0)
         oled.show()
 
@@ -33,9 +42,9 @@ async def draw_roboeyes():
         print(f"Error: {e}")
         return
     finally:
-        if hasattr(oled, 'deinit'):
+        if hasattr(oled, "deinit"):
             oled.deinit()
-        if hasattr(i2c, 'deinit'):
+        if hasattr(i2c, "deinit"):
             i2c.deinit()
         print("Resources cleaned up.")
 
