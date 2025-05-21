@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai import OpenAI
-from config import DOTENV_PATH
+from .config import DOTENV_PATH
 
 load_dotenv(dotenv_path=DOTENV_PATH,verbose=True)  # 加载环境变量
 
@@ -81,7 +81,7 @@ class MCPClient:
 
         # 调用 OpenAI API
         response = self.client.chat.completions.create(
-            model=self.model, messages=messages, tools=available_tools
+            model=self.model, messages=messages, tools=available_tools,extra_body={"enable_thinking":False}
         )
 
         # 处理返回的内容
@@ -110,6 +110,7 @@ class MCPClient:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
+                
             )
             return response.choices[0].message.content
 

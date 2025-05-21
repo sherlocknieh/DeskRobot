@@ -2,8 +2,8 @@
 from mcp.server.fastmcp import FastMCP
 #from gpiozero import
 from roboeyes import *
-from roboeyes_thread import roboeyes
-from roboeyes_thread import run as run_roboeyes, join as join_roboeyes
+from .roboeyes_thread import roboeyes
+from .roboeyes_thread import run as run_roboeyes, join as join_roboeyes
 
 from gpiozero import RGBLED
 

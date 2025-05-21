@@ -54,9 +54,6 @@ class MCPClient:
         tools = response.tools
         print("\n已连接到服务器，支持以下工具:", [tool.name for tool in tools])
 
-    async def connet_to_server_without
-
-
     async def process_query(self, query: str) -> str:
         """
         使用大模型处理查询并调用可用的 MCP 工具 (Function Calling)
