@@ -167,7 +167,6 @@ class Agent:
 
         print("Agent is running...")
         print("You can type 'exit' to stop the agent.")
-
         voice_interface = get_voice_interface()
         while True:
             user_input = voice_interface.speech_to_text(5, save_audio=True)
@@ -179,6 +178,16 @@ class Agent:
                 response["messages"][-1].pretty_print()
                 # 语音合成
                 voice_interface.text_to_speech(response["messages"][-1].content)
+        if False:
+            while True:
+                user_input = input("You: ")
+                if user_input.lower() == "exit":
+                    break
+                # 处理用户输入
+                response = self.agent_executor.invoke(
+                    {"messages": [HumanMessage(content=user_input)]}, config
+                )
+                response["messages"][-1].pretty_print()
 
 
 if __name__ == "__main__":
