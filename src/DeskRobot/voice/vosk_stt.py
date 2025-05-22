@@ -6,11 +6,21 @@ import numpy as np
 from util.config import VOSK_MODEL, VOSK_MODEL_PATH
 from vosk import KaldiRecognizer, Model, SetLogLevel
 
-__instance = None
+_instance = None
 
 
 class VoskSTT:
     def __init__(self):
+        """
+        初始化VoskSTT类。
+        确保只创建一个VoskSTT实例。
+        """
+        global _instance
+        if _instance is not None:
+            raise RuntimeError(
+                "尝试创建VoskSTT的多个实例。请使用VoskSTT.get_instance()方法获取实例。"
+            )
+
         self.model = Model(model_path=VOSK_MODEL_PATH + "/" + VOSK_MODEL)
 
         if not self.model:
@@ -41,13 +51,15 @@ class VoskSTT:
         print(res)
         return res["text"]
 
+    @staticmethod
+    def get_instance():
+        """
+        获取VoskSTT的单例实例
 
-def get_vosk_stt():
-    """
-    获取VoskSTT实例
-    :return: VoskSTT实例
-    """
-    global __instance
-    if __instance is None:
-        __instance = VoskSTT()
-    return __instance
+        Returns:
+            VoskSTT: 单例实例
+        """
+        global _instance
+        if _instance is None:
+            _instance = VoskSTT()
+        return _instance

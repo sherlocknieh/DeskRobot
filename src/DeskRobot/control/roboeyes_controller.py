@@ -4,13 +4,14 @@ RoboEyes动画控制模块，实现机器人眼睛动画的控制和更新
 
 import asyncio
 
-from device.oled import OLEDDisplay
 from roboeyes import ANGRY, DEFAULT, HAPPY, TIRED, RoboEyes
 from util.config import (
     OLED_FRAMERATE,
     OLED_SCREEN_HEIGHT,
     OLED_SCREEN_WIDTH,
 )
+
+from ..device.oled import OLEDDisplay
 
 # 全局单例实例
 _instance = None

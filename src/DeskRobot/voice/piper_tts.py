@@ -3,7 +3,7 @@ import subprocess
 
 from util.config import PIPER_MODEL_PATH, PIPER_OUTPUT_PATH, PIPER_PATH, PIPER_VOICE
 
-__instance = None
+_instance = None
 
 
 class PiperTTS:
@@ -12,6 +12,17 @@ class PiperTTS:
     """
 
     def __init__(self, voice=PIPER_VOICE):
+        """
+        Initialize the PiperTTS class.
+        Ensures that only one instance of PiperTTS is created.
+        """
+        global _instance
+        if _instance is not None:
+            raise RuntimeError(
+                "Attempted to create multiple instances of PiperTTS. "
+                "Please use PiperTTS.get_instance() to get the existing instance."
+            )
+
         self.voice = voice
         self.output_path = PIPER_OUTPUT_PATH
         self.model_path = PIPER_MODEL_PATH
@@ -42,13 +53,18 @@ class PiperTTS:
             return None
         return self.audio_path
 
+    @staticmethod
+    def get_instance(voice=PIPER_VOICE):
+        """
+        Get the PiperTTS singleton instance.
 
-def get_piper_tts():
-    """
-    Get the Piper TTS instance
-    :return: PiperTTS instance
-    """
-    global __instance
-    if __instance is None:
-        __instance = PiperTTS()
-    return __instance
+        Args:
+            voice (str, optional): The voice model to use. Defaults to PIPER_VOICE.
+
+        Returns:
+            PiperTTS: The singleton instance of PiperTTS.
+        """
+        global _instance
+        if _instance is None:
+            _instance = PiperTTS(voice=voice)
+        return _instance
