@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from util.config import PIPER_MODEL_PATH, PIPER_OUTPUT_PATH, PIPER_PATH, PIPER_VOICE
 
@@ -29,9 +30,15 @@ class PiperTTS:
         """
         # 使用Piper进行TTS
         command = f'echo  "{text}" | {self.piper_path}/piper --model {self.model_path}/{self.voice} --output_file {self.audio_path}'
-        res = os.system(command)
-        if res != 0:
-            print(f"Error: {res}")
+        res = subprocess.run(
+            command,
+            shell=True,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if res.returncode != 0:
+            print(f"Error: {res.stderr}")
             return None
         return self.audio_path
 

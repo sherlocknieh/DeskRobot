@@ -31,4 +31,7 @@ python scripts/main.py
 
 ## tmp
 
-wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
+- wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
+- piper tts
+- env example
+

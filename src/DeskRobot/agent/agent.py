@@ -146,43 +146,8 @@ class Agent:
             print(f"Setting robot emotion to: {emotion}")
             return rbe_controller.set_expression(emotion)
 
-        @tool(name_or_callable="say_text")
-        def say_text(text: str) -> str:
-            """
-            使用语音合成(TTS)将文本转换为语音
-
-            Args:
-                text: 要转换为语音的文本
-
-            Returns:
-                str: 操作状态信息
-            """
-            voice_interface = get_voice_interface()
-            success = voice_interface.text_to_speech(text)
-            return f"已播放文本：{text}" if success else "语音合成失败"
-
-        @tool(name_or_callable="listen_for_command")
-        def listen_for_command(duration: int = 5) -> str:
-            """
-            使用语音识别(STT)从用户那里录制并识别语音命令
-
-            Args:
-                duration: 录制时长(秒)，默认5秒
-
-            Returns:
-                str: 识别的文本
-            """
-            voice_interface = get_voice_interface()
-            text = voice_interface.speech_to_text(duration)
-            if text:
-                return f"用户说：{text}"
-            else:
-                return "未能识别语音"
-
         self.tools.append(secret_number)
         self.tools.append(set_robot_emotion)
-        self.tools.append(say_text)
-        self.tools.append(listen_for_command)
 
     async def run(self, query="what is secret number do secret operation with itself?"):
         """
@@ -203,16 +168,17 @@ class Agent:
         print("Agent is running...")
         print("You can type 'exit' to stop the agent.")
 
+        voice_interface = get_voice_interface()
         while True:
-            user_input = input("User: ")
-            if user_input.lower() == "exit":
-                break
+            user_input = voice_interface.speech_to_text(5, save_audio=True)
             if user_input:
                 # 处理用户输入
                 response = self.agent_executor.invoke(
                     {"messages": [HumanMessage(content=user_input)]}, config
                 )
                 response["messages"][-1].pretty_print()
+                # 语音合成
+                voice_interface.text_to_speech(response["messages"][-1].content)
 
 
 if __name__ == "__main__":

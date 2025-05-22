@@ -8,7 +8,9 @@ import sys
 import wave
 
 import numpy as np
+from util.config import PROJECT_ROOT
 
+from .fast_whisper_stt import get_fast_whisper_stt
 from .piper_tts import get_piper_tts
 
 # 导入远程音频客户端
@@ -25,7 +27,9 @@ class VoiceInterface:
     默认使用本地模式，可以通过设置环境变量切换到远程音频模式
     """
 
-    def __init__(self, remote_host=None, remote_port=12345):
+    def __init__(
+        self, remote_host=None, remote_port=12345, sample_rate=16000, channels=1
+    ):
         """
         初始化语音接口
 
@@ -37,6 +41,10 @@ class VoiceInterface:
         self.remote_mode = False
         self.remote_client = None
         self.piper_tts = get_piper_tts()
+        # self.vosk_stt = get_vosk_stt()
+        self.fast_whisper_stt = get_fast_whisper_stt()
+        self.sample_rate = sample_rate
+        self.channels = channels
 
         # 如果没有指定remote_host，尝试从环境变量获取
         if remote_host is None:
@@ -56,11 +64,6 @@ class VoiceInterface:
                 print(f"Failed to initialize remote audio client: {e}")
                 self.remote_mode = False
 
-        # TTS和STT引擎
-        # 这里先用占位符，后续会根据实际情况实现
-        self.tts_engine = None
-        self.stt_engine = None
-
         # 初始化本地音频库(如果需要)
         if not self.remote_mode:
             try:
@@ -77,25 +80,11 @@ class VoiceInterface:
             text: 要转换的文本
             voice_id: 语音ID，用于选择不同的声音
         """
-        print(f"Converting text to speech: '{text}'")
-
-        # 这里应该调用实际的TTS引擎
-        # 目前只是一个占位符
-        # 假设我们有音频数据用于测试
-        # audio_data = np.zeros(16000, dtype=np.int16)  # 1秒的静音数据
         audio_path = self.piper_tts.text_to_speech(text)
         if audio_path is None:
             print("Failed to convert text to speech")
             return False
-        with wave.open(audio_path, "rb") as wf:
-            params = wf.getparams()
-            audio_data = np.frombuffer(wf.readframes(params.nframes), dtype=np.int16)
-            sample_rate = params.framerate
-            channels = params.nchannels
-            print(f"Audio params: {params}")
-            print(f"Audio data shape: {audio_data.shape}")
-            print(f"Sample rate: {sample_rate}, Channels: {channels}")
-
+        audio_data, sample_rate, channels = self._load_audio_from_path(audio_path)
         # 播放音频
         self.play_audio(audio_data, sample_rate, channels)
         return True
@@ -117,20 +106,11 @@ class VoiceInterface:
 
         if audio_data is None:
             return None
-
-        # 这里应该调用实际的STT引擎
-        # 目前只是一个占位符
-
-        # save audio data to a file for testing
         if save_audio:
-            with wave.open("recorded_audio.wav", "wb") as wf:
-                wf.setnchannels(1)
-                wf.setsampwidth(2)
-                wf.setframerate(16000)
-                wf.writeframes(audio_data.tobytes())
-                print("Recorded audio saved to 'recorded_audio.wav'")
+            audio_path = PROJECT_ROOT + "/tmp/recorded_audio.wav"
+            self._save_audio_to_path(audio_data, audio_path)
 
-        recognized_text = "这是一个示例文本"
+        recognized_text = self.fast_whisper_stt.speech_to_text(audio=audio_path)
 
         print(f"Recognized text: '{recognized_text}'")
         return recognized_text
@@ -181,6 +161,56 @@ class VoiceInterface:
             self.remote_client.close()
 
         # 清理本地资源
+
+    def _load_audio_from_path(self, audio_path):
+        """
+        从指定的路径加载音频文件。
+
+        Args:
+            audio_path (str): 音频文件的路径。
+
+        Returns:
+            tuple: 包含 (audio_data, sample_rate, channels) 的元组，
+                   如果加载失败则返回 (None, None, None)。
+        """
+        try:
+            with wave.open(audio_path, "rb") as wf:
+                params = wf.getparams()
+                audio_data = np.frombuffer(
+                    wf.readframes(params.nframes), dtype=np.int16
+                )
+                sample_rate = params.framerate
+                channels = params.nchannels
+                print(f"Audio params: {params}")
+                print(f"Audio data shape: {audio_data.shape}")
+                print(f"Sample rate: {sample_rate}, Channels: {channels}")
+                return audio_data, sample_rate, channels
+        except FileNotFoundError:
+            print(f"Error: Audio file not found at {audio_path}")
+            return None, None, None
+        except Exception as e:
+            print(f"Error loading audio from {audio_path}: {e}")
+            return None, None, None
+
+    def _save_audio_to_path(self, audio_data, audio_path):
+        """
+        将音频数据保存到指定路径。
+
+        Args:
+            audio_data (numpy.ndarray): 要保存的音频数据。
+            audio_path (str): 保存音频文件的路径。
+        """
+        try:
+            with wave.open(audio_path, "wb") as wf:
+                wf.setnchannels(self.channels)
+                wf.setsampwidth(2)  # 16-bit PCM
+                wf.setframerate(self.sample_rate)
+                wf.writeframes(audio_data.tobytes())
+                print(f"Audio saved to {audio_path}")
+
+            return audio_path
+        except Exception as e:
+            print(f"Error saving audio to {audio_path}: {e}")
 
 
 # 单例模式
