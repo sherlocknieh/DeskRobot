@@ -21,3 +21,4 @@ rpi-gpio
 rpi-lgpio
 silero-vad
 vosk
+pillow
