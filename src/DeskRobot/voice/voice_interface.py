@@ -10,8 +10,8 @@ import wave
 import numpy as np
 from util.config import PROJECT_ROOT
 
-from .fast_whisper_stt import get_fast_whisper_stt
-from .piper_tts import get_piper_tts
+from .fast_whisper_stt import FastWhisperSTT
+from .piper_tts import PiperTTS
 
 # 导入远程音频客户端
 try:
@@ -40,9 +40,9 @@ class VoiceInterface:
         # 检查是否使用远程音频
         self.remote_mode = False
         self.remote_client = None
-        self.piper_tts = get_piper_tts()
-        # self.vosk_stt = get_vosk_stt()
-        self.fast_whisper_stt = get_fast_whisper_stt()
+        self.piper_tts = PiperTTS.get_instance()
+        # self.vosk_stt = VoskSTT.get_instance()
+        self.fast_whisper_stt = FastWhisperSTT.get_instance()
         self.sample_rate = sample_rate
         self.channels = channels
 

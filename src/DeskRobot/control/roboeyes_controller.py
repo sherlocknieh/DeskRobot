@@ -1,16 +1,20 @@
 """
 RoboEyes动画控制模块，实现机器人眼睛动画的控制和更新
 """
+if __name__ == "__main__":
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import asyncio
 
-from device.oled import OLEDDisplay
 from roboeyes import ANGRY, DEFAULT, HAPPY, TIRED, RoboEyes
 from util.config import (
     OLED_FRAMERATE,
     OLED_SCREEN_HEIGHT,
     OLED_SCREEN_WIDTH,
 )
+from time import sleep
+from device.oled import OLEDDisplay
 
 # 全局单例实例
 _instance = None
@@ -33,36 +37,10 @@ class RoboEyesController:
 
         self.rbe = RoboEyes(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, OLED_FRAMERATE)
         self.oled_display = OLEDDisplay.get_instance()
-        self.__setup()
+        self.expression=DEFAULT
         _instance = self
 
-    def __del__(self):
-        """析构函数，在对象被销毁时调用"""
-        try:
-            self.oled_display.cleanup()
-            print("RoboEyes资源已清理")
-        except Exception as e:
-            print(f"清理RoboEyes资源时出错: {e}")
-
-    def __setup(self, auto_blink=True, idle_mode=True, blink_min=3, blink_max=2):
-        """
-        设置RoboEyes参数
-
-        Args:
-            auto_blink: 是否自动眨眼
-            idle_mode: 是否启用闲置模式
-            blink_min: 眨眼最小间隔时间(秒)
-            blink_max: 眨眼最大间隔时间(秒)
-        """
-        if auto_blink:
-            self.rbe.set_autoblinker(True, blink_min, blink_max)
-
-        if idle_mode:
-            self.rbe.set_idle_mode(True, blink_min, blink_max)
-
-        print("RoboEyes控制器已初始化")
-
-    async def run(self):
+    def run(self):
         """运行RoboEyes动画循环"""
         while True:
             image = self.rbe.update()
@@ -73,28 +51,40 @@ class RoboEyesController:
         设置机器人表情
 
         Args:
-            expression: 表情名称，如'happy', 'angry', 'tired', 'surprised'等
+            expression:'happy', 'angry', 'tired', 'surprised'
         """
-        if expression == "happy":
-            # 设置为快乐表情
-            self.rbe.set_mood(HAPPY)
-            return "机器人现在快乐！"
-        elif expression == "angry":
-            # 设置为生气表情
-            self.rbe.set_mood(ANGRY)
-            return "机器人现在生气！"
-        elif expression == "tired":
-            # 设置为疲惫表情
-            self.rbe.set_mood(TIRED)
-            return "机器人现在疲惫！"
-        elif expression == "default":
-            # 设置为默认表情
-            self.rbe.set_mood(DEFAULT)
-            return "机器人现在是默认表情！（无表情）"
-        else:
-            # 设置为默认表情
-            self.rbe.set_mood(DEFAULT)
-            return "机器人没有这个表情！已设置为默认表情。"
+        expression_map = {
+            "happy": HAPPY,
+            "angry": ANGRY,
+            "tired": TIRED,
+            "default": DEFAULT,
+        }
+        self.rbe.set_mood(expression_map[expression])
+        self.expression=expression_map[expression]
+        return f"机器人现在是{expression}表情！"
+
+
+    def trigger_quick_expression(self, expression):
+        expression_map = {
+            "laugh": self.rbe.anim_laugh,
+            "confused": self.rbe.anim_confused,
+        }
+        expression_map[expression]()
+        return f"机器人{expression}了一下！"
+
+    def set_mode(self, mode):
+        """
+        设置RoboEyes模式
+        Args:
+            mode: 'idle'
+        """
+        mode_map = {
+            "idle": self.rbe.set_idle_mode
+        }
+        mode_map[mode]()
+
+        ## todo
+        return f"机器人现在是{mode}模式！"
 
     @staticmethod
     def get_instance():
@@ -111,8 +101,54 @@ class RoboEyesController:
 
 
 if __name__ == "__main__":
+    import threading
+    from time import sleep
     try:
-        rbe = RoboEyesController()
-        asyncio.run(rbe.run())
+        rbec = RoboEyesController()
+
+        thread = threading.Thread(target=rbec.run, args=())
+        thread.start()
+
+        def curious_test():
+            from roboeyes import N,NE,E,SE,S,SW,W,NW
+            rbec.rbe.set_curiosity(True)
+            rbec.rbe.set_position(N)
+            sleep(1)
+            rbec.rbe.set_position(NE)
+            sleep(1)
+            rbec.rbe.set_position(E)
+            sleep(1)
+            rbec.rbe.set_position(SE)
+        def init_test():
+            rbec.rbe.set_autoblinker(True, 3, 2)
+            rbec.rbe.set_idle_mode(True, 1, 3)
+        def quick_expression_test():
+            rbec.trigger_quick_expression("laugh")
+            sleep(1)
+            rbec.trigger_quick_expression("confused")
+
+        def blink_test():
+            sleep(1)
+            rbec.rbe.set_autoblinker(True, 1,0)
+
+
+        tests={
+            "init":(init_test,5,False),
+            "curious":(curious_test,5,False),
+            "quick_expression":(quick_expression_test,5,False),
+            "blink":(blink_test,5,False),
+        }
+
+        for test in tests:
+            if tests[test][2]:
+                print(f"run test: {test}")
+                tests[test][0]()
+                sleep(tests[test][1])
+            else:
+                pass
+        thread.join()
+
+        input("Press Enter to exit...")
+
     except KeyboardInterrupt:
         print("退出中...")

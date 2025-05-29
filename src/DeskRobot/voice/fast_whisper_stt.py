@@ -5,7 +5,7 @@ from faster_whisper import WhisperModel
 from numpy import ndarray
 from util.config import FAST_WHISPER_MODEL_PATH
 
-__instance = None
+_instance = None  # Changed from __instance
 
 
 class FastWhisperSTT:
@@ -17,7 +17,15 @@ class FastWhisperSTT:
     ):
         """
         Initialize the FastWhisperSTT class.
+        Ensures that only one instance of FastWhisperSTT is created.
         """
+        global _instance
+        if _instance is not None:
+            raise RuntimeError(
+                "Attempted to create multiple instances of FastWhisperSTT. "
+                "Please use FastWhisperSTT.get_instance() to get the existing instance."
+            )
+
         self.model = WhisperModel(
             model_size,
             device=device,
@@ -49,13 +57,26 @@ class FastWhisperSTT:
             print(f"[{segment.start:.2f}s -> {segment.end:.2f}s] {segment.text}")
         return text
 
+    @staticmethod
+    def get_instance(
+        model_size: str = "tiny",
+        device: str = "cpu",
+        download_root: str = FAST_WHISPER_MODEL_PATH,
+    ):
+        """
+        Get the FastWhisperSTT singleton instance.
 
-def get_fast_whisper_stt():
-    """
-    Get FastWhisperSTT instance.
-    :return: FastWhisperSTT instance.
-    """
-    global __instance
-    if __instance is None:
-        __instance = FastWhisperSTT()
-    return __instance
+        Args:
+            model_size (str, optional): The model size to use. Defaults to "tiny".
+            device (str, optional): The device to run the model on. Defaults to "cpu".
+            download_root (str, optional): The root directory for model downloads. Defaults to FAST_WHISPER_MODEL_PATH.
+
+        Returns:
+            FastWhisperSTT: The singleton instance of FastWhisperSTT.
+        """
+        global _instance
+        if _instance is None:
+            _instance = FastWhisperSTT(
+                model_size=model_size, device=device, download_root=download_root
+            )
+        return _instance
