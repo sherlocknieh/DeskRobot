@@ -145,10 +145,23 @@ class Agent:
             rbe_controller = RoboEyesController.get_instance()
             print(f"Setting robot emotion to: {emotion}")
             return rbe_controller.set_expression(emotion)
+        
+        @tool(name_or_callable="trigger_quick_expression")
+        def trigger_quick_expression(expression: str) -> str:
+            """ 
+            触发快速表情(快速表情是指短暂的表情)
+            Args:
+                expression: 'laugh','confused'
+                其中，laugh是短笑，具体表现为眼睛快速上下摆动，可以组合普通表情达到不同的效果，通常会增强普通表情的效果：比如angry+laugh=不怀好意的笑/坏笑/更加生气，happy+laugh=开心的笑/非常开心，tired+laugh=大哭，default+laugh=冷笑
+                confused是困惑，具体表现为眼睛快速左右摆动，有种动摇的感觉，可以组合普通表情达到不同的效果
+            """
+            rbe_controller = RoboEyesController.get_instance()
+            print(f"Triggering quick expression: {expression}")
+            return rbe_controller.trigger_quick_expression(expression)
 
         self.tools.append(secret_number)
         self.tools.append(set_robot_emotion)
-
+        self.tools.append(trigger_quick_expression)
     async def run(self, query="what is secret number do secret operation with itself?"):
         """
         运行代理，处理用户查询
@@ -156,32 +169,27 @@ class Agent:
         Args:
             query: 用户查询文本
         """
-        if False:  # 暂时禁用流式输出
-            for step in self.agent_executor.stream(
-                {"messages": [HumanMessage(content=query)]},
-                stream_mode="values",
-            ):
-                step["messages"][-1].pretty_print()
-
         config = {"configurable": {"thread_id": "1"}}
 
         print("Agent is running...")
         print("You can type 'exit' to stop the agent.")
-        voice_interface = get_voice_interface()
-        while True:
-            user_input = voice_interface.speech_to_text(5, save_audio=True)
-            if user_input:
-                # 处理用户输入
-                response = self.agent_executor.invoke(
-                    {"messages": [HumanMessage(content=user_input)]}, config
-                )
-                response["messages"][-1].pretty_print()
-                # 语音合成
-                voice_interface.text_to_speech(response["messages"][-1].content)
-        if False:
+        voice_interact = False
+        if voice_interact:
+            voice_interface = get_voice_interface()
+            while True:
+                user_input = voice_interface.speech_to_text(5, save_audio=True)
+                if user_input:
+                    # 处理用户输入
+                    response = self.agent_executor.invoke(
+                        {"messages": [HumanMessage(content=user_input)]}, config
+                    )
+                    response["messages"][-1].pretty_print()
+                    # 语音合成
+                    voice_interface.text_to_speech(response["messages"][-1].content)
+        else:
             while True:
                 user_input = input("You: ")
-                if user_input.lower() == "exit":
+                if user_input.lower() == "exit":  # 退出循环
                     break
                 # 处理用户输入
                 response = self.agent_executor.invoke(

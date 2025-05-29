@@ -2,20 +2,21 @@
 OLED显示设备模块，用于初始化和控制OLED显示屏
 """
 
-import adafruit_ssd1306
-import board
-import busio
-import cv2
-import numpy as np
 from util.config import (
-    # from ..util.config import (
-    # from util.config import (
     OLED_CV_SIMULATION,
     OLED_I2C_ADDRESS,
     OLED_SCREEN_HEIGHT,
     OLED_SCREEN_WIDTH,
     PROJECT_ROOT,
 )
+
+if OLED_CV_SIMULATION:
+    import cv2
+    import numpy as np
+else:
+    import adafruit_ssd1306
+    import board
+    import busio
 
 # 全局单例实例
 _instance = None
@@ -65,7 +66,7 @@ class OLEDDisplay:
 
     def __del__(self):
         """清理OLED显示设备"""
-        self.__cleanup()
+        self.clear_display()
 
     def clear_display(self):
         """清除显示"""
@@ -101,14 +102,3 @@ class OLEDDisplay:
                 if self.oled:
                     self.oled.image(image)
                     self.oled.show()
-
-    def __cleanup(self):
-        """清理资源"""
-        if not self.is_simulation:
-            if self.oled:
-                self.clear_display()
-                if hasattr(self.oled, "deinit"):
-                    self.oled.deinit()
-            if self.i2c and hasattr(self.i2c, "deinit"):
-                self.i2c.deinit()
-            print("OLED资源已清理")
