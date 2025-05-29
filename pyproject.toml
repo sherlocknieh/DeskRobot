@@ -3,38 +3,34 @@ name = "deskrobot"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">3.12"
+requires-python = ">=3.10"
 dependencies = [
-    "adafruit-circuitpython-ssd1306>=2.12.20",
-    "colorzero==2.0",
-    "contourpy==1.3.2",
-    "cycler==0.12.1",
-    "faster-whisper>=1.1.1",
-    "fonttools==4.57.0",
-    "gpiozero==2.0.1",
-    "kiwisolver==1.4.8",
-    "langchain-community>=0.3.24",
-    "langchain-core>=0.3.60",
-    "langchain-deepseek>=0.1.3",
-    "langchain-openai>=0.3.17",
-    "langgraph>=0.4.5",
-    "lgpio>=0.2.2.0",
-    "opencv-python>=4.11.0.86",
-    "pigpio==1.78",
-    "pyparsing==3.2.3",
-    "python-dateutil==2.9.0.post0",
-    "python-dotenv>=1.1.0",
-    "roboeyes>=0.1.0",
-    "rpi-gpio>=0.7.1",
-    "rpi-lgpio==0.6",
-    "silero-vad>=5.1.2",
-    "six==1.17.0",
-    "vosk>=0.3.45",
+    "adafruit-circuitpython-ssd1306",
+    "colorzero",
+    "contourpy",
+    "cycler",
+    "faster-whisper",
+    "fonttools",
+    "gpiozero",
+    "kiwisolver",
+    "langchain-community",
+    "langchain-core",
+    "langchain-deepseek",
+    "langchain-openai",
+    "langgraph",
+    "lgpio",
+    "opencv-python",
+    "pigpio",
+    "pyparsing",
+    "python-dateutil",
+    "python-dotenv",
+    "rpi-gpio",
+    "rpi-lgpio",
+    "silero-vad",
+    "six",
+    "vosk",
+    "pillow"
 ]
-
-
-[tool.uv.sources]
-roboeyes = { git = "https://github.com/Xe111/Roboeyes-python" }
 
 
 
@@ -45,6 +41,6 @@ default = true
 
 [dependency-groups]
 dev = [
-    "importmonkey>=2.1.1",
+    "importmonkey",
 ]
 
