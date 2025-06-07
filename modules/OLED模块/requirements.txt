@@ -1,0 +1,4 @@
+adafruit-circuitpython-ssd1306
+rpi-gpio
+pillow
+opencv-python # 可选，只在"模拟模式"使用

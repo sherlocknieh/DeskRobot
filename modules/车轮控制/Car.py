@@ -29,8 +29,6 @@ class Car:
     def __init__(self):
         self.motorA = Motor(14, 15, 18)
         self.motorB = Motor(23, 24, 19)
-        self.STBY = DigitalOutputDevice(25)
-        self.STBY.on()
     
     def forward(self):
         self.motorA.forward()

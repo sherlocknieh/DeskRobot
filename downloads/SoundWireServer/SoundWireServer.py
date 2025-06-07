@@ -1,6 +1,6 @@
 import subprocess
 
-binary_path = "data/SoundWireServer/SoundWireServer.bin"
+binary_path = "SoundWireServer.bin"
 
 def start_server():
     try:
