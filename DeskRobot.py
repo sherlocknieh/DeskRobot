@@ -1,5 +1,5 @@
 from threading import Thread
-from modules.LED灯模块 import LED_Thread
+from modules.LED.LED_Thread import LED_Control
 
 class DeskRobot:
     def __init__(self):
@@ -18,6 +18,5 @@ class DeskRobot:
 
 if __name__ == "__main__":
     robot = DeskRobot()
-    robot.add_task(lambda: print("Task 1"))
-    robot.add_task(lambda: print("Task 2"))
+    #robot.add_task(LED_Thread.)
     robot.run()

@@ -3,10 +3,10 @@ RoboEyes动画控制模块，实现机器人眼睛动画的控制和更新
 """
 if __name__ == "__main__":
     from roboeyes import ANGRY, DEFAULT, HAPPY, TIRED, RoboEyes
-    from OLED import OLEDDisplay
+    from OLED_API import OLEDDisplay
 else:
     from .roboeyes import ANGRY, DEFAULT, HAPPY, TIRED, RoboEyes
-    from .OLED import OLEDDisplay
+    from .OLED_API import OLEDDisplay
 
 from time import sleep
 

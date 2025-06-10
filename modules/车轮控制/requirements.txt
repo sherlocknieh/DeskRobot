@@ -1,4 +1,4 @@
 gpiozero
-
+pygame
 # 接线说明:
 # https://docs.qq.com/doc/DRmZNQU1YZ1dIYkdN
