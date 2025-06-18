@@ -1,22 +1,41 @@
 from threading import Thread
-from modules.LED.LED_Thread import LED_Control
+from modules.DataCenter import DataCenter
+from modules.LED_Thread import LED_Control
 
 class DeskRobot:
     def __init__(self):
-        self.name = "DeskRobot"
-        self.status = "idle"
+        self.data = DataCenter()
         self.tasks = []
 
-    def add_task(self, task):
+    def add(self, task):
         self.tasks.append(task)
 
-    def run(self):
+    def start(self):
         print("DeskRobot is running")
+        Thread(target=self._loop).start()
         for task in self.tasks:
-            Thread(target=task).start()
+            task.start(self.data)
 
+    def stop(self):
+        for task in self.tasks:
+            task.stop()
 
+    def _loop(self):
+        while True:
+            cmd = input("Enter command: ").strip()
+            if cmd in ["exit", "quit", "stop"]:
+                self.stop()
+                break
+            elif cmd == "led on":
+                self.data.LED_status['status'] = "on"
+            elif cmd == "led off":
+                self.data.LED_status['status'] = "off"
+            else: 
+                print("Invalid command")
+
+        print("DeskRobot is stopped")
+        
 if __name__ == "__main__":
     robot = DeskRobot()
-    #robot.add_task(LED_Thread.)
-    robot.run()
+    robot.add(LED_Control())
+    robot.start()

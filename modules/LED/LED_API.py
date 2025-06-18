@@ -1,37 +1,70 @@
 from gpiozero import PWMLED
-from time import sleep
 from threading import Thread
+from time import sleep
+
 
 class RGB:
-    def __init__(self, r_pin=13, g_pin=19, b_pin=26):
-        # 引脚初始化
-        self.red   = PWMLED(r_pin)
-        self.green = PWMLED(g_pin)
-        self.blue  = PWMLED(b_pin)
-        # 初始状态
-        self.red.off()
-        self.green.off()
-        self.blue.off()
-        # 公共状态
-        self.status = {'mode': 'off','speed': 1}
-    
+    def __init__(self, r_pin=10, g_pin=9, b_pin=11):
+
+        self._red   = PWMLED(r_pin)
+        self._green = PWMLED(g_pin)
+        self._blue  = PWMLED(b_pin)
+        self._thread = None
+        self._running = False
+        self.off()
+        
     def off(self):
-        self.red.off()
-        self.green.off()
-        self.blue.off()
+        """停止运行中的线程"""
+        if self._thread:
+            self._running = False
+            self._thread.join()
+        """关闭所有LED"""
+        self._red.off()
+        self._green.off()
+        self._blue.off()
 
-    def on(self):
-        self.red.on()
-        self.green.on()
-        self.blue.on()
+    def on(self, r=1.0, g=1.0, b=1.0):
+        """开启LED"""
+        self.off()
+        print('LED On, RGB:', r, g, b)
+        self._red.value = r
+        self._green.value = g
+        self._blue.value = b
 
-    def breeze_loop(self):
-        print('Breeze mode on')
-        lights = [self.red, self.green, self.blue]
+    def flash(self, speed=1):
+        """交替闪烁效果"""
+        self.off()
+        self._running = True
+        self._thread = Thread(target=self._flash_loop, args=([speed]))
+        self._thread.start()
+    
+    def breeze(self, speed=1):
+        """交替呼吸效果"""
+        self.off()
+        self._running = True
+        self._thread = Thread(target=self._breeze_loop, args=([speed]))
+        self._thread.start()
+    
+    def _flash_loop(self, speed=1):
+        print('Flash On, Speed:', speed)
+        lights = [self._red, self._green, self._blue]
+        current_color = 0
+        while self._running:
+            lights[current_color].on()
+            if not self._running:
+                break
+            sleep(1/speed)
+            lights[current_color].off()
+            current_color = (current_color + 1) % 3
+        print('Flash Off')
+
+    def _breeze_loop(self, speed=1):
+        print('Breeze On, Speed:', speed)
+        lights = [self._red, self._green, self._blue]
         current_color = 0
         brightness = 0
         direction = 1
-        while self.status['mode'] == 'breeze':
+        while self._running:
             brightness += 0.01 * direction
             if brightness >= 1.0:    # 亮度增加到1,开始减少亮度
                 direction = -1
@@ -41,10 +74,21 @@ class RGB:
                 brightness = 0.0
                 current_color = (current_color + 1) % 3
             lights[current_color].value = brightness # 设置当前颜色的亮度
-            sleep(0.1/self.status['speed'])  # 根据速度调整延时
-        print('Breeze mode off')
+            sleep(0.01/speed)  # 根据速度调整延时
+        print('Breeze Off')
 
 
 if __name__ == '__main__':
-    r = RGB()
-    Thread(target=r.breeze_loop).start()
+
+    rgb = RGB(10, 9, 11)
+
+    rgb.on(1, 1, 1)
+    sleep(2)
+
+    rgb.flash(speed=2)
+    sleep(4)
+    
+    rgb.breeze(speed=2)
+    sleep(4)
+
+    rgb.off()
