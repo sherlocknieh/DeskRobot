@@ -1,0 +1,34 @@
+# 车轮运动模块
+gpiozero
+pygame
+
+
+# OLED模块
+adafruit-circuitpython-ssd1306
+rpi-gpio; sys_platform == 'linux'
+pillow
+# opencv-python # 可选
+
+
+# 摄像头模块
+picamera2; sys_platform == 'linux'
+opencv-python
+# flask   # 可选
+
+
+# 语音模块
+#faster-whisper
+#silero-vad
+#vosk
+pyaudio
+
+# AI模块
+langgraph
+langchain
+langchain-openai
+
+Pillow
+python-dotenv
+
+# 语音唤醒
+snowboy; sys_platform == 'linux'

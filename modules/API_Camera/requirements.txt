@@ -1,0 +1,6 @@
+依赖的库:
+
+picamera2
+opencv-python
+
+flask
