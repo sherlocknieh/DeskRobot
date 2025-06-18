@@ -24,7 +24,10 @@ while True:
                 x = +event.value
             if event.axis == 1: #纵轴 上-1 下+1
                 y = -event.value
-            L = (y + x)/math.sqrt(2)
-            R = (y - x)/math.sqrt(2)
-            print(f"L: {L:2f}, R: {R:2f}")
-            car.speed(L, R)
+        if event.type == pygame.JOYHATMOTION:
+            x = event.value[0]
+            y = event.value[1]
+        L = (y + x/3)/1.2
+        R = (y - x/3)/1.2
+        print(f"L: {L:2f}, R: {R:2f}")
+        car.speed(L, R)
