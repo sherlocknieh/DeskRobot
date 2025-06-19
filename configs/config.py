@@ -29,10 +29,14 @@ config_data = {
     # Snowboy Wake Word Engine
     "snowboy_sensitivity": 0.5,
     # OLED Screen
-    "screen_cv_simulation": True,
-    "screen_i2c_address": 0x3C,
-    "screen_width": 128,
-    "screen_height": 64,
+    "oled_is_simulation": True,
+    "oled_i2c_address": 0x3C,
+    "oled_width": 128,
+    "oled_height": 64,
+    # Roboeyes Animation
+    "roboeyes_frame_rate": 50,  # 帧率
+    "roboeyes_width": 128,
+    "roboeyes_height": 64,
 }
 
 # --- 动态路径配置 ---
@@ -52,7 +56,7 @@ FFMPEG_URL_LINUX = {
 PIPER_VOICE_NAME = "zh_CN-huayan-medium"
 PIPER_VOICE_URL = f"https://huggingface.co/rhasspy/piper-voices/resolve/main/zh_CN/huayan/medium/{PIPER_VOICE_NAME}.onnx.json"
 EDGE_TTS_VOICE = "zh-CN-XiaoxiaoNeural"
-DOTENV_PATH = os.path.join(PROJECT_ROOT, ".env")
+DOTENV_PATH = os.path.join(PROJECT_ROOT, "configs", ".env")
 
 _config_instance = None
 
@@ -70,28 +74,29 @@ class Config:
         load_dotenv(DOTENV_PATH)
         self._data = config_data.copy()
         # 将所有路径和URL也加入到配置字典中
-        self._data["PROJECT_ROOT"] = PROJECT_ROOT
-        self._data["DOWNLOADS_PATH"] = DOWNLOADS_PATH
-        self._data["FFMPEG_PATH"] = FFMPEG_PATH
-        self._data["FFMPEG_URL_WINDOWS"] = FFMPEG_URL_WINDOWS
-        self._data["FFMPEG_URL_LINUX"] = FFMPEG_URL_LINUX
-        self._data["PIPER_MODELS_PATH"] = PIPER_MODELS_PATH
-        self._data["PIPER_VOICE_NAME"] = PIPER_VOICE_NAME
-        self._data["PIPER_VOICE_URL"] = PIPER_VOICE_URL
-        self._data["WHISPER_MODELS_PATH"] = WHISPER_MODELS_PATH
-        self._data["VOSK_MODELS_PATH"] = VOSK_MODELS_PATH
-        self._data["SNOWBOY_MODELS_PATH"] = SNOWBOY_MODELS_PATH
-        self._data["EDGE_TTS_OUTPUT_PATH"] = EDGE_TTS_OUTPUT_PATH
-        self._data["EDGE_TTS_VOICE"] = EDGE_TTS_VOICE
-        self._data["DOTENV_PATH"] = DOTENV_PATH
-        self._data["LLM_BASE_URL"] = os.getenv("LLM_BASE_URL")
-        self._data["LLM_API_KEY"] = os.getenv("LLM_API_KEY")
-        self._data["LLM_MODEL_NAME"] = os.getenv("LLM_MODEL_NAME")
-        self._data["SILICONFLOW_API_KEY"] = os.getenv("SILICONFLOW_API_KEY")
+        self._data["project_root"] = PROJECT_ROOT
+        self._data["download_path"] = DOWNLOADS_PATH
+        self._data["ffmpeg_path"] = FFMPEG_PATH
+        self._data["ffmpeg_url_windows"] = FFMPEG_URL_WINDOWS
+        self._data["ffmpeg_url_linux"] = FFMPEG_URL_LINUX
+        self._data["piper_models_path"] = PIPER_MODELS_PATH
+        self._data["piper_voice_name"] = PIPER_VOICE_NAME
+        self._data["piper_voice_url"] = PIPER_VOICE_URL
+        self._data["whisper_models_path"] = WHISPER_MODELS_PATH
+        self._data["vosk_models_path"] = VOSK_MODELS_PATH
+        self._data["snowboy_models_path"] = SNOWBOY_MODELS_PATH
+        self._data["edge_tts_output_path"] = EDGE_TTS_OUTPUT_PATH
+        self._data["edge_tts_voice"] = EDGE_TTS_VOICE
+        self._data["dotenv_path"] = DOTENV_PATH
+        self._data["llm_base_url"] = os.getenv("LLM_BASE_URL")
+        self._data["llm_api_key"] = os.getenv("LLM_API_KEY")
+        self._data["llm_model_name"] = os.getenv("LLM_MODEL_NAME")
+        self._data["siliconflow_api_key"] = os.getenv("SILICONFLOW_API_KEY")
+
 
         # snowboy模型路径需要特殊处理
         self._data["snowboy_model_path"] = os.path.join(
-            self._data["SNOWBOY_MODELS_PATH"], "snowboy.umdl"
+            self._data["snowboy_models_path"], "snowboy.umdl"
         )
 
     def get(self, key, default=None):

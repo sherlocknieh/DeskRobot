@@ -14,10 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class OledThread(threading.Thread):
-    def __init__(self, event_bus: EventBus):
+    def __init__(self, event_bus: EventBus,width=128, height=64, i2c_address=0x3C, is_simulation=False):
         super().__init__(daemon=True, name="OledThread")
         self.event_bus = event_bus
-        self.api = OLED.get_instance()
+        self.api = OLED.get_instance(
+            width=width,
+            height=height,
+            i2c_address=i2c_address,
+            is_simulation=is_simulation
+        )
         self.event_queue = queue.Queue()
         event_bus.subscribe("DISPLAY_IMAGE", self.event_queue)
         event_bus.subscribe("STOP_THREADS", self.event_queue)

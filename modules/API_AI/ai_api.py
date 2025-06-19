@@ -25,7 +25,6 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 
 from modules.API_EventBus import event_bus
-from utils.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -53,26 +52,26 @@ def strip_emoji(text: str) -> str:
 
 
 class AiAPI:
-    def __init__(self):
+    def __init__(self,llm_base_url: str = None, llm_api_key: str = None, llm_model_name: str = None):
         self.logger = logging.getLogger(__name__)
         self.logger.info("正在初始化 AiAPI...")
         self.event_bus = event_bus  # 依赖注入点
-        self.__initialize_agent()
+        self.__initialize_agent(llm_base_url, llm_api_key, llm_model_name)
         self.logger.info("AiAPI 初始化完成。")
 
-    def __initialize_agent(self):
+    def __initialize_agent(self,llm_base_url: str = None, llm_api_key: str = None, llm_model_name: str = None):
         """设置并初始化代理"""
         self.logger.info("正在设置 LangChain Agent...")
-        llm_base_url = config.get("LLM_BASE_URL")
-        llm_api_key = config.get("LLM_API_KEY")
-        llm_model_name = config.get("LLM_MODEL_NAME")
+        llm_base_url = llm_base_url
+        llm_api_key = llm_api_key
+        llm_model_name = llm_model_name
         llm_extra_body = {
             "enable_thinking": False,
         }
 
         if not all([llm_base_url, llm_api_key, llm_model_name]):
-            self.logger.critical("一个或多个LLM相关的环境变量未设置。")
-            raise ValueError("LLM 配置环境变量缺失，请检查 .env 文件。")
+            self.logger.critical("一个或多个LLM相关的参数缺失。")
+            raise ValueError("LLM 配置参数缺失。请检查配置。")
 
         self.logger.info(f"LLM 配置: URL='{llm_base_url}', Model='{llm_model_name}'")
 

@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class RoboeyesThread(threading.Thread):
-    def __init__(self, event_bus: EventBus, frame_rate=50):
+    def __init__(self, event_bus: EventBus, frame_rate=50, width=128, height=64):
         super().__init__(daemon=True, name="RoboeyesThread")
         self.event_bus = event_bus
-        self.api = RoboeyesAPI(frame_rate=frame_rate)
+        self.api = RoboeyesAPI(frame_rate, width, height)
         self._stop_event = threading.Event()
         self.frame_interval = 1.0 / frame_rate
 

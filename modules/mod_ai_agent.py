@@ -7,18 +7,21 @@ import logging
 import threading
 from queue import Empty, Queue
 
-from modules.AI对话.ai_api import AiAPI
+from modules.API_AI.ai_api import AiAPI  # AI API 接口
 from modules.API_EventBus.event_bus import EventBus  # For type hinting
 
 logger = logging.getLogger(__name__)
 
 
 class AiThread(threading.Thread):
-    def __init__(self, event_bus: EventBus):
+    def __init__(self, event_bus: EventBus,llm_base_url: str = None, llm_api_key: str = None, llm_model_name: str = None):
         super().__init__(daemon=True, name="AiThread")
         self.event_bus = event_bus
         self._stop_event = threading.Event()
         self.api = None
+        self.llm_base_url = llm_base_url
+        self.llm_api_key = llm_api_key
+        self.llm_model_name = llm_model_name
 
         # 创建私有队列并订阅
         self.event_queue = Queue()
@@ -32,7 +35,11 @@ class AiThread(threading.Thread):
 
         try:
             # API的初始化可能比较耗时，所以在线程的run方法中执行
-            self.api = AiAPI()
+            self.api = AiAPI(
+                llm_base_url=self.llm_base_url,
+                llm_api_key=self.llm_api_key,
+                llm_model_name=self.llm_model_name,
+            )
         except Exception:
             logger.critical("AI API 初始化失败，线程即将退出。", exc_info=True)
             return

@@ -1,10 +1,10 @@
 # 车轮运动模块
-gpiozero
+gpiozero; sys_platform == 'linux'
 pygame
 
 
 # OLED模块
-adafruit-circuitpython-ssd1306
+adafruit-circuitpython-ssd1306; sys_platform == 'linux'
 rpi-gpio; sys_platform == 'linux'
 pillow
 # opencv-python # 可选
