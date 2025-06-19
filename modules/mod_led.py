@@ -1,9 +1,9 @@
 if __name__ == '__main__':
     from API_LED.LED import RGB     # 直接运行时使用
-    import modules.API_EventBus.event_bus as event_bus
+    from API_EventBus import event_bus
 else:
     from .API_LED.LED import RGB    # 从外部调用时使用
-    from modules.API_EventBus import event_bus
+    from .API_EventBus import event_bus
 
 import threading
 import queue
@@ -32,13 +32,18 @@ class LED_Control(threading.Thread):
             try:
                 event = self.event_queue.get(timeout=1)
                 if event['type'] == "STOP_THREADS":
+                    print("LED_Control received STOP_THREADS event, stopping...")
+                    self.stop()
                     break
-                data = self.event_queue.get(timeout=1)['payload']
+                data = event['payload']
                 if data["action"] == "on":
-                    r=float(data["r"])
-                    g=float(data["g"])
-                    b=float(data["b"])
-                    self.rgb.on(r, g, b)
+                    self.rgb.on()
+                    if data.get("r") and data.get("g") and data.get("b"):
+                        r=float(data["r"])
+                        g=float(data["g"])
+                        b=float(data["b"])
+                        print(f"LED_Control received RGB: {r}, {g}, {b}")
+                        self.rgb.on(r, g, b)
                 elif data["action"] == "off":
                     self.rgb.off()
                 elif data["action"] == "flash":
@@ -55,4 +60,18 @@ class LED_Control(threading.Thread):
                 pass
 
     def stop(self):
+        print("LED_Control is stopping...")
         self._stop_event.set()
+        print("LED_Control stopped.")
+
+if __name__ == '__main__':
+    from mod_terminal_io import IOThread
+    io_thread = IOThread(event_bus)
+    led_control = LED_Control(event_bus)
+    io_thread.start()
+    led_control.start()
+    print("ALL THREADS STARTED")
+    led_control.join()
+    print("LED_Control thread stopped.")
+    io_thread.join()
+    print("ALL THREADS STOPPED")

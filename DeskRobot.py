@@ -48,9 +48,6 @@ if __name__ == "__main__":
 
     robot = DeskRobot(event_bus)
 
-    # 终端IO模块
-    from modules.mod_terminal_io import IOThread
-    robot.add_thread(IOThread(event_bus))
 
     # LED模块  # 依赖第三方库 : gpiozero rpi-gpio lgpio
     from modules.mod_led import LED_Control
@@ -77,5 +74,9 @@ if __name__ == "__main__":
     # # 其他模块  # 依赖第三方库 : 
     # ...
  
+    # 终端IO模块
+    from modules.mod_terminal_io import IOThread
+    robot.add_thread(IOThread(event_bus))
+    
     # 启动
     robot.run()
