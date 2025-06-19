@@ -25,7 +25,7 @@ class OledThread(threading.Thread):
     def run(self):
         """线程主循环"""
         logger.info("OledThread 启动")
-        self.event_bus.publish("THREAD_STARTED", name=self.__class__.__name__)
+        #self.event_bus.publish("THREAD_STARTED", name=self.__class__.__name__)
 
         while True:
             try:
