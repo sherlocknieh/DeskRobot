@@ -1,6 +1,23 @@
 """
 AI 对话线程
 负责监听用户输入事件，调用 AI API 获取回复，并发布待播报文本事件。
+
+Subscribe:
+- STT_RESULT_CAPTURED: 语音转文字结果
+    - payload格式:
+    {
+        "text": str,  # 用户说话内容
+        "confidence": float,  # 识别置信度（可选）
+        "source": str  # 识别来源（可选）
+    }
+- STOP_THREADS: 停止线程
+
+Publish:
+- SUB_TEXT_STATIC_DISPLAY: 显示AI回复文本
+    - 将AI回复内容显示到屏幕上
+- TTS_REQUEST: 文字转语音请求（如果启用语音回复）
+    - 将AI回复内容转为语音播放
+
 """
 
 import logging

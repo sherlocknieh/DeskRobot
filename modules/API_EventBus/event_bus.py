@@ -29,6 +29,14 @@ logger = logging.getLogger(__name__)
 
 
 class EventBus:
+    _instance = None
+
+    @staticmethod
+    def get_instance():
+        if EventBus._instance is None:
+            EventBus._instance = EventBus()
+        return EventBus._instance
+
     def __init__(self):
         # 使用 defaultdict 可以让订阅者列表在第一次访问时自动创建为空列表
         self.listeners: Dict[str, list[queue.Queue]] = defaultdict(list)
@@ -66,7 +74,7 @@ class EventBus:
 
         source = kwargs.get("source", "未知来源")
         # 增强日志：记录发布的完整事件内容
-        if event_type != "DISPLAY_IMAGE":
+        if event_type != "UPDATE_LAYER":
             logger.info(
                 f"E-BUS: 发布事件 => 类型='{event_type}', 来源='{source}', 内容={kwargs}"
             )
@@ -77,14 +85,13 @@ class EventBus:
             return
 
         # 增强日志：记录事件分发给了哪些订阅者
-        if event_type != "DISPLAY_IMAGE":
+        if event_type != "UPDATE_LAYER":
             logger.info(
                 f"E-BUS: 分发事件 '{event_type}' 给 {len(self.listeners[event_type])} 个订阅者:"
             )
         for listener_queue in self.listeners[event_type]:
             logger.debug(f"    -> 队列: {listener_queue}")
             listener_queue.put(event)
-
 
 
 def cmd_to_event(event_bus):
@@ -97,4 +104,3 @@ def cmd_to_event(event_bus):
     event_type = cmd.split()[0]
     payload = cmd.split()[1:]
     event_bus.publish(event_type, **dict(zip(payload[::2], payload[1::2])))
-    

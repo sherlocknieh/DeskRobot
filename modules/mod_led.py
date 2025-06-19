@@ -1,3 +1,24 @@
+"""
+LED 控制模块
+从事件总线接收指令，根据指令控制LED灯的状态。
+
+Subscribe:
+- LED: LED控制指令
+    - payload格式:
+    {
+        "action": str,  # 动作类型："on", "off", "blink", "color"
+        "r": int,       # 红色值 (0-255)（可选）
+        "g": int,       # 绿色值 (0-255)（可选）
+        "b": int,       # 蓝色值 (0-255)（可选）
+        "duration": float  # 持续时间（秒）（可选）
+    }
+- STOP_THREADS: 停止线程
+
+Publish:
+- 无
+
+"""
+
 if __name__ == '__main__':
     from API_LED.LED import RGB     # 直接运行时使用
     from API_EventBus import event_bus
@@ -8,12 +29,6 @@ else:
 import threading
 import queue
 
-"""LED 控制模块
-
-从事件总线接收指令
-根据指令控制LED灯的状态
-
-"""
 
 class LED_Control(threading.Thread):
     def __init__(self, event_bus):

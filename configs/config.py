@@ -37,6 +37,8 @@ config_data = {
     "roboeyes_frame_rate": 50,  # 帧率
     "roboeyes_width": 128,
     "roboeyes_height": 64,
+    # text rendering
+    "text_renderer_font_path": os.path.join(PROJECT_ROOT, "fonts", "msyh.ttc"),
 }
 
 # --- 动态路径配置 ---
@@ -92,7 +94,6 @@ class Config:
         self._data["llm_api_key"] = os.getenv("LLM_API_KEY")
         self._data["llm_model_name"] = os.getenv("LLM_MODEL_NAME")
         self._data["siliconflow_api_key"] = os.getenv("SILICONFLOW_API_KEY")
-
 
         # snowboy模型路径需要特殊处理
         self._data["snowboy_model_path"] = os.path.join(

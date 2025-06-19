@@ -1,6 +1,25 @@
 """
 RoboEyes 动画线程
 负责生成眼睛动画的每一帧，并监听外部事件来改变表情。
+
+Subscribe:
+- SET_EXPRESSION: 设置表情
+    - payload格式:
+    {
+        "expression": str  # 表情名称（如："happy", "sad", "angry", "surprised"等）
+    }
+- TRIGGER_QUICK_EXPRESSION: 触发快速表情
+    - payload格式:
+    {
+        "expression": str,  # 表情名称
+        "duration": float  # 表情持续时间（秒）（可选）
+    }
+- STOP_THREADS: 停止线程
+
+Publish:
+- UPDATE_LAYER: 更新图层显示
+    - 发布眼睛动画帧到显示系统
+
 """
 
 import logging
@@ -53,9 +72,14 @@ class RoboeyesThread(threading.Thread):
             # 如果生成了有效图像，则发布到事件总线
             if image:
                 self.event_bus.publish(
-                    "DISPLAY_IMAGE", source=self.__class__.__name__, image=image
+                    "UPDATE_LAYER",
+                    source=self.__class__.__name__,
+                    layer_id="roboeyes",
+                    image=image,
+                    z_index=0,  # 总是在底层
+                    position=(0, 0),  # 图像位置，左上角
+                    duration=None,  # 持续时间为 None，表示永久显示
                 )
-
             # 控制帧率
             elapsed_time = time.monotonic() - start_time
             sleep_time = self.frame_interval - elapsed_time
