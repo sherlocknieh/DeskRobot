@@ -24,7 +24,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 
-from modules.API_EventBus import event_bus
+from modules.EventBus import event_bus
 
 logger = logging.getLogger(__name__)
 

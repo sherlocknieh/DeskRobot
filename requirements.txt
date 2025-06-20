@@ -4,8 +4,11 @@ pygame
 
 
 # OLED模块
-adafruit-circuitpython-ssd1306; sys_platform == 'linux'
-rpi-gpio; sys_platform == 'linux'
+#adafruit-circuitpython-ssd1306; sys_platform == 'linux'
+#rpi-lgpio; sys_platform == 'linux'
+#rpi-gpio; sys_platform == 'linux'
+luma.oled; sys_platform == 'linux'
+luma.core; sys_platform == 'linux'
 pillow
 # opencv-python # 可选
 
@@ -31,4 +34,4 @@ Pillow
 python-dotenv
 
 # 语音唤醒
-snowboy; sys_platform == 'linux'
+#snowboy; sys_platform == 'linux'

@@ -25,7 +25,7 @@ import threading
 from queue import Empty, Queue
 
 from modules.API_AI.ai_api import AiAPI  # AI API 接口
-from modules.API_EventBus.event_bus import EventBus  # For type hinting
+from modules.EventBus.event_bus import EventBus  # For type hinting
 
 logger = logging.getLogger(__name__)
 

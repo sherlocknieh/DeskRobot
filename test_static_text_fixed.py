@@ -9,7 +9,7 @@ import time
 
 from configs.config import config
 from configs.logging_config import setup_logging
-from modules.API_EventBus.event_bus import EventBus
+from modules.EventBus.event_bus import EventBus
 from modules.mod_oled import OLEDThread
 from modules.mod_roboeyes import RoboeyesThread
 from modules.mod_text_display import TextDisplayThread
@@ -269,7 +269,7 @@ if __name__ == "__main__":
         width=config.get("oled_width", 128),
         height=config.get("oled_height", 64),
         fps=config.get("oled_fps", 30),
-        is_simulation=True,
+        is_simulation=False,
     )
     test_rig.add_thread(oled_thread)
 

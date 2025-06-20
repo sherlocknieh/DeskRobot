@@ -2,10 +2,10 @@ import logging
 import queue
 import threading
 
-from configs.config import config
+#from configs.config import config
 from configs.logging_config import setup_logging
-from modules.API_EventBus import event_bus
-from modules.API_EventBus.event_bus import EventBus
+from modules.EventBus import event_bus
+from modules.EventBus.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 setup_logging()
@@ -47,47 +47,42 @@ class DeskRobot:
 if __name__ == "__main__":
     robot = DeskRobot(event_bus)
 
-    # LED模块  # 依赖第三方库 : gpiozero rpi-gpio lgpio
-    # from modules.mod_led import LED_Control
-    # robot.add_thread(LED_Control(event_bus))
 
     # # OLED模块  # 依赖第三方库 :  rpi-gpio pillow adafruit-circuitpython-ssd1306
-    from modules.mod_oled import OLEDThread
-
-    robot.add_thread(
-        OLEDThread(
-            event_bus,
-            config.get("oled_width", 128),
-            config.get("oled_height", 64),
-            config.get("oled_fps", 50),
-            config.get("oled_i2c_address", 0x3C),
-            config.get("oled_is_simulation", False),
-        )
-    )
+    # from modules.mod_oled import OLEDThread
+    # robot.add_thread(
+    #     OLEDThread(
+    #         event_bus,
+    #         config.get("oled_width", 128),
+    #         config.get("oled_height", 64),
+    #         config.get("oled_fps", 50),
+    #         config.get("oled_i2c_address", 0x3C),
+    #         config.get("oled_is_simulation", False),
+    #     )
+    # )
 
     # # 表情模块  # 依赖第三方库 : pillow
-    from modules.mod_roboeyes import RoboeyesThread
-
-    robot.add_thread(
-        RoboeyesThread(
-            event_bus,
-            config.get("roboeyes_frame_rate", 50),
-            config.get("roboeyes_width", 128),
-            config.get("roboeyes_height", 64),
-        )
-    )
+    # from modules.mod_roboeyes import RoboeyesThread
+    # robot.add_thread(
+    #     RoboeyesThread(
+    #         event_bus,
+    #         config.get("roboeyes_frame_rate", 50),
+    #         config.get("roboeyes_width", 128),
+    #         config.get("roboeyes_height", 64),
+    #     )
+    # )
 
     # # AI模块  # 依赖第三方库 : langchain langchain-openai langgraph
-    from modules.mod_ai_agent import AiThread
+    # from modules.mod_ai_agent import AiThread
 
-    robot.add_thread(
-        AiThread(
-            event_bus,
-            llm_base_url=config.get("llm_base_url", None),
-            llm_api_key=config.get("llm_api_key", None),
-            llm_model_name=config.get("llm_model_name", None),
-        )
-    )
+    # robot.add_thread(
+    #     AiThread(
+    #         event_bus,
+    #         llm_base_url=config.get("llm_base_url", None),
+    #         llm_api_key=config.get("llm_api_key", None),
+    #         llm_model_name=config.get("llm_model_name", None),
+    #     )
+    # )
 
     # # 语音模块  # 依赖第三方库 : faster_whisper pyaudio vosk numpy
     # from modules.voice_threads import initialize_voice_threads
@@ -96,22 +91,31 @@ if __name__ == "__main__":
     #    robot.add_thread(thread)
 
     # # 其他模块  # 依赖第三方库 :
-    # ...    # 文本显示模块
-    from modules.mod_text_display import TextDisplayThread
+    # ...
 
-    robot.add_thread(
-        TextDisplayThread(
-            event_bus,
-            config.get("text_renderer_font_path", "arial.ttf"),
-            config.get("oled_width", 128),
-            config.get("oled_height", 64),
-            config.get("oled_fps", 50),
-        )
-    )
+    # # 文本显示模块
+    # from modules.mod_text_display import TextDisplayThread
+
+    # robot.add_thread(
+    #     TextDisplayThread(
+    #         event_bus,
+    #         config.get("text_renderer_font_path", "arial.ttf"),
+    #         config.get("oled_width", 128),
+    #         config.get("oled_height", 64),
+    #         config.get("oled_fps", 50),
+    #     )
+    # )
+
+    # LED模块  # 依赖第三方库 : gpiozero rpi-gpio lgpio
+    # from modules.mod_led import LED_Control
+    # robot.add_thread(LED_Control(event_bus))
+
+    # 小车控制模块  # 依赖第三方库 : gpiozero evdev
+    from modules.mod_car_control import CarControl
+    robot.add_thread(CarControl(event_bus))
 
     # 终端IO模块
     from modules.mod_terminal_io import IOThread
-
     robot.add_thread(IOThread(event_bus))
 
     # 启动

@@ -43,13 +43,19 @@ class OLED:
             self.np = np
         else:
             try:
-                import adafruit_ssd1306
-                import board
-                import busio
+                # import adafruit_ssd1306
+                # import board
+                # import busio
+                from luma.core.interface.serial import i2c
+                from luma.core.render import canvas
+                from luma.oled.device import ssd1306
 
-                self.adafruit_ssd1306 = adafruit_ssd1306
-                self.board = board
-                self.busio = busio
+                # self.adafruit_ssd1306 = adafruit_ssd1306
+                # self.board = board
+                # self.busio = busio
+                self.i2c = i2c
+                self.ssd1306 = ssd1306
+                self.canvas = canvas
             except ImportError:
                 self.is_simulation = True  # 驱动导入失败，强制切换到模拟模式
                 import cv2
@@ -77,9 +83,13 @@ class OLED:
 
         try:
             if not self.is_simulation:
-                self.i2c = self.busio.I2C(self.board.SCL, self.board.SDA)
-                self.screen = self.adafruit_ssd1306.SSD1306_I2C(
-                    self.width, self.height, self.i2c, addr=self.i2c_address
+                # self.i2c = self.busio.I2C(self.board.SCL, self.board.SDA)
+                # self.screen = self.adafruit_ssd1306.SSD1306_I2C(
+                #    self.width, self.height, self.i2c, addr=self.i2c_address
+                # )
+                self.serial = self.i2c(address=self.i2c_address)
+                self.screen = self.ssd1306(
+                    self.serial, width=self.width, height=self.height
                 )
                 logger.info("OLED 硬件初始化成功。")
                 self.clear_display()
@@ -95,8 +105,10 @@ class OLED:
     def clear_display(self):
         """清除显示"""
         if not self.is_simulation and self.screen:
-            self.screen.fill(0)
-            self.screen.show()
+            # self.screen.fill(0)
+            # self.screen.show()
+            with self.canvas(self.screen) as draw:
+                draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)
         elif self.is_simulation:
             if hasattr(self, "cv2"):
                 self.cv2.destroyAllWindows()
@@ -122,8 +134,10 @@ class OLED:
                     self.cv2.waitKey(1)
                 else:
                     if self.screen:
-                        self.screen.image(image.convert("1"))
-                        self.screen.show()
+                        # self.screen.image(image.convert("1"))
+                        # self.screen.show()
+                        with self.canvas(self.screen) as draw:
+                            draw.bitmap((0, 0), image.convert("1"), fill="white")
             except Exception:
                 logger.error("显示图像时发生错误", exc_info=True)
 
