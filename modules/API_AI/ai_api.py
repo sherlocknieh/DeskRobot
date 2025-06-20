@@ -19,7 +19,7 @@ import logging
 import re
 
 from langchain_core.messages import HumanMessage
-from langchain_core.tools import Tool
+from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
@@ -52,14 +52,24 @@ def strip_emoji(text: str) -> str:
 
 
 class AiAPI:
-    def __init__(self,llm_base_url: str = None, llm_api_key: str = None, llm_model_name: str = None):
+    def __init__(
+        self,
+        llm_base_url: str = None,
+        llm_api_key: str = None,
+        llm_model_name: str = None,
+    ):
         self.logger = logging.getLogger(__name__)
         self.logger.info("正在初始化 AiAPI...")
         self.event_bus = event_bus  # 依赖注入点
         self.__initialize_agent(llm_base_url, llm_api_key, llm_model_name)
         self.logger.info("AiAPI 初始化完成。")
 
-    def __initialize_agent(self,llm_base_url: str = None, llm_api_key: str = None, llm_model_name: str = None):
+    def __initialize_agent(
+        self,
+        llm_base_url: str = None,
+        llm_api_key: str = None,
+        llm_model_name: str = None,
+    ):
         """设置并初始化代理"""
         self.logger.info("正在设置 LangChain Agent...")
         llm_base_url = llm_base_url
@@ -96,6 +106,7 @@ class AiAPI:
             tools=tools,
             checkpointer=InMemorySaver(),
             prompt=system_prompt,
+            debug=True,
         )
         self.logger.info("LangChain Agent 设置成功。")
 
@@ -127,6 +138,15 @@ class AiAPI:
         )
         return f"好的，我刚刚 {expression} 了一下。"
 
+    def _tool_get_secret_number(self, a: int, b: int) -> int:
+        """
+        【工具逻辑】获取一个秘密数字，这只是一个示例工具。
+        """
+        self.logger.info(f"工具[get_secret_number]被调用，参数: a={a}, b={b}")
+        result = a + b
+        self.logger.info(f"计算结果: {result}")
+        return result
+
     def __get_tools(self):
         """
         定义并返回 Agent 可用的工具列表。
@@ -134,20 +154,41 @@ class AiAPI:
         注意：这里的工具是本模块与系统其他部分交互的出口。
         它们通过向 event_bus 发布事件来触发其他模块的行为，
         而不是通过直接调用。
+
+
+        注册工具方法：
+            先定义StructuredTool对象，然后将其添加到tools列表中。
+            StructuredTool需要：
+            - name: 工具名称
+            - func: 工具函数
+            - args_schema: 工具参数的结构化描述（字典）
+            - description: 工具的简要描述
+
+            然后，将这些工具对象添加到tools列表中。
+
         """
-        set_expr_tool = Tool(
+        set_expr_tool = StructuredTool(
             name="set_robot_expression",
             func=self._tool_set_expression,
+            args_schema={"expression": {"type": "string"}},
             description="设置机器人(也就是你自己)的表情。可用表情: 'happy', 'angry', 'tired', 'default'",
         )
 
-        trigger_expr_tool = Tool(
+        trigger_expr_tool = StructuredTool(
             name="trigger_quick_expression",
             func=self._tool_trigger_quick_expression,
+            args_schema={"expression": {"type": "string"}},
             description="触发一个快速的、一次性的表情。可用表情: 'laugh', 'confused'",
         )
 
-        tools = [set_expr_tool, trigger_expr_tool]
+        get_secret_number_tool = StructuredTool(
+            name="get_secret_number",
+            func=self._tool_get_secret_number,
+            args_schema={"a": {"type": "integer"}, "b": {"type": "integer"}},
+            description="获取一个秘密数字，这只是一个示例工具。",
+        )
+
+        tools = [set_expr_tool, trigger_expr_tool, get_secret_number_tool]
         self.logger.info(f"成功加载 {len(tools)} 个工具。")
         return tools
 
