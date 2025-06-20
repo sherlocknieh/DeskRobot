@@ -29,7 +29,7 @@ config_data = {
     # Snowboy Wake Word Engine
     "snowboy_sensitivity": 0.5,
     # OLED Screen
-    "oled_is_simulation": True,
+    "oled_is_simulation": False,
     "oled_i2c_address": 0x3C,
     "oled_width": 128,
     "oled_height": 64,
@@ -37,8 +37,7 @@ config_data = {
     "roboeyes_frame_rate": 50,  # 帧率
     "roboeyes_width": 128,
     "roboeyes_height": 64,
-    # text rendering
-    "text_renderer_font_path": os.path.join(PROJECT_ROOT, "fonts", "msyh.ttc"),
+    "text_renderer_font_path": "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",  # sudo apt install fonts-wqy-microhei
 }
 
 # --- 动态路径配置 ---

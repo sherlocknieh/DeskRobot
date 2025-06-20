@@ -269,7 +269,7 @@ if __name__ == "__main__":
         width=config.get("oled_width", 128),
         height=config.get("oled_height", 64),
         fps=config.get("oled_fps", 30),
-        is_simulation=True,
+        is_simulation=False,
     )
     test_rig.add_thread(oled_thread)
 
