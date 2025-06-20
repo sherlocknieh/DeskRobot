@@ -1,10 +1,11 @@
 """
 项目全局配置文件
 """
-
+import logging
+import sys
 import os
 
-import pyaudio
+#import pyaudio
 from dotenv import load_dotenv
 
 # --- 基础路径配置 ---
@@ -16,7 +17,7 @@ VAD_SAMPLE_RATE = 16000
 config_data = {
     # PyAudio-related settings
     "pyaudio_rate": VAD_SAMPLE_RATE,
-    "pyaudio_format": pyaudio.paInt16,
+#    "pyaudio_format": pyaudio.paInt16,
     "pyaudio_channels": 1,
     "vad_chunk_size": 512,  # VAD model requires 512, 1024, or 1536
     # VAD settings
@@ -59,8 +60,8 @@ PIPER_VOICE_URL = f"https://huggingface.co/rhasspy/piper-voices/resolve/main/zh_
 EDGE_TTS_VOICE = "zh-CN-XiaoxiaoNeural"
 DOTENV_PATH = os.path.join(PROJECT_ROOT, "configs", ".env")
 
-_config_instance = None
 
+_config_instance = None
 
 def get_config():
     """获取全局配置实例"""
@@ -109,3 +110,16 @@ class Config:
 
 
 config = get_config()
+
+
+def setup_logging(level=logging.INFO):
+    """
+    配置全局日志记录器。
+    """
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        stream=sys.stdout,
+    )
+    logging.info("日志系统配置成功。")

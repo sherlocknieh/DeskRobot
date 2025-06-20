@@ -1,17 +1,20 @@
-# 车轮运动模块
-gpiozero; sys_platform == 'linux'
-pygame
+# 全局依赖
+python-dotenv
 
+# LED灯模块
+gpiozero; sys_platform == 'linux'
+RPi.GPIO
+lgpio
+
+# 车轮控制模块
+gpiozero; sys_platform == 'linux'
+evdev
 
 # OLED模块
-#adafruit-circuitpython-ssd1306; sys_platform == 'linux'
-#rpi-lgpio; sys_platform == 'linux'
-#rpi-gpio; sys_platform == 'linux'
+pillow
 luma.oled; sys_platform == 'linux'
 luma.core; sys_platform == 'linux'
-pillow
 # opencv-python # 可选
-
 
 # 摄像头模块
 picamera2; sys_platform == 'linux'
@@ -29,9 +32,7 @@ pyaudio
 langgraph
 langchain
 langchain-openai
-
 Pillow
-python-dotenv
 
 # 语音唤醒
 #snowboy; sys_platform == 'linux'

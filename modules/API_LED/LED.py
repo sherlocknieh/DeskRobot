@@ -1,35 +1,38 @@
+"""
+LED控制API
+
+依赖的库: 
+    gpiozero
+    RPi.GPIO
+    lgpio
+
+可用接口:
+    rgb = RGB(r_pin=10, g_pin=9, b_pin=11)  # 创建RGB对象, 并指定GPIO引脚
+    rgb.off()                               # 关闭所有LED
+    rgb.on(r=1, g=0, b=0)                   # 开启LED, 并设置各灯的亮度
+    rgb.flash(speed=1)                      # 启动交替闪烁效果
+    rgb.breeze(speed=1)                     # 启动交替呼吸效果
+"""
+
+
 from gpiozero import PWMLED
 from threading import Thread
 from time import sleep
 
 
-"""LED控制API
-
-依赖的库: gpiozero
-
-可用接口:
-
-rgb = RGB(r_pin=10, g_pin=9, b_pin=11)  # 创建RGB对象
-rgb.on(r=1, g=0, b=0)                   # 开启LED, 并控制各灯的亮度
-rgb.off()                               # 关闭所有LED
-rgb.flash(speed=1)                      # 交替闪烁效果
-rgb.breeze(speed=1)                     # 交替呼吸效果
-
-"""
-
 class RGB:
-    def __init__(self, r_pin=10, g_pin=9, b_pin=11):
-
+    def __init__(self, r_pin=10, g_pin=9, b_pin=11): # 默认连接GPIO10, GPIO9, GPIO11
+        """初始化RGB对象"""
         self._red   = PWMLED(r_pin)
         self._green = PWMLED(g_pin)
         self._blue  = PWMLED(b_pin)
-        self._thread = None
         self._running = False
+        self._thread = None
         self.off()
 
     def off(self):
-        """结束正在运行的线程"""
         if self._thread:
+            """结束正在运行的线程"""
             self._running = False
             self._thread.join()
         """关闭所有LED"""
@@ -45,20 +48,21 @@ class RGB:
         self._blue.value = b
 
     def flash(self, speed=1):
-        """交替闪烁效果"""
+        """启动交替闪烁线程"""
         self.off()
         self._running = True
         self._thread = Thread(target=self._flash_loop, args=([speed]))
         self._thread.start()
     
     def breeze(self, speed=1):
-        """交替呼吸效果"""
+        """启动交替呼吸线程"""
         self.off()
         self._running = True
         self._thread = Thread(target=self._breeze_loop, args=([speed]))
         self._thread.start()
     
     def _flash_loop(self, speed=1):
+        """交替闪烁循环"""
         print('Flash On, Speed:', speed)
         lights = [self._red, self._green, self._blue]
         current_color = 0
@@ -72,6 +76,7 @@ class RGB:
         print('Flash Off')
 
     def _breeze_loop(self, speed=1):
+        """交替呼吸循环"""
         print('Breeze On, Speed:', speed)
         lights = [self._red, self._green, self._blue]
         current_color = 0
@@ -93,18 +98,23 @@ class RGB:
 
 
 if __name__ == '__main__':
+    """
+    测试代码
 
-    """测试代码"""
-
+    将三色LED灯接到树莓派
+        红: GPIO 10
+        绿: GPIO 9
+        蓝: GPIO 11
+    """
     rgb = RGB(10, 9, 11)       # 创建RGB对象
 
     rgb.on(1, 1, 1)            # 开启LED, 全亮
-    sleep(2)
+    sleep(2)                   # 持续2秒
 
     rgb.flash(speed=2)         # 交替闪烁效果
-    sleep(4)
+    sleep(4)                   # 持续4秒
     
     rgb.breeze(speed=2)        # 交替呼吸效果
-    sleep(4)
+    sleep(4)                   # 持续4秒
 
     rgb.off()                  # 关闭所有LED

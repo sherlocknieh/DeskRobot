@@ -1,6 +1,3 @@
-依赖的库:
-
-picamera2
 opencv-python
-
+picamera2
 flask

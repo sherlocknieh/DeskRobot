@@ -2,13 +2,8 @@ import logging
 import queue
 import threading
 
-#from configs.config import config
-from configs.logging_config import setup_logging
 from modules.EventBus import event_bus
 from modules.EventBus.event_bus import EventBus
-
-logger = logging.getLogger(__name__)
-setup_logging()
 
 
 class DeskRobot:
@@ -45,36 +40,63 @@ class DeskRobot:
 
 
 if __name__ == "__main__":
+
+    print("加载主控模块")
     robot = DeskRobot(event_bus)
 
 
-    # # OLED模块  # 依赖第三方库 :  rpi-gpio pillow adafruit-circuitpython-ssd1306
-    # from modules.mod_oled import OLEDThread
-    # robot.add_thread(
-    #     OLEDThread(
-    #         event_bus,
-    #         config.get("oled_width", 128),
-    #         config.get("oled_height", 64),
-    #         config.get("oled_fps", 50),
-    #         config.get("oled_i2c_address", 0x3C),
-    #         config.get("oled_is_simulation", False),
-    #     )
-    # )
+    print("加载配置文件")
+    """安装依赖: pip install python-dotenv"""
+    from configs.config import config, setup_logging
+    logger = logging.getLogger(__name__)
+    setup_logging()
 
-    # # 表情模块  # 依赖第三方库 : pillow
-    # from modules.mod_roboeyes import RoboeyesThread
-    # robot.add_thread(
-    #     RoboeyesThread(
-    #         event_bus,
-    #         config.get("roboeyes_frame_rate", 50),
-    #         config.get("roboeyes_width", 128),
-    #         config.get("roboeyes_height", 64),
-    #     )
-    # )
 
-    # # AI模块  # 依赖第三方库 : langchain langchain-openai langgraph
+    print("加载 OLED 模块")
+    """安装依赖: pip install luma.core luma.oled pillow"""
+    from modules.mod_oled import OLEDThread
+    robot.add_thread(
+        OLEDThread(
+            event_bus,
+            config.get("oled_width", 128),
+            config.get("oled_height", 64),
+            config.get("oled_fps", 50),
+            config.get("oled_i2c_address", 0x3C),
+            config.get("oled_is_simulation", False),
+        )
+    )
+
+
+    print("加载 OLED 文本模块")
+    "安装字体: sudo apt install fonts-wqy-microhei"
+    from modules.mod_text_display import TextDisplayThread
+    robot.add_thread(
+        TextDisplayThread(
+            event_bus,
+            config.get("text_renderer_font_path", "arial.ttf"),
+            config.get("oled_width", 128),
+            config.get("oled_height", 64),
+            config.get("oled_fps", 50),
+        )
+    )
+
+
+    print("加载 OLED 表情模块")
+    "安装依赖: pip install pillow"
+    from modules.mod_roboeyes import RoboeyesThread
+    robot.add_thread(
+        RoboeyesThread(
+            event_bus,
+            config.get("roboeyes_frame_rate", 50),
+            config.get("roboeyes_width", 128),
+            config.get("roboeyes_height", 64),
+        )
+    )
+
+
+    # print("加载 AI Agent 模块")
+    # """安装依赖 : pip install langchain langchain-openai langgraph"""
     # from modules.mod_ai_agent import AiThread
-
     # robot.add_thread(
     #     AiThread(
     #         event_bus,
@@ -84,39 +106,35 @@ if __name__ == "__main__":
     #     )
     # )
 
-    # # 语音模块  # 依赖第三方库 : faster_whisper pyaudio vosk numpy
+
+    print("加载 LED 三色灯模块")
+    """安装依赖 : pip install gpiozero rpi-gpio lgpio"""
+    from modules.mod_led import LED_Control
+    robot.add_thread(LED_Control(event_bus))
+
+
+    print("加载小车控制模块")  
+    """安装依赖 : pip install gpiozero evdev"""
+    from modules.mod_car_control import CarControl
+    robot.add_thread(CarControl(event_bus))
+
+
+    # print("加载语音模块")  
+    # """安装依赖 : faster_whisper pyaudio vosk numpy"""
     # from modules.voice_threads import initialize_voice_threads
     # voice_threads = initialize_voice_threads(event_bus)
     # for thread in voice_threads:
     #    robot.add_thread(thread)
 
-    # # 其他模块  # 依赖第三方库 :
+
+    # print("加载摄像头模块")
+    # """安装依赖 : picamera"""
     # ...
 
-    # # 文本显示模块
-    # from modules.mod_text_display import TextDisplayThread
 
-    # robot.add_thread(
-    #     TextDisplayThread(
-    #         event_bus,
-    #         config.get("text_renderer_font_path", "arial.ttf"),
-    #         config.get("oled_width", 128),
-    #         config.get("oled_height", 64),
-    #         config.get("oled_fps", 50),
-    #     )
-    # )
-
-    # LED模块  # 依赖第三方库 : gpiozero rpi-gpio lgpio
-    # from modules.mod_led import LED_Control
-    # robot.add_thread(LED_Control(event_bus))
-
-    # 小车控制模块  # 依赖第三方库 : gpiozero evdev
-    from modules.mod_car_control import CarControl
-    robot.add_thread(CarControl(event_bus))
-
-    # 终端IO模块
+    print("加载终端IO模块")
     from modules.mod_terminal_io import IOThread
     robot.add_thread(IOThread(event_bus))
 
-    # 启动
+    print("启动!")
     robot.run()

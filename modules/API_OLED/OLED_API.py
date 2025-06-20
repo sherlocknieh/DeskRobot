@@ -1,9 +1,20 @@
 """
-通用屏幕显示设备API
+OLED显示API
 
-负责最底层的屏幕硬件初始化、控制和图像显示。
+依赖的库: 
+    luma.core
+    luma.oled
+    pillow        (导入时不需要, 使用时需要)
+    opencv-python (仅在模拟模式下需要)
+
+可用接口:
+    oled = OLED.get_instance()              # 获取OLED的单例实例
+    oled.clear_display()                    # 清屏
+    oled.display_image(image)               # 显示图像 (image: PIL图像对象) 
+
+
+使用单例模式实现，确保全局只有一个实例。
 支持物理硬件和OpenCV模拟两种模式。
-实现为单例模式，确保全局只有一个显示设备实例。
 """
 
 import logging
@@ -43,16 +54,10 @@ class OLED:
             self.np = np
         else:
             try:
-                # import adafruit_ssd1306
-                # import board
-                # import busio
                 from luma.core.interface.serial import i2c
                 from luma.core.render import canvas
                 from luma.oled.device import ssd1306
 
-                # self.adafruit_ssd1306 = adafruit_ssd1306
-                # self.board = board
-                # self.busio = busio
                 self.i2c = i2c
                 self.ssd1306 = ssd1306
                 self.canvas = canvas
@@ -64,7 +69,7 @@ class OLED:
                 self.cv2 = cv2
                 self.np = np
 
-                logging.warning("Adafruit库未找到，OLED将强制在模拟模式下运行。")
+                logging.warning(" luma.core luma.oled 库未找到，OLED将强制在模拟模式下运行。")
                 self.adafruit_ssd1306 = None
 
     def __init__(self, width=128, height=64, i2c_address=0x3C, is_simulation=False):
@@ -105,8 +110,6 @@ class OLED:
     def clear_display(self):
         """清除显示"""
         if not self.is_simulation and self.screen:
-            # self.screen.fill(0)
-            # self.screen.show()
             with self.canvas(self.screen) as draw:
                 draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)
         elif self.is_simulation:
@@ -134,8 +137,6 @@ class OLED:
                     self.cv2.waitKey(1)
                 else:
                     if self.screen:
-                        # self.screen.image(image.convert("1"))
-                        # self.screen.show()
                         with self.canvas(self.screen) as draw:
                             draw.bitmap((0, 0), image.convert("1"), fill="white")
             except Exception:
@@ -143,16 +144,28 @@ class OLED:
 
 
 if __name__ == "__main__":
+    """
+    测试代码
+
+    将0.96寸OLED显示屏连接到树莓派
+        SCL 接 GPIO 2
+        SDA 接 GPIO 3
+    检测连接是否有效
+        sudo i2cdetect -y 1
+    """
     from PIL import Image, ImageDraw, ImageFont
 
-    oled = OLED.get_instance()
-    oled.clear_display()
+    oled = OLED.get_instance()  # 获取OLED的单例实例
+    oled.clear_display()        # 清屏
     time.sleep(1)
-    # 创建一个简单的图像
+
+    # 创建测试图像
     image = Image.new("1", (oled.width, oled.height), 0)
     draw = ImageDraw.Draw(image)
     font = ImageFont.load_default()
     draw.text((0, 0), "Hello, OLED!", font=font, fill=1)
-    oled.display_image(image)
+
+    oled.display_image(image)  # 显示图像
     time.sleep(2)
-    oled.clear_display()
+
+    oled.clear_display()       # 清屏

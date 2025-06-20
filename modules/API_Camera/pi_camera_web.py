@@ -1,5 +1,13 @@
+import sys
+sys.path.insert(0, '/usr/lib/python3/dist-packages') # 为 picamera2 引入系统库路径
+from picamera2 import Picamera2
+sys.path.pop(0)  # 导入 picamera2 后立即移除系统库路径，避免影响其他模块
+
+
+import cv2
 from flask import Flask, render_template, request, jsonify, Response  # 导入Flask相关模块
-import cv2  # 导入OpenCV库，用于视频捕获和处理
+
+
 
 # 创建Flask应用实例
 app = Flask(__name__)
@@ -19,26 +27,22 @@ def stream():
 
 def gen_frames():
     # 打开摄像头
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("无法打开摄像头")
-        exit()
+    picam2 = Picamera2()
+    picam2.configure(picam2.create_still_configuration(main={"size": (640, 480)}))
+    picam2.start()
     while True:
-        # 读取帧
-        ret, frame = cap.read()
-        if not ret:
-            print("无法读取帧")
-            break
-        else:
-            # 将图像编码为JPEG格式
-            ret, buffer = cv2.imencode('.jpg', frame)
-            # 将图像数据转换为字节流格式
-            frame = buffer.tobytes()
-            # 添加帧头尾标识符
-            yield (b'--frame\r\n' 
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        # 捕获帧
+        frame = picam2.capture_array()
+        # 转换为BGR格式（Flask需要JPEG，OpenCV处理BGR）
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # 编码为JPEG
+        ret, buffer = cv2.imencode('.jpg', frame_bgr)
+        frame = buffer.tobytes()
+        # 添加帧头尾标识符
+        yield (b'--frame\r\n' 
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
     # 释放摄像头
-    cap.release()
+    picam2.stop()
 
 # 程序入口点
 if __name__ == '__main__':
