@@ -1,11 +1,10 @@
 """
-全局事件总线模块
-本项目的核心模块, 各模块间通信的中心枢纽
-提供一个全局 event_bus 对象, 供各模块收发消息   (事件=消息)
+数据中心模块, 各模块间通信的统一入口
 
 使用方法:
-    # 导入事件总线
-    from modules.event_bus import event_bus
+    # 导入和实例化
+    from modules.DataCenter import EventBus
+    event_bus = EventBus()
 
     # 订阅事件
     self.my_queue = queue.Queue()                          # 创建一个自己的事件队列(收件箱)

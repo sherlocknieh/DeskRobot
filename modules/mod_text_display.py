@@ -84,12 +84,12 @@ class TextDisplayThread(threading.Thread):
             font_path
         )  # Create private queue and subscribe to events
         self.event_queue = Queue()
-        self.event_bus.subscribe("SUB_TEXT_DISPLAY_REQUEST", self.event_queue)
-        self.event_bus.subscribe("SUB_TEXT_DISPLAY_CANCEL", self.event_queue)
+        self.event_bus.subscribe("SUB_TEXT_DISPLAY_REQUEST", self.event_queue, "OLED文本模块")
+        self.event_bus.subscribe("SUB_TEXT_DISPLAY_CANCEL", self.event_queue, "OLED文本模块")
         self.event_bus.subscribe(
-            "SUB_TEXT_STATIC_DISPLAY", self.event_queue
+            "SUB_TEXT_STATIC_DISPLAY", self.event_queue, "OLED文本模块"
         )  # 新增：静态文本显示
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue)
+        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "OLED文本模块")
 
     def run(self):
         logger.info(f"{self.name} started.")

@@ -4,16 +4,16 @@ LED 控制模块:
 根据事件内容切换 LED 灯状态
 
 Subscribe:
-- LED: LED控制指令
+- "LED": LED控制指令
     - payload格式:
     {
         "action": str,  # 动作类型："on", "off", "blink", "color"
         "r": int,       # 红色值 (0-255)（可选）
         "g": int,       # 绿色值 (0-255)（可选）
         "b": int,       # 蓝色值 (0-255)（可选）
-        "duration": float  # 持续时间（秒）（可选）
+        "speed": float  # 闪烁频率      （可选）
     }
-- STOP_THREADS: 停止线程
+- "STOP_THREADS": 线程终止指令
 
 Publish:
 - 无
@@ -21,11 +21,11 @@ Publish:
 """
 
 if __name__ == '__main__':
-    from API_LED.LED import RGB     # 直接运行时使用
+    from API_LED.LED import RGB     # 直接运行时本模块时使用相对路径导入
     from EventBus import event_bus
 else:
-    from .API_LED.LED import RGB    # 从外部调用时使用
-    from .EventBus import event_bus
+    from modules.API_LED.LED import RGB    # 被外层模块导入时使用绝对路径
+    from modules.EventBus import event_bus
 
 import threading
 import queue
@@ -38,8 +38,8 @@ class LED_Control(threading.Thread):
         self.rgb = RGB(10, 9, 11)
         self.event_queue = queue.Queue()
         self._stop_event = threading.Event()
-        self.event_bus.subscribe("LED", self.event_queue)
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue)
+        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "LED灯模块")
+        self.event_bus.subscribe("LED", self.event_queue, "LED灯模块")
 
     def run(self):
         #self.event_bus.publish("THREAD_STARTED", name=self.__class__.__name__)

@@ -94,6 +94,18 @@ if __name__ == "__main__":
     )
 
 
+    print("加载 LED 三色灯模块")
+    """安装依赖 : pip install gpiozero rpi-gpio lgpio"""
+    from modules.mod_led import LED_Control
+    robot.add_thread(LED_Control(event_bus))
+
+
+    print("加载小车控制模块")  
+    """安装依赖 : pip install gpiozero evdev"""
+    from modules.mod_car_control import CarControl
+    robot.add_thread(CarControl(event_bus))
+
+
     # print("加载 AI Agent 模块")
     # """安装依赖 : pip install langchain langchain-openai langgraph"""
     # from modules.mod_ai_agent import AiThread
@@ -105,18 +117,6 @@ if __name__ == "__main__":
     #         llm_model_name=config.get("llm_model_name", None),
     #     )
     # )
-
-
-    print("加载 LED 三色灯模块")
-    """安装依赖 : pip install gpiozero rpi-gpio lgpio"""
-    from modules.mod_led import LED_Control
-    robot.add_thread(LED_Control(event_bus))
-
-
-    print("加载小车控制模块")  
-    """安装依赖 : pip install gpiozero evdev"""
-    from modules.mod_car_control import CarControl
-    robot.add_thread(CarControl(event_bus))
 
 
     # print("加载语音模块")  

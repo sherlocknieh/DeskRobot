@@ -104,10 +104,10 @@ class OLEDThread(threading.Thread):
         self.needs_render = threading.Event()  # 用于通知渲染线程需要重新合成
         self._stop_event = threading.Event()
 
-        self.event_bus.subscribe("UPDATE_LAYER", self.event_queue)
-        self.event_bus.subscribe("SET_LAYER_VISIBILITY", self.event_queue)
-        self.event_bus.subscribe("DELETE_LAYER", self.event_queue)
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue)
+        self.event_bus.subscribe("UPDATE_LAYER", self.event_queue, "OLED模块")
+        self.event_bus.subscribe("SET_LAYER_VISIBILITY", self.event_queue, "OLED模块")
+        self.event_bus.subscribe("DELETE_LAYER", self.event_queue, "OLED模块")
+        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "OLED模块")
 
     def run(self):
         """线程主循环"""

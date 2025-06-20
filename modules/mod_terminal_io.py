@@ -39,7 +39,7 @@ class IOThread(threading.Thread):
         print("输入 'exit' 或 'quit' 或 'stop' 退出程序")
         while True:
             try:
-                text = input('Input: ').strip()
+                text = input().strip()
                 if not text: continue
                 if text.startswith("#"): continue
                 input_list = text.split()

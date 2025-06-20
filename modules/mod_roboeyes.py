@@ -44,9 +44,9 @@ class RoboeyesThread(threading.Thread):
 
         # 创建私有事件队列并订阅
         self.event_queue = queue.Queue()
-        self.event_bus.subscribe("SET_EXPRESSION", self.event_queue)
-        self.event_bus.subscribe("TRIGGER_QUICK_EXPRESSION", self.event_queue)
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue)
+        self.event_bus.subscribe("SET_EXPRESSION", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe("TRIGGER_QUICK_EXPRESSION", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "OLED表情模块")
 
         # 默认开启闲置和眨眼
         self.api.set_autoblinker(True)
@@ -55,7 +55,7 @@ class RoboeyesThread(threading.Thread):
     def run(self):
         """线程主循环"""
         logger.info(f"{self.name} 启动")
-        self.event_bus.publish("THREAD_STARTED", name=self.__class__.__name__)
+        self.event_bus.publish("THREAD_STARTED", name="OLED表情模块")
 
         while not self._stop_event.is_set():
             start_time = time.monotonic()
