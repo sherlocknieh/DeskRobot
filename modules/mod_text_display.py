@@ -53,7 +53,7 @@ import time
 import uuid
 from queue import Empty, Queue
 
-from .API_EventBus.event_bus import EventBus
+from .EventBus.event_bus import EventBus
 from .API_Text.text_renderer import TextRenderer
 from .API_Text.text_scroller import TextScroller
 

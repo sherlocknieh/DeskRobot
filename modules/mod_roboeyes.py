@@ -27,7 +27,8 @@ import queue
 import threading
 import time
 
-from modules.API_EventBus.event_bus import EventBus
+
+from modules.EventBus.event_bus import EventBus
 from modules.API_Roboeyes.roboeyes_api import RoboeyesAPI
 
 logger = logging.getLogger(__name__)

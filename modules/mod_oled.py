@@ -35,7 +35,7 @@ from queue import Queue
 
 from PIL import Image, ImageDraw, ImageFont
 
-from .API_EventBus import event_bus
+from .EventBus import event_bus
 from .API_OLED.OLED_API import OLED
 
 logger = logging.getLogger(__name__)
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     )
 
     # EventBus 是单例，所以这里获取的是全局唯一的实例
-    from API_EventBus import event_bus
+    from EventBus import event_bus
 
     # 创建并启动OLED管理线程，并将事件总线实例传入
     oled_thread = OLEDThread(event_bus=event_bus, width=128, height=64, fps=15)

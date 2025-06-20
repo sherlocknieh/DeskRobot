@@ -36,10 +36,17 @@ class Car:
         self.B.speed(0)
     
     def speed(self, L, R):
-        self.A.speed(R)
-        self.B.speed(L)
+        self.A.speed(L*1.4)
+        self.B.speed(R)
+
+    def steer(self, x, y):
+        L = (y + x/2) / 1.4
+        R = (y - x/2) / 1.4
+        print(L, R)
+        self.speed(L, R)
 
 if __name__ == '__main__':
     car = Car()
-    car.speed(-0.6, -0.6)
-    sleep(2)
+    car.speed(-0.3, -0.3)
+    #car.steer(1, 0)
+    sleep(1)

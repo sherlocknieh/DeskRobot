@@ -67,7 +67,7 @@ class IOThread(threading.Thread):
 
 if __name__ == '__main__':
 
-    from API_EventBus import event_bus
+    from EventBus import event_bus
     io_thread = IOThread(event_bus)
     io_thread.start()
     io_thread.join()

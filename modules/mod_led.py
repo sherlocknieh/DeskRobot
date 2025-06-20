@@ -21,10 +21,10 @@ Publish:
 
 if __name__ == '__main__':
     from API_LED.LED import RGB     # 直接运行时使用
-    from API_EventBus import event_bus
+    from EventBus import event_bus
 else:
     from .API_LED.LED import RGB    # 从外部调用时使用
-    from .API_EventBus import event_bus
+    from .EventBus import event_bus
 
 import threading
 import queue

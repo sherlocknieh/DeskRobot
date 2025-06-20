@@ -9,7 +9,7 @@ import time
 
 from configs.config import config
 from configs.logging_config import setup_logging
-from modules.API_EventBus.event_bus import EventBus
+from modules.EventBus.event_bus import EventBus
 from modules.mod_oled import OLEDThread
 from modules.mod_roboeyes import RoboeyesThread
 from modules.mod_text_display import TextDisplayThread
