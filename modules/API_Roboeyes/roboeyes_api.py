@@ -4,7 +4,6 @@ RoboEyes 表情生成API
 """
 
 import logging
-import time
 
 from .roboeyes import ANGRY, DEFAULT, HAPPY, TIRED, RoboEyes
 
@@ -18,7 +17,7 @@ class RoboeyesAPI:
     """
 
     def __init__(self, frame_rate, width, height):
-        """初始化RoboEyes控制器"""  
+        """初始化RoboEyes控制器"""
         self.rbe = RoboEyes(width, height, frame_rate)
         self.expression_map = {
             "happy": HAPPY,
@@ -46,6 +45,14 @@ class RoboeyesAPI:
         self.rbe.set_mood(mood)
         return f"机器人表情设置为: {expression}"
 
+    def open_eyes(self):
+        """打开眼睛"""
+        self.rbe.open_eyes()
+
+    def close_eyes(self):
+        """关闭眼睛"""
+        self.rbe.close_eyes()
+
     def trigger_quick_expression(self, expression: str):
         """
         触发一个快速、一次性的表情动画。
@@ -69,6 +76,10 @@ class RoboeyesAPI:
         # Note: Need to import directions from .roboeyes if they are defined there
         # For now, assuming they are passed in correctly.
         self.rbe.set_position(direction)
+
+    def center_eyes(self):
+        """将眼睛位置设置为中置"""
+        self.rbe.set_position(DEFAULT)
 
     def set_idle_mode(self, active: bool, interval=1, variation=3):
         """开启或关闭闲置模式（眼睛随机看）"""

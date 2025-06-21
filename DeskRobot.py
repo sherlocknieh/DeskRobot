@@ -2,8 +2,7 @@ import logging
 import queue
 import threading
 
-from modules.EventBus import event_bus
-from modules.EventBus.event_bus import EventBus
+from modules.EventBus import EventBus
 
 
 class DeskRobot:
@@ -40,21 +39,22 @@ class DeskRobot:
 
 
 if __name__ == "__main__":
+    event_bus = EventBus()  # 获取事件总线单例
 
     print("加载主控模块")
     robot = DeskRobot(event_bus)
 
-
     print("加载配置文件")
     """安装依赖: pip install python-dotenv"""
     from configs.config import config, setup_logging
-    logger = logging.getLogger(__name__)
-    setup_logging()
 
+    logger = logging.getLogger(__name__)
+    setup_logging(level=logging.INFO)
 
     print("加载 OLED 模块")
     """安装依赖: pip install luma.core luma.oled pillow"""
     from modules.mod_oled import OLEDThread
+
     robot.add_thread(
         OLEDThread(
             event_bus,
@@ -66,10 +66,10 @@ if __name__ == "__main__":
         )
     )
 
-
     print("加载 OLED 文本模块")
     "安装字体: sudo apt install fonts-wqy-microhei"
     from modules.mod_text_display import TextDisplayThread
+
     robot.add_thread(
         TextDisplayThread(
             event_bus,
@@ -80,10 +80,10 @@ if __name__ == "__main__":
         )
     )
 
-
     print("加载 OLED 表情模块")
     "安装依赖: pip install pillow"
     from modules.mod_roboeyes import RoboeyesThread
+
     robot.add_thread(
         RoboeyesThread(
             event_bus,
@@ -93,47 +93,86 @@ if __name__ == "__main__":
         )
     )
 
+    print("加载思考中动画模块")
+    from modules.mod_thinking_animation import ThinkingAnimationThread
 
-    print("加载 LED 三色灯模块")
-    """安装依赖 : pip install gpiozero rpi-gpio lgpio"""
-    from modules.mod_led import LED_Control
-    robot.add_thread(LED_Control(event_bus))
+    robot.add_thread(
+        ThinkingAnimationThread(
+            event_bus,
+            frame_rate=config.get("thinking_animation_frame_rate", 20),
+            width=config.get("oled_width", 128),
+            height=config.get("oled_height", 64),
+        )
+    )
 
+    # print("加载 LED 三色灯模块")
+    # """安装依赖 : pip install gpiozero rpi-gpio lgpio"""
+    # from modules.mod_led import LED_Control
+    # robot.add_thread(LED_Control(event_bus))
 
-    print("加载小车控制模块")  
-    """安装依赖 : pip install gpiozero evdev"""
-    from modules.mod_car_control import CarControl
-    robot.add_thread(CarControl(event_bus))
+    # print("加载小车控制模块")
+    # """安装依赖 : pip install gpiozero evdev"""
+    # from modules.mod_car_control import CarControl
+    # robot.add_thread(CarControl(event_bus))
 
+    print("加载 AI Agent 模块")
+    """安装依赖 : pip install langchain langchain-openai langgraph"""
+    from modules.mod_ai_agent import AiThread
 
-    # print("加载 AI Agent 模块")
-    # """安装依赖 : pip install langchain langchain-openai langgraph"""
-    # from modules.mod_ai_agent import AiThread
+    robot.add_thread(
+        AiThread(
+            event_bus,
+            llm_base_url=config.get("llm_base_url", None),
+            llm_api_key=config.get("llm_api_key", None),
+            llm_model_name=config.get("llm_model_name", None),
+        )
+    )
+
+    print("加载 STT 模块")
+    from modules.mod_stt import STTThread
+
+    robot.add_thread(
+        STTThread(
+            event_bus=event_bus,
+            config=config,
+        )
+    )
+
+    print("加载 TTS 模块")
+    from modules.mod_tts import TTSThread
+
+    robot.add_thread(TTSThread(event_bus=event_bus))
+
+    print("加载语音模块")
+    # from modules.mod_voice import VoiceThreads
+    # # 强制 frames_per_buffer=512，确保与 VAD 兼容
     # robot.add_thread(
-    #     AiThread(
+    #     VoiceThreads(
     #         event_bus,
-    #         llm_base_url=config.get("llm_base_url", None),
-    #         llm_api_key=config.get("llm_api_key", None),
-    #         llm_model_name=config.get("llm_model_name", None),
+    #         channels=config.get("voice_channels", 1),
+    #         rate=config.get("voice_rate", 16000),
+    #         frames_per_buffer=512,  # 强制512
     #     )
     # )
+    from modules.mod_voice import VoiceThread
 
-
-    # print("加载语音模块")  
-    # """安装依赖 : faster_whisper pyaudio vosk numpy"""
-    # from modules.voice_threads import initialize_voice_threads
-    # voice_threads = initialize_voice_threads(event_bus)
-    # for thread in voice_threads:
-    #    robot.add_thread(thread)
-
+    robot.add_thread(
+        VoiceThread(
+            event_bus=event_bus,
+            sample_rate=config.get("voice_sample_rate"),
+            channels=config.get("voice_channels"),
+            vad_threshold=config.get("voice_vad_threshold"),
+            frames_per_buffer=config.get("voice_frames_per_buffer"),
+        )
+    )
 
     # print("加载摄像头模块")
     # """安装依赖 : picamera"""
     # ...
 
-
     print("加载终端IO模块")
     from modules.mod_terminal_io import IOThread
+
     robot.add_thread(IOThread(event_bus))
 
     print("启动!")

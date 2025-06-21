@@ -1,6 +1,3 @@
 langchain
 langchain-openai
 langgraph
-python-dotenv
-pytest
-pytest-mock

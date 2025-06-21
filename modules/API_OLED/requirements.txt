@@ -1,6 +1,6 @@
-#adafruit-circuitpython-ssd1306
-rpi-gpio
-rpi-lgpio
 luma.oled
 luma.core
-opencv-python # 可选，只在"模拟模式"使用
+Pillow
+opencv-python
+numpy
+rpi-lgpio

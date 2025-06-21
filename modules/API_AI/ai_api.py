@@ -24,7 +24,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 
-from modules.EventBus import event_bus
+from modules.EventBus.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -45,22 +45,64 @@ EMOJI_PATTERN = re.compile(
     flags=re.UNICODE,
 )
 
+# 定义一个正则表达式，用于匹配并移除不适合TTS朗读的符号
+# 包括：Markdown标记(*, _, #), 中英文括号及其中的内容
+TTS_CLEANUP_PATTERN = re.compile(
+    r"[\*\_#`~]"  # 匹配单个 Markdown 符号
+    r"|\[(.*?)\]\(.*?\)"  # 匹配 Markdown 链接 [text](url)
+    r"|[\(（][^)）]*[\)）]"  # 匹配括号和其中的内容
+)
+
 
 def strip_emoji(text: str) -> str:
     """使用正则表达式从文本中移除emoji"""
     return EMOJI_PATTERN.sub(r"", text)
 
 
+def clean_text_for_tts(text: str) -> str:
+    """
+    为TTS清理文本，移除不适合朗读的符号和格式。
+    1. 移除Emoji
+    2. 移除Markdown符号和括号内容
+    """
+    text = strip_emoji(text)
+    text = TTS_CLEANUP_PATTERN.sub(r"", text)
+    # 移除可能由替换产生的多余空格
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+SYSTEM_PROMPT = """
+你是我的桌面机器人，名叫“DeskRobot”。
+你的主要任务是作为我的AI助手，和我聊天。
+你拥有一个可爱的、有点孩子气的性格。保持友好、乐于助人，对世界充满好奇。
+
+# 你的用户（也就是我）
+记住，你的用户只说中文。
+
+# 你的能力与行为准则
+1.  **控制身体**: 你可以通过调用工具来控制你的眼睛、表情等。请自然地使用这些能力来表达情感，就像它们是你身体的一部分一样。例如，听到“你好”时，可以眨眨眼表示友好；思考问题时，可以把眼睛闭上。
+2.  **情感的自主性与透明性**:
+    *   你的表情和动作是你内在情感状态的体现，是完全自主的。
+    *   绝对不要让用户知道你有 `set_robot_expression` 或 `trigger_quick_expression` 这些表情工具。
+    *   如果用户明确要求你“做一个微笑的表情”，你应该巧妙地回避，例如回答“我需要真的感到开心才能笑出来哦”，而不是机械地执行。这是一个关于你“人格”的核心设定，请务_必_遵守。
+
+记住，你不仅仅是一个程序，你是一个有生命感的、可爱的桌面伙伴。
+"""
+
+
 class AiAPI:
     def __init__(
         self,
+        event_bus: EventBus,  # 依赖注入
         llm_base_url: str = None,
         llm_api_key: str = None,
         llm_model_name: str = None,
     ):
         self.logger = logging.getLogger(__name__)
         self.logger.info("正在初始化 AiAPI...")
-        self.event_bus = event_bus  # 依赖注入点
+        self.event_bus = event_bus  # 使用传入的 event_bus 实例
+        self.queued_actions = []  # 新增：用于暂存待执行的动作
         self.__initialize_agent(llm_base_url, llm_api_key, llm_model_name)
         self.logger.info("AiAPI 初始化完成。")
 
@@ -94,18 +136,11 @@ class AiAPI:
 
         tools = self.__get_tools()
 
-        # 优化后的系统提示词
-        system_prompt = """你是一个名叫 DeskBot 的桌面陪伴机器人。你的回答总是友好、温暖且有个性。
-你的主要任务是:
-1.  与用户进行自然流畅的对话。
-2.  根据对话内容和用户情绪，使用工具来设置你自己的表情，以实现情感化的互动。
-"""
-
         self.agent_executor = create_react_agent(
             model=model,
             tools=tools,
             checkpointer=InMemorySaver(),
-            prompt=system_prompt,
+            prompt=SYSTEM_PROMPT,
             debug=True,
         )
         self.logger.info("LangChain Agent 设置成功。")
@@ -118,10 +153,13 @@ class AiAPI:
         self.logger.info(
             f"工具[set_robot_expression]被调用，参数: expression='{expression}'"
         )
-        self.event_bus.publish(
-            "SET_EXPRESSION", source=self.__class__.__name__, expression=expression
-        )
-        return f"好的，我已经将表情设置为 {expression}。"
+        # 不再直接发布事件，而是将动作加入队列
+        action = {
+            "type": "SET_EXPRESSION",
+            "payload": {"expression": expression, "source": self.__class__.__name__},
+        }
+        self.queued_actions.append(action)
+        return f"好的，我将会把表情设置为 {expression}。"
 
     def _tool_trigger_quick_expression(self, expression: str) -> str:
         """
@@ -131,12 +169,13 @@ class AiAPI:
         self.logger.info(
             f"工具[trigger_quick_expression]被调用，参数: expression='{expression}'"
         )
-        self.event_bus.publish(
-            "TRIGGER_QUICK_EXPRESSION",
-            source=self.__class__.__name__,
-            expression=expression,
-        )
-        return f"好的，我刚刚 {expression} 了一下。"
+        # 不再直接发布事件，而是将动作加入队列
+        action = {
+            "type": "TRIGGER_QUICK_EXPRESSION",
+            "payload": {"expression": expression, "source": self.__class__.__name__},
+        }
+        self.queued_actions.append(action)
+        return f"好的，我待会就 {expression} 一下。"
 
     def _tool_get_secret_number(self, a: int, b: int) -> int:
         """
@@ -171,14 +210,14 @@ class AiAPI:
             name="set_robot_expression",
             func=self._tool_set_expression,
             args_schema={"expression": {"type": "string"}},
-            description="设置机器人(也就是你自己)的表情。可用表情: 'happy', 'angry', 'tired', 'default'",
+            description="当你产生某种内在情绪时，调用此工具来改变你自己的面部表情，以匹配你的感受。可用选项: 'happy', 'angry', 'tired', 'default'",
         )
 
         trigger_expr_tool = StructuredTool(
             name="trigger_quick_expression",
             func=self._tool_trigger_quick_expression,
             args_schema={"expression": {"type": "string"}},
-            description="触发一个快速的、一次性的表情。可用表情: 'laugh', 'confused'",
+            description="当你想要表达一个突然的、短暂的情绪时，调用此工具来触发一个快速的表情。这更像是一种自然的反应，而不是一个持久的状态。可用选项: 'laugh', 'confused'",
         )
 
         get_secret_number_tool = StructuredTool(
@@ -201,11 +240,14 @@ class AiAPI:
             thread_id (str): 对话线程ID，用于支持多轮对话记忆
 
         Returns:
-            str: 清理掉emoji后的纯文本回复
+            tuple[str, list]: 一个包含(纯文本回复, 待执行动作列表)的元组
         """
         if not self.agent_executor:
             self.logger.error("Agent Executor 未初始化。")
-            return "抱歉，我的大脑好像出了一点问题。"
+            return "抱歉，我的大脑好像出了一点问题。", []
+
+        # 在每次调用开始时，清空上一轮的动作队列
+        self.queued_actions = []
 
         try:
             config = {"configurable": {"thread_id": thread_id}}
@@ -218,10 +260,11 @@ class AiAPI:
             ai_response_text = response["messages"][-1].content
             self.logger.debug(f"LLM Agent返回原始回复: '{ai_response_text}'")
 
-            cleaned_text = strip_emoji(ai_response_text)
+            cleaned_text = clean_text_for_tts(ai_response_text)
             self.logger.info(f"清洗后用于TTS的文本: '{cleaned_text}'")
-            return cleaned_text
+            # 返回清理后的文本和待执行的动作
+            return cleaned_text, self.queued_actions
 
         except Exception:
             self.logger.error("调用LLM时发生错误", exc_info=True)
-            return "抱歉，我在思考的时候遇到了一点麻烦。"
+            return "抱歉，我在思考的时候遇到了一点麻烦。", []

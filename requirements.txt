@@ -1,38 +1,36 @@
-# 全局依赖
+# [ Core Framework ]
 python-dotenv
+Pillow
+numpy
+requests
 
-# LED灯模块
-gpiozero; sys_platform == 'linux'
-RPi.GPIO
-lgpio
-
-# 车轮控制模块
-gpiozero; sys_platform == 'linux'
-evdev
-
-# OLED模块
-pillow
-luma.oled; sys_platform == 'linux'
-luma.core; sys_platform == 'linux'
-# opencv-python # 可选
-
-# 摄像头模块
-picamera2; sys_platform == 'linux'
-opencv-python
-# flask   # 可选
-
-
-# 语音模块
-#faster-whisper
-#silero-vad
-#vosk
-pyaudio
-
-# AI模块
-langgraph
+# [ AI & LangChain ]
 langchain
 langchain-openai
-Pillow
+langgraph
 
-# 语音唤醒
-#snowboy; sys_platform == 'linux'
+# [ Voice Processing ]
+pyaudio
+torch
+edge-tts
+pydub
+websocket-client
+
+# [ Hardware Drivers (Platform-Specific) ]
+# --- General GPIO ---
+gpiozero; sys_platform == 'linux'
+RPi.GPIO; sys_platform == 'linux'
+lgpio; sys_platform == 'linux'
+rpi-lgpio; sys_platform == 'linux'
+
+# --- OLED Display ---
+luma.oled; sys_platform == 'linux'
+luma.core; sys_platform == 'linux'
+
+# --- Camera ---
+picamera2; sys_platform == 'linux'
+opencv-python
+flask
+
+# --- Car Control ---
+evdev; sys_platform == 'linux'

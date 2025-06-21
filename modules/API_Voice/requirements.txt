@@ -1,4 +1,7 @@
-faster-whisper
-langgraph
-silero-vad
-vosk
+pyaudio
+torch
+requests
+edge-tts
+pydub
+websocket-client
+numpy

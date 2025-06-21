@@ -14,7 +14,14 @@ Subscribe:
         "expression": str,  # 表情名称
         "duration": float  # 表情持续时间（秒）（可选）
     }
+- OPEN_EYES: 打开眼睛
+- CLOSE_EYES: 关闭眼睛
 - STOP_THREADS: 停止线程
+- ENABLE_AUTOBLINKER: 开启自动眨眼
+- DISABLE_AUTOBLINKER: 关闭自动眨眼
+- ENABLE_IDLE_MODE: 开启闲置模式
+- DISABLE_IDLE_MODE: 关闭闲置模式
+- CENTER_EYES: 眼睛中置
 
 Publish:
 - UPDATE_LAYER: 更新图层显示
@@ -27,9 +34,8 @@ import queue
 import threading
 import time
 
-
-from modules.EventBus.event_bus import EventBus
 from modules.API_Roboeyes.roboeyes_api import RoboeyesAPI
+from modules.EventBus.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +51,18 @@ class RoboeyesThread(threading.Thread):
         # 创建私有事件队列并订阅
         self.event_queue = queue.Queue()
         self.event_bus.subscribe("SET_EXPRESSION", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe("TRIGGER_QUICK_EXPRESSION", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe(
+            "TRIGGER_QUICK_EXPRESSION", self.event_queue, "OLED表情模块"
+        )
+        self.event_bus.subscribe("OPEN_EYES", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe("CLOSE_EYES", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe("ENABLE_AUTOBLINKER", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe(
+            "DISABLE_AUTOBLINKER", self.event_queue, "OLED表情模块"
+        )
+        self.event_bus.subscribe("ENABLE_IDLE_MODE", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe("DISABLE_IDLE_MODE", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe("CENTER_EYES", self.event_queue, "OLED表情模块")
         self.event_bus.subscribe("STOP_THREADS", self.event_queue, "OLED表情模块")
 
         # 默认开启闲置和眨眼
@@ -107,6 +124,27 @@ class RoboeyesThread(threading.Thread):
                     logger.info(f"接收到 SET_EXPRESSION 事件, 设置为 '{expression}'")
                     result = self.api.set_expression(expression)
                     logger.debug(f"API 调用结果: {result}")
+                elif event_type == "OPEN_EYES":
+                    logger.info("接收到 OPEN_EYES 事件")
+                    self.api.open_eyes()
+                elif event_type == "CLOSE_EYES":
+                    logger.info("接收到 CLOSE_EYES 事件")
+                    self.api.close_eyes()
+                elif event_type == "ENABLE_AUTOBLINKER":
+                    logger.info("接收到 ENABLE_AUTOBLINKER 事件, 开启自动眨眼")
+                    self.api.set_autoblinker(True)
+                elif event_type == "DISABLE_AUTOBLINKER":
+                    logger.info("接收到 DISABLE_AUTOBLINKER 事件, 关闭自动眨眼")
+                    self.api.set_autoblinker(False)
+                elif event_type == "ENABLE_IDLE_MODE":
+                    logger.info("接收到 ENABLE_IDLE_MODE 事件, 开启闲置模式")
+                    self.api.set_idle_mode(True)
+                elif event_type == "DISABLE_IDLE_MODE":
+                    logger.info("接收到 DISABLE_IDLE_MODE 事件, 关闭闲置模式")
+                    self.api.set_idle_mode(False)
+                elif event_type == "CENTER_EYES":
+                    logger.info("接收到 CENTER_EYES 事件, 眼睛中置")
+                    self.api.center_eyes()
                 elif event_type == "TRIGGER_QUICK_EXPRESSION":
                     expression = payload.get("expression")
                     if expression:

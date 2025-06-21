@@ -35,7 +35,6 @@ from queue import Queue
 
 from PIL import Image, ImageDraw, ImageFont
 
-from .EventBus import event_bus
 from .API_OLED.OLED_API import OLED
 
 logger = logging.getLogger(__name__)
@@ -148,11 +147,18 @@ class OLEDThread(threading.Thread):
             event = self.event_queue.get()
             # event["type"] & event["payload"]  # 获取事件类型和负载
             if event["type"] == "UPDATE_LAYER":
-                layer_id = event["payload"]["layer_id"]
-                image = event["payload"]["image"]
-                z_index = event["payload"]["z_index"]
-                position = event["payload"]["position"]
-                duration = event["payload"].get("duration")
+                payload = event.get("payload", {})
+                layer_id = payload.get("layer_id")
+
+                # 如果没有 layer_id，这是一个无效事件，记录并跳过
+                if not layer_id:
+                    logger.warning("收到无效的 UPDATE_LAYER 事件，缺少 layer_id")
+                    continue
+
+                image = payload.get("image")
+                z_index = payload.get("z_index", 0)  # 提供默认值
+                position = payload.get("position", (0, 0))  # 提供默认值
+                duration = payload.get("duration")
 
                 if layer_id in self.layers:
                     self.layers[layer_id].update(image, z_index, position, duration)
@@ -161,14 +167,24 @@ class OLEDThread(threading.Thread):
 
                 self.needs_render.set()
             elif event["type"] == "SET_LAYER_VISIBILITY":
-                layer_id = event["payload"]["layer_id"]
-                visible = event["payload"]["visible"]
+                payload = event.get("payload", {})
+                layer_id = payload.get("layer_id")
+                if not layer_id:
+                    logger.warning(
+                        "收到无效的 SET_LAYER_VISIBILITY 事件，缺少 layer_id"
+                    )
+                    continue
+                visible = payload.get("visible", True)
 
                 if layer_id in self.layers:
                     self.layers[layer_id].visible = visible
                     self.needs_render.set()
             elif event["type"] == "DELETE_LAYER":
-                layer_id = event["payload"]["layer_id"]
+                payload = event.get("payload", {})
+                layer_id = payload.get("layer_id")
+                if not layer_id:
+                    logger.warning("收到无效的 DELETE_LAYER 事件，缺少 layer_id")
+                    continue
                 if layer_id in self.layers:
                     del self.layers[layer_id]
                     self.needs_render.set()  # 触发重绘以确保图层消失

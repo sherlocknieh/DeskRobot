@@ -1,6 +1,9 @@
 from .event_bus import EventBus
 
-# 创建一个唯一的、全局的事件总线实例
-# 所有模块都应该从这里导入它，以确保是同一个对象
-# e.g. from modules import event_bus
-event_bus = EventBus.get_instance()
+# 导出 EventBus 类, 而非实例。
+# 使用单例模式, 各模块通过调用 EventBus() 来获取全局唯一的实例。
+# e.g.:
+# from modules.EventBus import EventBus
+# event_bus = EventBus()
+
+__all__ = ["EventBus"]
