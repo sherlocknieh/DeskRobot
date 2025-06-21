@@ -30,13 +30,16 @@ def gamepad_test_debounced(gamepad):
     if gamepad is None:
         print("No gamepad found.")
         return
-    THRESHOLD = 1
+    THRESHOLD = 4
     last_abs_values = 0
     for event in gamepad.read_loop():
         if event.type == evdev.ecodes.EV_ABS:
-            if abs(event.value - last_abs_values) > THRESHOLD:
+            if event.code in [0, 1, 2, 5]:  # 左摇杆或右摇杆
+                if abs(event.value - last_abs_values) > THRESHOLD:
+                    print(f'摇杆事件: {event.code}; 值: {event.value}')
+                    last_abs_values = event.value
+            else:
                 print(f'摇杆事件: {event.code}; 值: {event.value}')
-                last_abs_values = event.value
         elif event.type == evdev.ecodes.EV_KEY:
             print(f'按键事件: {event.code}; 值: {event.value}')
 
@@ -44,6 +47,7 @@ def gamepad_test_debounced(gamepad):
 gamepad_test_debounced(gamepad)
 
 """测试结果
+摇杆事件:
     左摇杆:横轴：Code: 0, Value: 0~65535 (左~右)
     左摇杆:纵轴：Code: 1, Value: 0~65535 (上~下)
 
@@ -52,7 +56,7 @@ gamepad_test_debounced(gamepad)
 
     方向键:左右：Code: 16, Value:-1 (左), 0(放开), 1 (右)
     方向键:上下：Code: 17, Value:-1 (上), 0(放开), 1 (下)
-
+按键事件:
     按键:A：Code: 304, Value: 1 (按下), 0 (放开)
     按键:B：Code: 305, Value: 1 (按下), 0 (放开)
 """

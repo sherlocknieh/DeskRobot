@@ -1,0 +1,16 @@
+{   
+    "使用方法": "把本文件复制到 config.json, 并修改其中的 LLM_API_KEY",
+
+    "LLM_BASE_URL": "https://api.siliconflow.cn/v1",
+    "LLM_API_KEY": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+
+    "PIPER_VOICE_NAME" : "zh_CN-huayan-medium",
+    "PIPER_VOICE_URL" : "https://huggingface.co/rhasspy/piper-voices/resolve/main/zh_CN/huayan/medium/{PIPER_VOICE_NAME}.onnx.json",
+    "EDGE_TTS_VOICE" : "zh-CN-XiaoxiaoNeural",
+    "FFMPEG_URL_WINDOWS" : "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+    "FFMPEG_URL_LINUX" :
+    {
+        "amd64": "https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz",
+        "arm64": "https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-arm64-static.tar.xz"
+    }
+}

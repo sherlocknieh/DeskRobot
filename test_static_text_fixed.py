@@ -6,16 +6,14 @@
 import logging
 import threading
 import time
+import sys
+import json
 
-from configs.config import config
-from configs.logging_config import setup_logging
-from modules.EventBus.event_bus import EventBus
+from modules.event_bus import EventBus
 from modules.mod_oled import OLEDThread
 from modules.mod_roboeyes import RoboeyesThread
 from modules.mod_text_display import TextDisplayThread
 
-# Setup logging
-setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -46,14 +44,16 @@ class StaticTextTestRig:
         # 显示一个简单的静态文本
         self.event_bus.publish(
             "SUB_TEXT_STATIC_DISPLAY",
-            text="Hello World!",
-            font_size=20,
-            layer_id="hello_world",
-            z_index=10,
-            position=(0, 0),
-            align="center",
-            valign="center",
-            duration=3,  # 3秒后自动消失
+            {
+            "text":"Hello World!",
+            "font_size":20,
+            "layer_id":"hello_world",
+            "z_index":10,
+            "position":(0, 0),
+            "align":"center",
+            "valign":"center",
+            "duration":3,  # 3秒后自动消失
+            }
         )
         logger.info("显示 'Hello World!' 文本，3秒后消失")
         time.sleep(4)
@@ -78,14 +78,16 @@ class StaticTextTestRig:
             logger.info(f"显示 {name} 位置文本")
             self.event_bus.publish(
                 "SUB_TEXT_STATIC_DISPLAY",
-                text=f"{name}位置",
-                font_size=16,
-                layer_id=f"pos_test_{i}",
-                z_index=10,
-                position=pos,
-                align=align,
-                valign=valign,
-                duration=2,
+                {
+                "text":f"{name}位置",
+                "font_size":16,
+                "layer_id":f"pos_test_{i}",
+                "z_index":10,
+                "position":pos,
+                "align":align,
+                "valign":valign,
+                "duration":2,
+                }
             )
             time.sleep(2.5)
 
@@ -99,14 +101,16 @@ class StaticTextTestRig:
             logger.info(f"显示字体大小 {size}px")
             self.event_bus.publish(
                 "SUB_TEXT_STATIC_DISPLAY",
-                text=f"字体 {size}px",
-                font_size=size,
-                layer_id=f"font_test_{size}",
-                z_index=10,
-                position=(0, 0),
-                align="center",
-                valign="center",
-                duration=2,
+                {
+                "text":f"字体 {size}px",
+                "font_size":size,
+                "layer_id":f"font_test_{size}",
+                "z_index":10,
+                "position":(0, 0),
+                "align":"center",
+                "valign":"center",
+                "duration":2,
+                }
             )
             time.sleep(2.5)
 
@@ -118,15 +122,17 @@ class StaticTextTestRig:
 
         self.event_bus.publish(
             "SUB_TEXT_STATIC_DISPLAY",
-            text=long_text,
-            font_size=12,
-            layer_id="multiline_test",
-            z_index=10,
-            position=(0, 0),
-            align="left",
-            valign="top",
-            wrap=True,
-            duration=5,
+            {
+            "text":long_text,
+            "font_size":12,
+            "layer_id":"multiline_test",
+            "z_index":10,
+            "position":(0, 0),
+            "align":"left",
+            "valign":"top",
+            "wrap":True,
+            "duration":5,
+            }
         )
         logger.info("显示多行换行文本，5秒后消失")
         time.sleep(6)
@@ -137,7 +143,7 @@ class StaticTextTestRig:
 
         # 设置背景表情
         logger.info("设置背景表情为 'happy'")
-        self.event_bus.publish("SET_EXPRESSION", expression="happy")
+        self.event_bus.publish("SET_EXPRESSION" ,{"expression":"happy"})
         time.sleep(1)
 
         # 在表情上叠加静态文本
@@ -151,14 +157,16 @@ class StaticTextTestRig:
             logger.info(f"叠加显示: {text}")
             self.event_bus.publish(
                 "SUB_TEXT_STATIC_DISPLAY",
-                text=text,
-                font_size=size,
-                layer_id=f"overlay_{i}",
-                z_index=15,  # 高于表情层
-                position=pos,
-                align=align,
-                valign=valign,
-                duration=3,
+                {
+                "text":text,
+                "font_size":size,
+                "layer_id":f"overlay_{i}",
+                "z_index":15,  # 高于表情层
+                "position":pos,
+                "align":align,
+                "valign":valign,
+                "duration":3,
+                }
             )
             time.sleep(1)
 
@@ -171,21 +179,22 @@ class StaticTextTestRig:
         # 显示一个永久文本（没有duration参数）
         self.event_bus.publish(
             "SUB_TEXT_STATIC_DISPLAY",
-            text="永久显示",
-            font_size=14,
-            layer_id="permanent_text",
-            z_index=10,
-            position=(0, 0),
-            align="center",
-            valign="center",
-            # 注意：没有duration参数，所以会永久显示
+            {
+            "text":"永久显示",
+            "font_size":14,
+            "layer_id":"permanent_text",
+            "z_index":10,
+            "position":(0, 0),
+            "align":"center",
+            "valign":"center",
+            }
         )
         logger.info("显示永久文本（需要手动删除）")
         time.sleep(3)
 
         # 手动删除永久文本
         logger.info("手动删除永久文本")
-        self.event_bus.publish("DELETE_LAYER", layer_id="permanent_text")
+        self.event_bus.publish("DELETE_LAYER", {"layer_id":"permanent_text"})
         time.sleep(2)
 
     def test_custom_colors(self):
@@ -195,32 +204,36 @@ class StaticTextTestRig:
         # 测试白字黑底（默认）
         self.event_bus.publish(
             "SUB_TEXT_STATIC_DISPLAY",
-            text="白字黑底",
-            font_size=16,
-            layer_id="white_on_black",
-            z_index=10,
-            position=(0, 10),
-            align="center",
-            valign="center",
-            text_color=1,  # 白色
-            bg_color=0,  # 黑色
-            duration=2,
+            {    
+            "text":"白字黑底",
+            "font_size":16,
+            "layer_id":"white_on_black",
+            "z_index":10,
+            "position":(0, 10),
+            "align":"center",
+            "valign":"center",
+            "text_color":1,  # 白色
+            "bg_color":0,  # 黑色
+            "duration":2,
+            }
         )
         time.sleep(2.5)
 
         # 测试黑字白底（反色）
         self.event_bus.publish(
             "SUB_TEXT_STATIC_DISPLAY",
-            text="黑字白底",
-            font_size=16,
-            layer_id="black_on_white",
-            z_index=10,
-            position=(0, 10),
-            align="center",
-            valign="center",
-            text_color=0,  # 黑色
-            bg_color=1,  # 白色
-            duration=2,
+            {
+            "text":"黑字白底",
+            "font_size":16,
+            "layer_id":"black_on_white",
+            "z_index":10,
+            "position":(0, 10),
+            "align":"center",
+            "valign":"center",
+            "text_color":0,  # 黑色
+            "bg_color":1,  # 白色
+            "duration":2,
+            }
         )
         time.sleep(2.5)
 
@@ -259,36 +272,45 @@ class StaticTextTestRig:
             logger.error(f"测试过程中发生错误: {e}", exc_info=True)
 
 
+def init_config(config_file):
+    """设置日志格式"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        stream=sys.stdout,
+    )
+    """加载配置文件"""
+    with open(config_file, 'r', encoding='utf-8') as f:
+        config_data = json.load(f)
+    return config_data
+    
+
 if __name__ == "__main__":
+
+
+    print("初始化配置")
+    config = init_config('configs/config.json')
+
+
+
     test_rig = StaticTextTestRig()
 
     # --- 初始化模块 ---
     # OLED 模块
-    oled_thread = OLEDThread(
-        test_rig.event_bus,
-        width=config.get("oled_width", 128),
-        height=config.get("oled_height", 64),
-        fps=config.get("oled_fps", 30),
-        is_simulation=False,
-    )
+    oled_thread = OLEDThread()
     test_rig.add_thread(oled_thread)
 
     # Roboeyes 模块（用于叠加测试）
-    roboeyes_thread = RoboeyesThread(
-        test_rig.event_bus,
-        frame_rate=config.get("roboeyes_frame_rate", 30),
-        width=config.get("roboeyes_width", 128),
-        height=config.get("roboeyes_height", 64),
-    )
+    roboeyes_thread = RoboeyesThread()
     # test_rig.add_thread(roboeyes_thread)
 
     # Text Display 模块（包含新的静态文本功能）
     text_display_thread = TextDisplayThread(
-        event_bus=test_rig.event_bus,
         font_path=config.get("text_renderer_font_path"),
-        oled_width=config.get("oled_width", 128),
-        oled_height=config.get("oled_height", 64),
-        oled_fps=config.get("oled_fps", 30),
+        oled_width=128,
+        oled_height=64,
+        oled_fps=30,
     )
     test_rig.add_thread(text_display_thread)
 

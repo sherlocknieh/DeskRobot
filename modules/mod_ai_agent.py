@@ -25,15 +25,15 @@ import threading
 from queue import Empty, Queue
 
 from modules.API_AI.ai_api import AiAPI  # AI API 接口
-from modules.EventBus.event_bus import EventBus  # For type hinting
+from modules.event_bus import EventBus  # For type hinting
 
 logger = logging.getLogger(__name__)
 
 
 class AiThread(threading.Thread):
-    def __init__(self, event_bus: EventBus,llm_base_url: str = None, llm_api_key: str = None, llm_model_name: str = None):
+    def __init__(self, llm_base_url: str, llm_api_key: str, llm_model_name: str):
         super().__init__(daemon=True, name="AiThread")
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self._stop_event = threading.Event()
         self.api = None
         self.llm_base_url = llm_base_url
@@ -42,7 +42,7 @@ class AiThread(threading.Thread):
 
         # 创建私有队列并订阅
         self.event_queue = Queue()
-        self.event_bus.subscribe("STT_RESULT_CAPTURED", self.event_queue)
+        self.event_bus.subscribe("STT_RESULT_CAPTURED", self.event_queue, "AI_Agent")
         self.event_bus.subscribe("STOP_THREADS", self.event_queue)
 
     def run(self):
@@ -85,8 +85,10 @@ class AiThread(threading.Thread):
                             logger.info(f"已发布TTS请求: '{ai_response}'")
                             self.event_bus.publish(
                                 "SPEAK_TEXT",
-                                source=self.__class__.__name__,
-                                text=ai_response,
+                                {
+                                    "source": self.__class__.__name__,
+                                    "text": ai_response,
+                                },
                             )
 
             except Empty:

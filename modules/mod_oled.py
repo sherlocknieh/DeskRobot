@@ -4,7 +4,7 @@ OLED 显示线程
 
 subscribe:
 - UPDATE_LAYER: 更新或创建图层
-    - payload格式:
+    - data格式:
   {
     "layer_id": str,  # 图层唯一标识符
     "image": PIL.Image.Image,  # 要显示的图像
@@ -13,13 +13,13 @@ subscribe:
     "duration": int  # 图像显示的持续时间（秒）
   }
 - SET_LAYER_VISIBILITY: 设置图层可见性
-    - payload格式:
+    - data格式:
   {
     "layer_id": str,  # 图层唯一标识符
     "visible": bool  # 图层是否可见
   }
 - DELETE_LAYER: 删除图层
-    - payload格式:
+    - data格式:
     {
     "layer_id": str  # 图层唯一标识符
     }
@@ -31,12 +31,10 @@ import logging
 import queue
 import threading
 import time
-from queue import Queue
 
 from PIL import Image, ImageDraw, ImageFont
-
-from .EventBus import event_bus
 from .API_OLED.OLED_API import OLED
+from .event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +76,6 @@ class Layer:
 class OLEDThread(threading.Thread):
     def __init__(
         self,
-        event_bus,
         width=128,
         height=64,
         fps=50,
@@ -97,10 +94,9 @@ class OLEDThread(threading.Thread):
             i2c_address=i2c_address,
             is_simulation=is_simulation,
         )
-        self.event_bus = event_bus
-
         self.layers = {}  # 存储所有图层，用 layer_id 作为 key
-        self.event_queue = Queue()  # 用于接收来自事件监听器的请求
+        self.event_bus = EventBus()
+        self.event_queue = queue.Queue()  # 用于接收来自事件监听器的请求
         self.needs_render = threading.Event()  # 用于通知渲染线程需要重新合成
         self._stop_event = threading.Event()
 
@@ -146,13 +142,13 @@ class OLEDThread(threading.Thread):
         # 处理队列中的所有待办事项
         while not self.event_queue.empty():
             event = self.event_queue.get()
-            # event["type"] & event["payload"]  # 获取事件类型和负载
+            # event["type"] & event["data"]  # 获取事件类型和负载
             if event["type"] == "UPDATE_LAYER":
-                layer_id = event["payload"]["layer_id"]
-                image = event["payload"]["image"]
-                z_index = event["payload"]["z_index"]
-                position = event["payload"]["position"]
-                duration = event["payload"].get("duration")
+                layer_id = event["data"]["layer_id"]
+                image = event["data"]["image"]
+                z_index = event["data"]["z_index"]
+                position = event["data"]["position"]
+                duration = event["data"].get("duration")
 
                 if layer_id in self.layers:
                     self.layers[layer_id].update(image, z_index, position, duration)
@@ -161,14 +157,14 @@ class OLEDThread(threading.Thread):
 
                 self.needs_render.set()
             elif event["type"] == "SET_LAYER_VISIBILITY":
-                layer_id = event["payload"]["layer_id"]
-                visible = event["payload"]["visible"]
+                layer_id = event["data"]["layer_id"]
+                visible = event["data"]["visible"]
 
                 if layer_id in self.layers:
                     self.layers[layer_id].visible = visible
                     self.needs_render.set()
             elif event["type"] == "DELETE_LAYER":
-                layer_id = event["payload"]["layer_id"]
+                layer_id = event["data"]["layer_id"]
                 if layer_id in self.layers:
                     del self.layers[layer_id]
                     self.needs_render.set()  # 触发重绘以确保图层消失

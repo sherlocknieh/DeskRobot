@@ -28,16 +28,16 @@ import threading
 import time
 
 
-from modules.EventBus.event_bus import EventBus
+from .event_bus import EventBus
 from modules.API_Roboeyes.roboeyes_api import RoboeyesAPI
 
 logger = logging.getLogger(__name__)
 
 
 class RoboeyesThread(threading.Thread):
-    def __init__(self, event_bus: EventBus, frame_rate=50, width=128, height=64):
+    def __init__(self, frame_rate=50, width=128, height=64):
         super().__init__(daemon=True, name="RoboeyesThread")
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self.api = RoboeyesAPI(frame_rate, width, height)
         self._stop_event = threading.Event()
         self.frame_interval = 1.0 / frame_rate
@@ -55,7 +55,7 @@ class RoboeyesThread(threading.Thread):
     def run(self):
         """线程主循环"""
         logger.info(f"{self.name} 启动")
-        self.event_bus.publish("THREAD_STARTED", name="OLED表情模块")
+        self.event_bus.publish("THREAD_STARTED","OLED表情模块")
 
         while not self._stop_event.is_set():
             start_time = time.monotonic()
@@ -72,14 +72,17 @@ class RoboeyesThread(threading.Thread):
 
             # 如果生成了有效图像，则发布到事件总线
             if image:
+                data = {
+                    'layer_id': 'roboeyes',
+                    "image": image,
+                    "duration": None,  # 持续时间为 None，表示永久显示
+                    "position": (0, 0),  # 图像位置，左上角
+                    "z_index": 0,  # 总是在底层
+                }
                 self.event_bus.publish(
-                    "UPDATE_LAYER",
-                    source=self.__class__.__name__,
-                    layer_id="roboeyes",
-                    image=image,
-                    z_index=0,  # 总是在底层
-                    position=(0, 0),  # 图像位置，左上角
-                    duration=None,  # 持续时间为 None，表示永久显示
+                    event_type="UPDATE_LAYER",
+                    name=self.__class__.__name__,
+                    data=data,
                 )
             # 控制帧率
             elapsed_time = time.monotonic() - start_time

@@ -88,13 +88,11 @@ class OLED:
 
         try:
             if not self.is_simulation:
-                # self.i2c = self.busio.I2C(self.board.SCL, self.board.SDA)
-                # self.screen = self.adafruit_ssd1306.SSD1306_I2C(
-                #    self.width, self.height, self.i2c, addr=self.i2c_address
-                # )
                 self.serial = self.i2c(address=self.i2c_address)
                 self.screen = self.ssd1306(
-                    self.serial, width=self.width, height=self.height
+                    self.serial,
+                    width=self.width,
+                    height=self.height
                 )
                 logger.info("OLED 硬件初始化成功。")
                 self.clear_display()
