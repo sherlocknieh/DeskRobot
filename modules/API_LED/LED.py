@@ -42,7 +42,6 @@ class RGB:
 
     def on(self, r=1.0, g=1.0, b=1.0):
         self.off()
-        print('LED On, RGB:', r, g, b)
         self._red.value = r
         self._green.value = g
         self._blue.value = b

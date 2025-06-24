@@ -74,20 +74,27 @@ class EventBus:
             self.listeners[event_type].append(event_queue)
 
         # 打印日志
-        logger.info(f'[事件总线] {name} 订阅了 "{event_type}" 事件')
+        logger.info(f'{name} 订阅了 {event_type} 事件')
 
     def publish(self, event_type, data = {}, source = "未知"):
         # 事件类型转换为大写字符串
         event_type = str(event_type).upper()
+
+        # 如果数据是字符串, 作为 source 处理
+        if isinstance(data, str):
+            source = data
+            data = {}
   
         # 打印日志
         if event_type != "UPDATE_LAYER":            # OLED屏幕刷新事件太频繁，跳过
-            logger.info(f'[事件总线] "{source}" 发布了 "{event_type}" 事件: data={data}')
+            logger.info(f'{source} 发布了 {event_type} 事件')
+            if data:
+                logger.info(f'事件内容: {data}')
 
         # 丢弃无效的事件类型
         if event_type not in self.listeners:
             if event_type != "UPDATE_LAYER":            # OLED屏幕刷新事件太频繁，跳过
-                logger.info(f'[事件总线] "{event_type}" 事件无人订阅, 已丢弃')
+                logger.info(f'{event_type} 事件无人订阅, 已丢弃')
             return
         
         # 将事件类型,数据,发布人打包进字典

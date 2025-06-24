@@ -11,13 +11,12 @@
 """
 
 
-if __name__ == '__main__':
-    from EventBus import EventBus   # 直接运行时使用, 用于测试
-else:
-    from .EventBus import EventBus  # 被上级模块导入时使用
-
-
 import threading
+import logging
+
+
+from .EventBus import EventBus
+logger = logging.getLogger("终端IO")
 
 
 class IOThread(threading.Thread):
@@ -28,23 +27,24 @@ class IOThread(threading.Thread):
 
     def run(self):
         self.thread_flag.set()
-        print("IO线程已启动")
-        print("命令格式: 事件类型 [参数=值] [参数:值] ...")
+        logger.info("终端IO已启动, 输入指令以发布事件")
+        print("格式: 事件类型 [参数=值] [参数:值] ...")
         print("例如: led_on r=0 g=1 b=0.5")
         print("例如: led_off")
         print("例如: exit")
         while self.thread_flag.is_set():
+            # 接收命令
             cmd = input('> ').strip().split()
             if not cmd:
                 continue
             # 解析命令
             event_type = cmd[0].replace('-', '_')
             if event_type.lower() == 'exit':
-                self.event_bus.publish("exit", {}, "IO线程")
+                self.event_bus.publish("exit", "终端IO模块")
                 self.stop()
                 break
             # 解析参数
-            payload = {}
+            data = {}
             for arg in cmd[1:]:
                 if '=' in arg:
                     key, value = arg.split('=')
@@ -54,23 +54,9 @@ class IOThread(threading.Thread):
                     value = float(value)
                 except ValueError:
                     value = str(value)
-                payload[key.strip()] = value
-            self.event_bus.publish(event_type, payload, "IO线程")
+                data[key.strip()] = value
+            self.event_bus.publish(event_type, data, "终端IO模块")
 
     def stop(self):
-        print("IO线程已退出")
+        logger.info("终端IO模块已退出")
         self.thread_flag.clear()
-
-
-if __name__ == '__main__':
-
-    """ 测试: """
-
-    # 设置日志格式
-    import logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(asctime)s][%(levelname)s]%(message)s",
-    )
-    # 启动IO线程
-    IOThread().start()

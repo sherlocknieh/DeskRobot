@@ -2,31 +2,74 @@
 项目全局配置文件
 """
 
-import logging
 import os
-from logging.handlers import RotatingFileHandler
 
-from dotenv import load_dotenv
 
-# --- 基本路径设置 ---
-# 项目根目录
+# 获取项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# --- .env 文件加载 ---
-# 构造 .env 文件的路径 (与 config.py 同级)
-dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 
-# 加载 .env 文件
+# 日志系统配置
+import logging
+from logging.handlers import RotatingFileHandler
+def setup_logging(level=logging.INFO):
+    """配置日志系统"""
+    log_dir = os.path.join(PROJECT_ROOT, "logs")
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    log_file_path = os.path.join(log_dir, "desk_robot.log")
+
+    # 配置根 logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    # 移除所有现有的处理器，以避免重复日志
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # 创建一个 RotatingFileHandler
+    # maxBytes=5*1024*1024 表示日志文件最大为 5MB
+    # backupCount=3 表示保留3个备份文件
+    file_handler = RotatingFileHandler(
+        log_file_path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+    )
+    file_formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s"
+    )
+    file_handler.setFormatter(file_formatter)
+    root_logger.addHandler(file_handler)
+
+    # 创建一个 StreamHandler 用于在控制台输出
+    console_handler = logging.StreamHandler()
+    console_formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s"
+    )
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
+
+    logging.info("日志系统配置成功")
+setup_logging()
+
+
+# API_KEY 相关配置
+try:
+    logging.info("正在导入 API_KEY")
+    from dotenv import load_dotenv
+except ImportError:
+    logging.warning("依赖缺失, 请安装: pip install python-dotenv")
+    exit()
+dotenv_path = os.path.join(PROJECT_ROOT, 'configs/.env')# 加载 .env 文件
 if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path=dotenv_path)
-    print(f"成功从 {dotenv_path} 加载环境变量。")
+    load_dotenv(dotenv_path)
 else:
-    print(f"警告: 在 {os.path.dirname(dotenv_path)} 目录下未找到 .env 文件。")
+    logging.warning("API_KEY 配置文件不存在: \"configs/.env\"; AI和语音相关模块将无法正常工作")
 
 
 # ==============================================================================
 # 全局配置字典
 # ==============================================================================
+
 config = {}
 
 # ==============================================================================
@@ -79,45 +122,6 @@ config["roboeyes_width"] = 128
 config["roboeyes_height"] = 64
 
 # ==============================================================================
-# 思考中动画配置
+# 思考动画配置
 # ==============================================================================
 config["thinking_animation_frame_rate"] = 20
-
-
-def setup_logging(level=logging.INFO):
-    """配置日志系统"""
-    log_dir = os.path.join(PROJECT_ROOT, "logs")
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-
-    log_file_path = os.path.join(log_dir, "desk_robot.log")
-
-    # 配置根 logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
-
-    # 移除所有现有的处理器，以避免重复日志
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
-
-    # 创建一个 RotatingFileHandler
-    # maxBytes=5*1024*1024 表示日志文件最大为 5MB
-    # backupCount=3 表示保留3个备份文件
-    file_handler = RotatingFileHandler(
-        log_file_path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-    )
-    file_formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
-    )
-    file_handler.setFormatter(file_formatter)
-    root_logger.addHandler(file_handler)
-
-    # 创建一个 StreamHandler 用于在控制台输出
-    console_handler = logging.StreamHandler()
-    console_formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] [%(module)s] %(message)s"
-    )
-    console_handler.setFormatter(console_formatter)
-    root_logger.addHandler(console_handler)
-
-    logging.info("日志系统配置成功。")
