@@ -40,7 +40,7 @@ class IOThread(threading.Thread):
             # 解析命令
             event_type = cmd[0].replace('-', '_')
             if event_type.lower() == 'exit':
-                self.event_bus.publish("exit", {}, "IO")
+                self.event_bus.publish("exit", {}, "IO线程")
                 self.stop()
                 break
             # 解析参数
@@ -55,8 +55,7 @@ class IOThread(threading.Thread):
                 except ValueError:
                     value = str(value)
                 payload[key.strip()] = value
-            # 发布事件
-            self.event_bus.publish(event_type, payload, "IO")
+            self.event_bus.publish(event_type, payload, "IO线程")
 
     def stop(self):
         print("IO线程已退出")
