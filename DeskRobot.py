@@ -129,9 +129,9 @@ if __name__ == "__main__":
     from modules.mod_thinking_animation import ThinkingAnimationThread
     robot.add_task(
         ThinkingAnimationThread(
-            frame_rate=config.get("thinking_animation_frame_rate", 20),
-            width=config.get("oled_width", 128),
-            height=config.get("oled_height", 64),
+            frame_rate = config.get("thinking_animation_frame_rate", 20),
+            width = config.get("oled_width", 128),
+            height = config.get("oled_height", 64),
         )
     )
 
@@ -141,9 +141,9 @@ if __name__ == "__main__":
     from modules.mod_ai_agent import AiThread
     robot.add_task(
         AiThread(
-            llm_base_url  = config.get("llm_base_url"),
-            llm_api_key   = config.get("llm_api_key", None),
-            llm_model_name= config.get("llm_model_name", None),
+            llm_base_url = config["llm_base_url"],
+            llm_api_key = config["llm_api_key"],
+            llm_model_name = config["llm_model_name"],
         )
     )
 
@@ -162,10 +162,10 @@ if __name__ == "__main__":
     from modules.mod_voice import VoiceThread
     robot.add_task(
         VoiceThread(
-            sample_rate=config.get("voice_sample_rate"),
-            channels=config.get("voice_channels"),
-            vad_threshold=config.get("voice_vad_threshold"),
-            frames_per_buffer=config.get("voice_frames_per_buffer"),
+            sample_rate = config["voice_sample_rate"],
+            channels = config["voice_channels"],
+            vad_threshold = config["voice_vad_threshold"],
+            frames_per_buffer = config["voice_frames_per_buffer"],
         )
     )
 

@@ -37,7 +37,8 @@ from urllib.request import urlretrieve
 from pydub import AudioSegment
 from pydub.playback import play
 
-from .EventBus import EventBus
+if __name__ != "__main__":
+    from .EventBus import EventBus
 
 logger = logging.getLogger("音乐播放器")
 
@@ -55,6 +56,7 @@ class MusicPlayerThread(threading.Thread):
         self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         
         # 播放器状态
+        self.playback_thread = None
         self.current_player = None
         self.is_playing = False
         self.is_paused = False
@@ -105,7 +107,7 @@ class MusicPlayerThread(threading.Thread):
             self.event_bus.publish("MUSIC_STARTED", source=source)
         except Exception as e:
             logger.error(f"播放失败: {e}")
-            self.event_bus.publish("ERROR", message=str(e))
+            self.event_bus.publish("ERROR", {"message":str(e)})
 
     def _play_audio(self):
         def playback():
@@ -137,9 +139,12 @@ class MusicPlayerThread(threading.Thread):
     def _stop_playback(self):
         self.is_playing = False
         self.is_paused = False
-        if self.playback_thread and self.playback_thread.is_alive():
+        if (
+            self.playback_thread
+            and self.playback_thread.is_alive()
+            and self.playback_thread is not threading.current_thread()
+        ):
             self.playback_thread.join()
-
     def stop(self):
         """停止线程并清理资源"""
         self._stop_event.set()
@@ -152,31 +157,37 @@ class MusicPlayerThread(threading.Thread):
 
 if __name__ == "__main__":
     # 测试代码
+    from EventBus import EventBus
     from pydub import generators
     
     # 生成测试音频
-    test_sound = generators.Sine(440).to_audio_segment(duration=2000)
+    test_sound = generators.Sine(440).to_audio_segment(duration=10000)
     test_sound.export("test.mp3", format="mp3")
 
-    # 初始化事件总线
-    event_bus = EventBus()
-    
     # 创建并启动播放器线程
-    player = MusicPlayerThread(event_bus)
+    player = MusicPlayerThread()
     player.start()
 
     # 测试播放
-    event_bus.publish("PLAY_MUSIC", path="test.mp3")
+    print("播放音乐")
+    player.event_bus.publish("PLAY_MUSIC", {"path": "test.mp3"})
     time.sleep(5)
     
     # 测试暂停
-    event_bus.publish("PAUSE_MUSIC")
+    print("暂停播放")
+    player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 测试恢复
-    event_bus.publish("PAUSE_MUSIC")
+    print("恢复播放")
+    player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 停止播放
-    event_bus.publish("STOP_MUSIC")
+    print("停止播放")
+    player.event_bus.publish("STOP_MUSIC")
+
+    # 退出播放器
+    print("退出播放器")
+    player.event_bus.publish("EXIT")
     player.join()
