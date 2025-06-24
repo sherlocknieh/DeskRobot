@@ -3,7 +3,7 @@ import wave
 
 import pyaudio
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("VoiceIOAPI")
 
 
 class VoiceIO:

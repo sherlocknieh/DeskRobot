@@ -174,7 +174,7 @@ def detect_first_face(frame):
 
 
 
-from modules.mod_face_tracking import detect_first_face
+from .mod_face_tracking import detect_first_face
 from simple_pid import PID
 from urllib import request
 import cv2

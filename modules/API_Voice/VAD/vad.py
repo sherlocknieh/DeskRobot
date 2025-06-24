@@ -4,7 +4,7 @@ from typing import Dict, Optional
 import numpy as np
 import torch
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("SileroVAD")
 
 
 class SileroVAD:
@@ -36,6 +36,7 @@ class SileroVAD:
                 force_reload=False,
                 onnx=False,  # 使用 PyTorch JIT 模型
             )
+            
             (
                 get_speech_timestamps,
                 save_audio,

@@ -15,14 +15,14 @@
 
 订阅 (Subscribe):
 - SPEAK_TEXT: 接收到需要播报的文本时触发。
-    - payload: {"text": str}
+    - data: {"text": str}
 - INTERRUPTION_DETECTED: 接收到打断信号时触发，会立即停止当前播放。
-- STOP_THREADS: 停止线程。
+- EXIT: 停止线程。
 
 发布 (Publish):
 - TTS_STARTED: 在音频文件生成完毕、即将开始播放时发布。
 - TTS_FINISHED: 在音频播放结束后发布（无论是正常结束还是被中途打断）。
-    - payload: {"interrupted": True} (仅在被中途打断时携带此载荷)
+    - data: {"interrupted": True} (仅在被中途打断时携带此载荷)
 
 """
 
@@ -39,7 +39,7 @@ from pydub.utils import get_player_name
 from .API_Voice.TTS.edge_tts1 import EdgeTTS
 from .EventBus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("TTS模块")
 
 
 class TTSThread(threading.Thread):
@@ -50,20 +50,20 @@ class TTSThread(threading.Thread):
 
     subscribe:
     - SPEAK_TEXT: 接收到需要播报的文本时触发。
-        - payload: {"text": str}
+        - data: {"text": str}
     - INTERRUPTION_DETECTED: 检测到音频播放中断时触发。
-    - STOP_THREADS: 停止线程。
+    - EXIT: 停止线程。
 
     publish:
     - TTS_STARTED: 开始播放语音时发布。
     - TTS_FINISHED: 结束播放语音时发布。
     """
 
-    def __init__(self, event_bus: EventBus):
+    def __init__(self):
         super().__init__()
         self.daemon = True
         self.name = "TTS Thread"
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self.event_queue = Queue()
         self.stop_event = threading.Event()
         self.playback_handle = None  # 用于跟踪播放进程
@@ -80,10 +80,8 @@ class TTSThread(threading.Thread):
         """订阅事件。"""
         try:
             self.event_bus.subscribe("SPEAK_TEXT", self.event_queue, self.name)
-            self.event_bus.subscribe(
-                "INTERRUPTION_DETECTED", self.event_queue, self.name
-            )
-            self.event_bus.subscribe("STOP_THREADS", self.event_queue, self.name)
+            self.event_bus.subscribe("INTERRUPTION_DETECTED", self.event_queue, self.name)
+            self.event_bus.subscribe("EXIT", self.event_queue, self.name)
             logger.info("TTSThread 事件订阅成功。")
             return True
         except Exception as e:
@@ -117,13 +115,13 @@ class TTSThread(threading.Thread):
     def _handle_event(self, event):
         event_type = event.get("type")
         if event_type == "SPEAK_TEXT":
-            text_to_speak = event.get("payload", {}).get("text")
+            text_to_speak = event.get("data", {}).get("text")
             if text_to_speak:
                 self._process_text(text_to_speak)
         elif event_type == "INTERRUPTION_DETECTED":
             logger.info("TTSThread 收到打断事件，停止播放...")
             self._interrupt_playback()
-        elif event_type == "STOP_THREADS":
+        elif event_type == "EXIT":
             self.stop()
 
     def _cleanup_playback(self):
@@ -157,7 +155,7 @@ class TTSThread(threading.Thread):
                 self.playback_handle.wait()  # 等待进程完全终止
                 logger.info("TTS 播放已中断。")
                 # 发布一个被中断的结束事件
-                self.event_bus.publish("TTS_FINISHED", payload={"interrupted": True})
+                self.event_bus.publish("TTS_FINISHED", data={"interrupted": True})
             self._cleanup_playback()
 
     def _process_text(self, text: str):

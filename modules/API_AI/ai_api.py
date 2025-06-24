@@ -24,9 +24,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 
-from modules.EventBus.event_bus import EventBus
-
-logger = logging.getLogger(__name__)
+from modules.EventBus import EventBus
 
 EMOJI_PATTERN = re.compile(
     "["
@@ -94,23 +92,22 @@ SYSTEM_PROMPT = """
 class AiAPI:
     def __init__(
         self,
-        event_bus: EventBus,  # 依赖注入
-        llm_base_url: str = None,
-        llm_api_key: str = None,
-        llm_model_name: str = None,
+        llm_base_url = None,
+        llm_api_key = None,
+        llm_model_name = None,
     ):
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger("AI_API")
         self.logger.info("正在初始化 AiAPI...")
-        self.event_bus = event_bus  # 使用传入的 event_bus 实例
+        self.event_bus = EventBus()  # 使用传入的 event_bus 实例
         self.queued_actions = []  # 新增：用于暂存待执行的动作
         self.__initialize_agent(llm_base_url, llm_api_key, llm_model_name)
         self.logger.info("AiAPI 初始化完成。")
 
     def __initialize_agent(
         self,
-        llm_base_url: str = None,
-        llm_api_key: str = None,
-        llm_model_name: str = None,
+        llm_base_url = None,
+        llm_api_key = None,
+        llm_model_name = None,
     ):
         """设置并初始化代理"""
         self.logger.info("正在设置 LangChain Agent...")
@@ -156,7 +153,7 @@ class AiAPI:
         # 不再直接发布事件，而是将动作加入队列
         action = {
             "type": "SET_EXPRESSION",
-            "payload": {"expression": expression, "source": self.__class__.__name__},
+            "data": {"expression": expression, "source": self.__class__.__name__},
         }
         self.queued_actions.append(action)
         return f"好的，我将会把表情设置为 {expression}。"
@@ -172,7 +169,7 @@ class AiAPI:
         # 不再直接发布事件，而是将动作加入队列
         action = {
             "type": "TRIGGER_QUICK_EXPRESSION",
-            "payload": {"expression": expression, "source": self.__class__.__name__},
+            "data": {"expression": expression, "source": self.__class__.__name__},
         }
         self.queued_actions.append(action)
         return f"好的，我待会就 {expression} 一下。"

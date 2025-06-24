@@ -88,7 +88,7 @@ def test_tool_set_expression_publishes_event(api_for_unit_test, mock_event_bus):
     assert result == f"好的，我已经将表情设置为 {expression}。"
 
     # 3. 断言 event_bus.publish 被以正确的参数调用了一次
-    expected_event = {"type": "SET_EXPRESSION", "payload": {"expression": expression}}
+    expected_event = {"type": "SET_EXPRESSION", "data": {"expression": expression}}
     api_for_unit_test.event_bus.publish.assert_called_once_with(expected_event)
 
     print(
@@ -112,7 +112,7 @@ def test_tool_trigger_quick_expression_publishes_event(
     # 3. 断言 event_bus.publish 被以正确的参数调用了一次
     expected_event = {
         "type": "TRIGGER_QUICK_EXPRESSION",
-        "payload": {"expression": expression},
+        "data": {"expression": expression},
     }
     api_for_unit_test.event_bus.publish.assert_called_once_with(expected_event)
 
@@ -160,7 +160,7 @@ def test_integration_tool_call_publishes_event(ai_api_instance, mock_event_bus):
         event = last_call_args[0][0]  # call_args 是一个元组 (args, kwargs)
 
         assert event.get("type") == "SET_EXPRESSION"
-        assert event.get("payload", {}).get("expression") == "happy"
+        assert event.get("data", {}).get("expression") == "happy"
         print("\n集成测试：工具调用事件发布测试通过！")
     else:
         pytest.fail("event_bus.publish 一次都未被调用！")

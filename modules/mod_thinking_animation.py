@@ -5,7 +5,7 @@
 Subscribe:
 - START_AI_THINKING: 开始显示思考动画
 - STOP_AI_THINKING: 停止显示思考动画
-- STOP_THREADS: 停止线程
+- EXIT: 停止线程
 
 Publish:
 - UPDATE_LAYER: 更新图层显示
@@ -17,16 +17,16 @@ import queue
 import threading
 import time
 
-from modules.API_OLED.oled_animation_api import OledAnimationAPI
-from modules.EventBus.event_bus import EventBus
+from .API_OLED.oled_animation_api import OledAnimationAPI
+from .EventBus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("思考动画模块")
 
 
 class ThinkingAnimationThread(threading.Thread):
-    def __init__(self, event_bus: EventBus, frame_rate=20, width=128, height=64):
-        super().__init__(daemon=True, name="ThinkingAnimationThread")
-        self.event_bus = event_bus
+    def __init__(self, frame_rate=20, width=128, height=64):
+        super().__init__(daemon=True, name="思考中动画")
+        self.event_bus = EventBus()
         self.api = OledAnimationAPI(width, height)
         self._stop_event = threading.Event()
         self.frame_interval = 1.0 / frame_rate
@@ -37,11 +37,11 @@ class ThinkingAnimationThread(threading.Thread):
         self.event_queue = queue.Queue()
         self.event_bus.subscribe("START_AI_THINKING", self.event_queue, self.name)
         self.event_bus.subscribe("STOP_AI_THINKING", self.event_queue, self.name)
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue, self.name)
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
 
     def run(self):
         logger.info(f"{self.name} 启动")
-        self.event_bus.publish("THREAD_STARTED", name=self.name)
+        self.event_bus.publish("THREAD_STARTED", self.name)
 
         while not self._stop_event.is_set():
             start_time = time.monotonic()
@@ -52,12 +52,14 @@ class ThinkingAnimationThread(threading.Thread):
                 image = self.api.get_thinking_spinner_frame(self.frame_index)
                 self.event_bus.publish(
                     "UPDATE_LAYER",
-                    source=self.name,
-                    layer_id="thinking_spinner",
-                    image=image,
-                    position=(0, -15),
-                    z_index=10,
-                    duration=None,  # 动画由事件控制，不自动过期
+                    {
+                        "source": self.name,
+                        "layer_id": "thinking_spinner",
+                        "image": image,
+                        "position": (0, -15),
+                        "z_index": 10,
+                        "duration": None,  # 动画由事件控制，不自动过期
+                    }
                 )
                 self.frame_index += 1
 
@@ -82,11 +84,9 @@ class ThinkingAnimationThread(threading.Thread):
                 elif event_type == "STOP_AI_THINKING":
                     logger.info("接收到 STOP_AI_THINKING，停止动画并删除图层。")
                     self.is_active = False
-                    self.event_bus.publish(
-                        "DELETE_LAYER", layer_id="thinking_spinner", source=self.name
-                    )
+                    self.event_bus.publish("DELETE_LAYER", {"layer_id":"thinking_spinner"}, source=self.name)
 
-                elif event_type == "STOP_THREADS":
+                elif event_type == "EXIT":
                     self.stop()
 
         except queue.Empty:

@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 3.配置参数
 ```
-修改 xxx.py 文件中以下参数：
+修改 configs 中的配置参数
 ```
 
 4.运行

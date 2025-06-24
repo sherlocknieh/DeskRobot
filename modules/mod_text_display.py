@@ -4,7 +4,7 @@
 
 Subscribe:
 - SUB_TEXT_DISPLAY_REQUEST: 滚动文本显示请求
-    - payload格式:
+    - data格式:
     {
         "text_id": str,  # 滚动文本唯一标识符（可选）
         "text": str,  # 要显示的文本内容
@@ -18,12 +18,12 @@ Subscribe:
         "duration": float  # 显示持续时间（秒）（可选）
     }
 - SUB_TEXT_DISPLAY_CANCEL: 取消滚动文本显示
-    - payload格式:
+    - data格式:
     {
         "text_id": str  # 要取消的滚动文本标识符
     }
 - SUB_TEXT_STATIC_DISPLAY: 静态文本显示请求
-    - payload格式:
+    - data格式:
     {
         "text": str,  # 要显示的文本内容
         "font_size": int,  # 字体大小（默认16）
@@ -39,7 +39,7 @@ Subscribe:
         "text_color": int,  # 文本颜色（单色）（默认1白色）
         "bg_color": int  # 背景颜色（单色）（默认0黑色）
     }
-- STOP_THREADS: 停止线程
+- EXIT: 停止线程
 
 Publish:
 - UPDATE_LAYER: 更新图层显示
@@ -53,24 +53,23 @@ import time
 import uuid
 from queue import Empty, Queue
 
-from .EventBus.event_bus import EventBus
+from .EventBus import EventBus
 from .API_Text.text_renderer import TextRenderer
 from .API_Text.text_scroller import TextScroller
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("OLED文本模块")
 
 
 class TextDisplayThread(threading.Thread):
     def __init__(
         self,
-        event_bus: EventBus,
-        font_path: str,
+        font_path,
         oled_width: int,
         oled_height: int,
         oled_fps: int,
     ):
         super().__init__(daemon=True, name="TextDisplayThread")
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self._stop_event = threading.Event()
         self.active_scrolls = {}
 
@@ -86,10 +85,8 @@ class TextDisplayThread(threading.Thread):
         self.event_queue = Queue()
         self.event_bus.subscribe("SUB_TEXT_DISPLAY_REQUEST", self.event_queue, "OLED文本模块")
         self.event_bus.subscribe("SUB_TEXT_DISPLAY_CANCEL", self.event_queue, "OLED文本模块")
-        self.event_bus.subscribe(
-            "SUB_TEXT_STATIC_DISPLAY", self.event_queue, "OLED文本模块"
-        )  # 新增：静态文本显示
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "OLED文本模块")
+        self.event_bus.subscribe("SUB_TEXT_STATIC_DISPLAY", self.event_queue, "OLED文本模块")  # 新增：静态文本显示
+        self.event_bus.subscribe("EXIT", self.event_queue, "OLED文本模块")
 
     def run(self):
         logger.info(f"{self.name} started.")
@@ -98,15 +95,15 @@ class TextDisplayThread(threading.Thread):
                 # Process events from the queue
                 event = self.event_queue.get(timeout=1)
                 event_type = event.get("type")
-                payload = event.get("payload", {})
+                data = event.get("data", {})
 
                 if event_type == "SUB_TEXT_DISPLAY_REQUEST":
-                    self._handle_display_request(payload)
+                    self._handle_display_request(data)
                 elif event_type == "SUB_TEXT_DISPLAY_CANCEL":
-                    self._handle_cancel_request(payload)
+                    self._handle_cancel_request(data)
                 elif event_type == "SUB_TEXT_STATIC_DISPLAY":
-                    self._handle_static_display_request(payload)
-                elif event_type == "STOP_THREADS":
+                    self._handle_static_display_request(data)
+                elif event_type == "EXIT":
                     self.stop()
                     break
             except Empty:
@@ -123,28 +120,28 @@ class TextDisplayThread(threading.Thread):
         for text_id, scroll_info in list(self.active_scrolls.items()):
             scroll_info["stop_event"].set()
 
-    def _handle_display_request(self, payload):
-        text_id = payload.get("text_id", f"text-scroll-{uuid.uuid4()}")
+    def _handle_display_request(self, data):
+        text_id = data.get("text_id", f"text-scroll-{uuid.uuid4()}")
 
         # If a scroll with the same ID is active, cancel it first
         if text_id in self.active_scrolls:
             self._cancel_scroll(text_id)
 
         scroll_thread = threading.Thread(
-            target=self._scroll_task, args=(text_id, payload), daemon=True
+            target=self._scroll_task, args=(text_id, data), daemon=True
         )
 
         stop_event = threading.Event()
         self.active_scrolls[text_id] = {
             "thread": scroll_thread,
             "stop_event": stop_event,
-            "layer_id": payload.get("layer_id"),
+            "layer_id": data.get("layer_id"),
         }
         scroll_thread.start()
         logger.info(f"Started text scroll task: {text_id}")
 
-    def _handle_cancel_request(self, payload):
-        text_id = payload.get("text_id")
+    def _handle_cancel_request(self, data):
+        text_id = data.get("text_id")
         if text_id in self.active_scrolls:
             self._cancel_scroll(text_id)
             logger.info(f"Cancelled text scroll task via event: {text_id}")
@@ -155,22 +152,22 @@ class TextDisplayThread(threading.Thread):
             scroll_info["stop_event"].set()  # Signal the thread to stop
             # The thread will clean itself up
 
-    def _scroll_task(self, text_id, payload):
+    def _scroll_task(self, text_id, data):
         scroller = TextScroller(
             renderer=self.renderer,
-            text=payload.get("text", ""),
-            font_size=payload.get("font_size", 16),
+            text=data.get("text", ""),
+            font_size=data.get("font_size", 16),
             viewport_width=self.oled_width,
             viewport_height=self.oled_height,
-            scroll_direction=payload.get("scroll_direction", "horizontal"),
-            scroll_speed=payload.get("scroll_speed", 1),
-            loop=payload.get("loop", True),
+            scroll_direction=data.get("scroll_direction", "horizontal"),
+            scroll_speed=data.get("scroll_speed", 1),
+            loop=data.get("loop", True),
         )
 
-        layer_id = payload.get("layer_id")
-        z_index = payload.get("z_index", 0)
-        position = payload.get("position", (0, 0))
-        duration = payload.get("duration")
+        layer_id = data.get("layer_id")
+        z_index = data.get("z_index", 0)
+        position = data.get("position", (0, 0))
+        duration = data.get("duration")
 
         # Ensure text_id exists before trying to access it
         if text_id not in self.active_scrolls:
@@ -195,10 +192,12 @@ class TextDisplayThread(threading.Thread):
 
             self.event_bus.publish(
                 "UPDATE_LAYER",
-                layer_id=layer_id,
-                image=frame,
-                z_index=z_index,
-                position=position,
+                {
+                    "layer_id": layer_id,
+                    "image": frame,
+                    "z_index": z_index,
+                    "position": position,
+                }
             )
 
             time.sleep(frame_interval)
@@ -209,11 +208,11 @@ class TextDisplayThread(threading.Thread):
         if text_id in self.active_scrolls:
             del self.active_scrolls[text_id]
 
-    def _handle_static_display_request(self, payload):
+    def _handle_static_display_request(self, data):
         """
         处理静态文本显示请求
 
-        payload参数：
+        data参数：
         - text: 要显示的文本内容
         - font_size: 字体大小，默认16
         - layer_id: 图层ID，用于标识此文本层
@@ -229,20 +228,20 @@ class TextDisplayThread(threading.Thread):
         - bg_color: 背景颜色（单色），默认0（黑色）
         """
         try:
-            # 从payload中提取参数，设置默认值
-            text = payload.get("text", "")
-            font_size = payload.get("font_size", 16)
-            layer_id = payload.get("layer_id", f"static-text-{uuid.uuid4()}")
-            z_index = payload.get("z_index", 10)
-            position = payload.get("position", (0, 0))
-            align = payload.get("align", "center")
-            valign = payload.get("valign", "center")
-            wrap = payload.get("wrap", True)
-            image_width = payload.get("image_width", self.oled_width)
-            image_height = payload.get("image_height", self.oled_height)
-            duration = payload.get("duration")  # None means display permanently
-            text_color = payload.get("text_color", 1)  # White text
-            bg_color = payload.get("bg_color", 0)  # Black background
+            # 从data中提取参数，设置默认值
+            text = data.get("text", "")
+            font_size = data.get("font_size", 16)
+            layer_id = data.get("layer_id", f"static-text-{uuid.uuid4()}")
+            z_index = data.get("z_index", 10)
+            position = data.get("position", (0, 0))
+            align = data.get("align", "center")
+            valign = data.get("valign", "center")
+            wrap = data.get("wrap", True)
+            image_width = data.get("image_width", self.oled_width)
+            image_height = data.get("image_height", self.oled_height)
+            duration = data.get("duration")  # None means display permanently
+            text_color = data.get("text_color", 1)  # White text
+            bg_color = data.get("bg_color", 0)  # Black background
 
             if not text:
                 logger.warning("Static text display request with empty text, ignoring.")
@@ -264,11 +263,13 @@ class TextDisplayThread(threading.Thread):
             # 发布图层更新事件，显示静态文本
             self.event_bus.publish(
                 "UPDATE_LAYER",
-                layer_id=layer_id,
-                image=static_image,
-                z_index=z_index,
-                position=position,
-                duration=duration,  # 如果指定了持续时间，图层会自动过期
+            {
+                "layer_id": layer_id,
+                "image": static_image,
+                "z_index": z_index,
+                "position": position,
+                "duration": duration,  # 如果指定了持续时间，图层会自动过期
+            }
             )
 
             logger.info(

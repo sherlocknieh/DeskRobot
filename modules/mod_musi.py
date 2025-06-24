@@ -12,14 +12,14 @@ choco install ffmpeg
 
 Subscribe:
 - PLAY_MUSIC: 开始播放音乐
-    - payload格式:
+    - data格式:
     {
         "path": str,  # 本地文件路径或URL
         "loop": bool   # 是否循环播放（可选）
     }
 - PAUSE_MUSIC: 暂停/恢复播放
 - STOP_MUSIC: 停止播放
-- STOP_THREADS: 停止线程
+- EXIT: 停止线程
 
 Publish:
 - MUSIC_STARTED: 音乐开始播放时发布
@@ -37,14 +37,14 @@ from urllib.request import urlretrieve
 from pydub import AudioSegment
 from pydub.playback import play
 
-from modules.EventBus import EventBus
+from .EventBus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("音乐播放器")
 
 class MusicPlayerThread(threading.Thread):
-    def __init__(self, event_bus: EventBus):
+    def __init__(self):
         super().__init__(daemon=True, name="MusicPlayerThread")
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self.event_queue = Queue()
         self._stop_event = threading.Event()
         
@@ -52,7 +52,7 @@ class MusicPlayerThread(threading.Thread):
         self.event_bus.subscribe("PLAY_MUSIC", self.event_queue, self.name)
         self.event_bus.subscribe("PAUSE_MUSIC", self.event_queue, self.name)
         self.event_bus.subscribe("STOP_MUSIC", self.event_queue, self.name)
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue, self.name)
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         
         # 播放器状态
         self.current_player = None
@@ -71,20 +71,20 @@ class MusicPlayerThread(threading.Thread):
                 
     def _handle_event(self, event):
         event_type = event.get("type")
-        payload = event.get("payload", {})
+        data = event.get("data", {})
 
         if event_type == "PLAY_MUSIC":
-            self._handle_play(payload)
+            self._handle_play(data)
         elif event_type == "PAUSE_MUSIC":
             self._handle_pause()
         elif event_type == "STOP_MUSIC":
             self._handle_stop()
-        elif event_type == "STOP_THREADS":
+        elif event_type == "EXIT":
             self.stop()
 
-    def _handle_play(self, payload):
-        source = payload.get("path")
-        self.loop = payload.get("loop", False)
+    def _handle_play(self, data):
+        source = data.get("path")
+        self.loop = data.get("loop", False)
 
         try:
             # 如果是网络资源则下载

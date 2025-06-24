@@ -16,18 +16,20 @@ import logging
 
 
 from .EventBus import EventBus
-logger = logging.getLogger("终端IO")
 
 
 class IOThread(threading.Thread):
     def __init__(self):
         super().__init__()
+        self.name = "终端IO"
         self.event_bus = EventBus()
         self.thread_flag = threading.Event()
+        self.logger = logging.getLogger(self.name)
+
 
     def run(self):
         self.thread_flag.set()
-        logger.info("终端IO已启动, 输入指令以发布事件")
+        self.logger.info("终端IO已启动, 输入指令以发布事件")
         print("格式: 事件类型 [参数=值] [参数:值] ...")
         print("例如: led_on r=0 g=1 b=0.5")
         print("例如: led_off")
@@ -58,5 +60,5 @@ class IOThread(threading.Thread):
             self.event_bus.publish(event_type, data, "终端IO模块")
 
     def stop(self):
-        logger.info("终端IO模块已退出")
+        self.logger.info("终端IO模块已退出")
         self.thread_flag.clear()

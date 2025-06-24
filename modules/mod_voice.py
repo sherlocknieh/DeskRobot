@@ -23,11 +23,11 @@
 订阅 (Subscribe):
 - TTS_STARTED: 当 TTS 开始播放时，进入“打断模式”。
 - TTS_FINISHED: 当 TTS 结束播放时，回到“聆- 听模式”。
-- STOP_THREADS: 停止线程。
+- EXIT: 停止线程。
 
 发布 (Publish):
 - VOICE_COMMAND_DETECTED: 当检测到一段完整的用户语音时发布（无论是正常聆听还是打断）。
-    - payload: {"audio_data": bytes, "sample_rate": int, "channels": int, "sample_width": int}
+    - data: {"audio_data": bytes, "sample_rate": int, "channels": int, "sample_width": int}
 - INTERRUPTION_DETECTED: 在“打断模式”下，检测到用户语音的瞬间发布，用于立即停止TTS。
 
 """
@@ -41,7 +41,7 @@ from .API_Voice.IO.io import VoiceIO
 from .API_Voice.VAD.vad import SileroVAD
 from .EventBus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("VoiceIO模块")
 
 
 class VoiceThread(threading.Thread):
@@ -53,22 +53,21 @@ class VoiceThread(threading.Thread):
     - 使用 SileroVAD 分析音频流，以检测语音的开始和结束。
     - 当检测到完整的语音片段（一句话）时，将该片段的音频数据
       通过 EventBus 发布。
-    - 监听 "STOP_THREADS" 事件以实现优雅关闭。
+    - 监听 "EXIT" 事件以实现优雅关闭。
 
     subscribe:
     - TTS_STARTED: TTS 开始播放
     - TTS_FINISHED: TTS 结束播放
-    - STOP_THREADS: 停止线程。
+    - EXIT: 停止线程。
 
     publish:
     - VOICE_COMMAND_DETECTED: 当检测到完整的语音指令时发布。
-        - payload: {"audio_data": bytes, "sample_rate": int, "channels": int, "sample_width": int}
+        - data: {"audio_data": bytes, "sample_rate": int, "channels": int, "sample_width": int}
     - INTERRUPTION_DETECTED: 当TTS播放时检测到用户语音（打断）时发布。
     """
 
     def __init__(
         self,
-        event_bus: EventBus,
         sample_rate: int,
         channels: int,
         vad_threshold: float,
@@ -86,7 +85,7 @@ class VoiceThread(threading.Thread):
         super().__init__()
         self.daemon = True
         self.name = "Voice Thread"
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self.stop_event = threading.Event()
         self.event_queue = Queue()
 
@@ -116,7 +115,7 @@ class VoiceThread(threading.Thread):
             self.vad = SileroVAD(
                 sample_rate=self.sample_rate, threshold=self.vad_threshold
             )
-            self.event_bus.subscribe("STOP_THREADS", self.event_queue)
+            self.event_bus.subscribe("EXIT", self.event_queue)
             self.event_bus.subscribe("TTS_STARTED", self.event_queue)
             self.event_bus.subscribe("TTS_FINISHED", self.event_queue)
             logger.info("VoiceThread 底层组件设置成功。")
@@ -171,12 +170,12 @@ class VoiceThread(threading.Thread):
 
                         self.event_bus.publish(
                             "VOICE_COMMAND_DETECTED",
-                            audio_data=full_speech_audio,
-                            sample_rate=self.sample_rate,
-                            channels=self.channels,
-                            sample_width=self.voice_io.p.get_sample_size(
-                                self.voice_io.format
-                            ),
+                            {
+                                "audio_data": full_speech_audio,
+                                "sample_rate": self.sample_rate,
+                                "channels": self.channels,
+                                "sample_width": self.voice_io.p.get_sample_size(self.voice_io.format),
+                            }
                         )
                 elif self.is_detecting_speech:
                     self.speech_frames.append(chunk)
@@ -189,7 +188,7 @@ class VoiceThread(threading.Thread):
         try:
             while not self.event_queue.empty():
                 event = self.event_queue.get_nowait()
-                if event["type"] == "STOP_THREADS":
+                if event["type"] == "EXIT":
                     self.stop()
                 elif event["type"] == "TTS_STARTED":
                     self.is_speaking_tts = True
@@ -227,7 +226,7 @@ if __name__ == "__main__":
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 
-    from modules.EventBus import EventBus
+    from .EventBus import EventBus
 
     logging.basicConfig(
         level=logging.INFO,
@@ -260,7 +259,7 @@ if __name__ == "__main__":
                 event = voice_event_queue.get(timeout=0.5)
 
                 if event["type"] == "VOICE_COMMAND_DETECTED":
-                    audio_data = event["payload"]["audio_data"]
+                    audio_data = event["data"]["audio_data"]
                     logger.info(
                         f"Tester: 接收到语音命令，数据长度: {len(audio_data)} bytes。"
                     )
@@ -281,10 +280,10 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print("\n检测到 Ctrl+C，正在优雅地关闭...")
-        eb.publish("STOP_THREADS")
+        eb.publish("EXIT")
         voice_thread.join(timeout=5)
         print("测试结束。")
     except Exception as e:
         logger.error(f"测试主程序发生错误: {e}", exc_info=True)
-        eb.publish("STOP_THREADS")
+        eb.publish("EXIT")
         voice_thread.join(timeout=5)

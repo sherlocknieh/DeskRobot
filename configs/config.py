@@ -12,13 +12,16 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 日志系统配置
 import logging
 from logging.handlers import RotatingFileHandler
+
 def setup_logging(level=logging.INFO):
     """配置日志系统"""
+
     log_dir = os.path.join(PROJECT_ROOT, "logs")
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-
+    
     log_file_path = os.path.join(log_dir, "desk_robot.log")
+
 
     # 配置根 logger
     root_logger = logging.getLogger()
@@ -28,39 +31,41 @@ def setup_logging(level=logging.INFO):
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 
-    # 创建一个 RotatingFileHandler
-    # maxBytes=5*1024*1024 表示日志文件最大为 5MB
-    # backupCount=3 表示保留3个备份文件
+
+    # 创建一个 RotatingFileHandler, 用于写入日志文件
     file_handler = RotatingFileHandler(
-        log_file_path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+        log_file_path,
+        maxBytes=5 * 1024 * 1024,   # 日志文件最大为 5MB
+        backupCount=3,              # 保留3个备份文件
+        encoding="utf-8"
     )
-    file_formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s"
-    )
+    file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s")
     file_handler.setFormatter(file_formatter)
     root_logger.addHandler(file_handler)
 
-    # 创建一个 StreamHandler 用于在控制台输出
+
+    # 创建一个 StreamHandler, 用于在控制台输出
     console_handler = logging.StreamHandler()
-    console_formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s"
-    )
+    console_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s")
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
 
     logging.info("日志系统配置成功")
-setup_logging()
+
+setup_logging() # 执行日志系统配置
 
 
 # API_KEY 相关配置
 try:
-    logging.info("正在导入 API_KEY")
     from dotenv import load_dotenv
 except ImportError:
     logging.warning("依赖缺失, 请安装: pip install python-dotenv")
     exit()
-dotenv_path = os.path.join(PROJECT_ROOT, 'configs/.env')# 加载 .env 文件
+
+# 加载 .env 文件
+dotenv_path = os.path.join(PROJECT_ROOT, 'configs/.env')
 if os.path.exists(dotenv_path):
+    logging.info("正在导入 API_KEY")
     load_dotenv(dotenv_path)
 else:
     logging.warning("API_KEY 配置文件不存在: \"configs/.env\"; AI和语音相关模块将无法正常工作")
@@ -112,8 +117,7 @@ config["oled_is_simulation"] = False
 # ==============================================================================
 # 文本渲染配置
 # ==============================================================================
-config["text_renderer_font_path"] = "arial.ttf"
-
+config["text_renderer_font_path"] = "wqy-microhei"
 # ==============================================================================
 # Roboeyes 表情配置
 # ==============================================================================
