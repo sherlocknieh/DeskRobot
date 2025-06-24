@@ -1,73 +1,77 @@
-"""
-终端命令模块
-从终端接收特定格式的命令，解析为事件并发布到事件总线，便于对各个模块进行手动调试。
+"""终端命令IO模块
 
-Subscribe:
-- 无（仅从终端输入接收命令）
+接收终端命令，解析参数，发布事件
+用于调试其它模块
 
-Publish:
-- EXIT: 退出程序
-    - 当用户输入"exit"时发布
-- THREAD_STARTED: 线程启动通知
-- 动态事件: 根据用户输入的命令格式解析并发布
-    - 命令格式: "<事件类型> <参数1> <参数2> ..."
-    - 示例: "LED on 1 0 0" -> 发布LED事件
-    - 示例: "SET_EXPRESSION happy" -> 发布SET_EXPRESSION事件
+命令格式: 事件类型 [参数=值] [参数:值] ...
 
+    例如: led_on r=0 g=1 b=0.5
+    例如: led_off
+    例如: exit
 """
 
-import logging
-import queue
+
+if __name__ == '__main__':
+    from EventBus import EventBus   # 直接运行时使用, 用于测试
+else:
+    from .EventBus import EventBus  # 被上级模块导入时使用
+
+
 import threading
-
-logger = logging.getLogger(__name__)
 
 
 class IOThread(threading.Thread):
-    def __init__(self, event_bus):
-        super().__init__(daemon=True, name="IOThread")
-        self.event_bus = event_bus
-        self.event_queue = queue.Queue()
-        self._stop_event = threading.Event()
+    def __init__(self):
+        super().__init__()
+        self.event_bus = EventBus()
+        self.thread_flag = threading.Event()
 
     def run(self):
-        self.event_bus.publish("THREAD_STARTED", name=self.__class__.__name__)
-        
-        print(f"命令用法: 事件类型 [参数1:值1] [参数2:值2]...")
-        print('例如: "LED action:on r:0 g:1 b:0.5"')
-        print('例如: "LED action:off"')
-        print("输入 'exit' 或 'quit' 或 'stop' 退出程序")
-        while True:
-            try:
-                text = input().strip()
-                if not text: continue
-                if text.startswith("#"): continue
-                input_list = text.split()
-                event_type = input_list[0]
-                if event_type in ["exit", "quit", "stop"]:
-                    self.event_bus.publish("EXIT")
-                    break
-                event_payload = {}
-                if len(input_list)>1:
-                    event_payload = input_list[1:]
-                    event_payload = dict(item.split(":") for item in event_payload)
-                self.event_bus.publish(event_type, source="TERMINAL", **event_payload)
-            except EOFError:
-                # 当输入流关闭时（例如在某些IDE或管道中），优雅地退出
+        self.thread_flag.set()
+        print("IO线程已启动")
+        print("命令格式: 事件类型 [参数=值] [参数:值] ...")
+        print("例如: led_on r=0 g=1 b=0.5")
+        print("例如: led_off")
+        print("例如: exit")
+        while self.thread_flag.is_set():
+            cmd = input('> ').strip().split()
+            if not cmd:
+                continue
+            # 解析命令
+            event_type = cmd[0].replace('-', '_')
+            if event_type.lower() == 'exit':
+                self.event_bus.publish("exit", {}, "IO")
+                self.stop()
                 break
-            except Exception as e:
-                print(f"终端输入线程出错: {e}")
-                break
+            # 解析参数
+            payload = {}
+            for arg in cmd[1:]:
+                if '=' in arg:
+                    key, value = arg.split('=')
+                elif ':' in arg:
+                    key, value = arg.split(':')
+                try:
+                    value = float(value)
+                except ValueError:
+                    value = str(value)
+                payload[key.strip()] = value
+            # 发布事件
+            self.event_bus.publish(event_type, payload, "IO")
 
-    def stop(self, **kwargs):
-        """请求线程停止。"""
-        print(f"正在停止 {self.name}")
-        self._stop_event.set()
+    def stop(self):
+        print("IO线程已退出")
+        self.thread_flag.clear()
 
 
 if __name__ == '__main__':
 
-    from EventBus import event_bus
-    io_thread = IOThread(event_bus)
-    io_thread.start()
-    io_thread.join()
+    """ 测试: """
+
+    # 设置日志格式
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s][%(levelname)s]%(message)s",
+    )
+    # 启动IO线程
+    IOThread().start()
