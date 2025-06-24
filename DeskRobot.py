@@ -43,23 +43,26 @@ class DeskRobot:
         self.thread_flag.clear()               # 设本线程为停止状态
 
     def io_loop(self):
-        logger.info("调试终端已启动, 输入指令以发布事件")
-        print("格式: 事件类型 [参数=值] [参数:值] ...")
-        print("例如: led_on r=0 g=1 b=0.5")
-        print("例如: led_off")
-        print("例如: exit")
+
         while self.thread_flag.is_set():
-            # 接收命令
+            print("调试终端已启用, 输入指令以发布事件")
+            print("格式: 事件类型 [参数=值] [参数:值]")
+            print("例如: led_on r=0 g=1 b=0.5")
+            print("例如: led_off")
+            print("例如: exit")
+            # 接收指令
+            # 去掉前后 " 号 并按空格分割
+
+
             cmd = input('> ').strip().split()
             if not cmd:
                 continue
-            # 解析命令
-            event_type = cmd[0].replace('-', '_')
+            # 提取类型
+            event_type = cmd[0].strip('"').replace('-', '_')
             if event_type.lower() == 'exit':
-                self.event_bus.publish("exit", "DeskRobot")
-                self.stop()
+                self.stop()  # 停止所有任务
                 break
-            # 解析参数
+            # 提取数据
             data = {}
             for arg in cmd[1:]:
                 if '=' in arg:
@@ -71,8 +74,9 @@ class DeskRobot:
                 except ValueError:
                     value = str(value)
                 data[key.strip()] = value
-            self.event_bus.publish(event_type, data, "终端IO模块")
-
+            # 发布事件
+            self.event_bus.publish(event_type, data, "DeskRobot")
+        logger.info(f"DeskRobot 已退出调试终端")
 
 if __name__ == "__main__":
 

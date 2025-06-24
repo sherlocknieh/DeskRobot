@@ -37,7 +37,7 @@ import time
 from .API_Roboeyes.roboeyes_api import RoboeyesAPI
 from .EventBus import EventBus
 
-logger = logging.getLogger('RoboeyesThread')
+logger = logging.getLogger('OLED表情模块')
 
 
 class RoboeyesThread(threading.Thread):

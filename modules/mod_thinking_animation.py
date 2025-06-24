@@ -20,7 +20,7 @@ import time
 from .API_OLED.oled_animation_api import OledAnimationAPI
 from .EventBus import EventBus
 
-logger = logging.getLogger("思考动画模块")
+logger = logging.getLogger("OLED动画模块")
 
 
 class ThinkingAnimationThread(threading.Thread):
