@@ -85,9 +85,7 @@ if __name__ == "__main__":
 
 
     logger.info("加载音乐播放器模块")
-    logger.info("依赖的库: pip install pydub simpleaudio")
-    logger.info("依赖的软件 Linux: sudo apt install ffmpeg")
-    logger.info("依赖的软件 Windows: winget install ffmpeg")
+    logger.info("依赖的库: pip install pygame")
     from modules.mod_music_player import MusicPlayerThread
     robot.add_task(MusicPlayerThread())
 

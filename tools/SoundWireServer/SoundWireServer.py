@@ -1,11 +1,15 @@
 import subprocess
+import threading
+import os
 
-binary_path = "SoundWireServer.bin"
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+binary_path = os.path.join(ROOT_DIR, "tools/SoundWireServer/SoundWireServer.bin")
+
+process = None
 
 def start_server():
     try:
-        # 使用 subprocess.Popen 启动进程，但不调用 communicate()
-        global process
         process = subprocess.Popen(
             [binary_path],
             stdout=subprocess.PIPE,
@@ -18,6 +22,7 @@ def start_server():
         print(f"错误：没有执行权限，请运行 'chmod +x {binary_path}'")
     except FileNotFoundError:
         print(f"错误：找不到文件 {binary_path}")
+
 
 def stop_server():
     try:
@@ -38,21 +43,23 @@ def stop_server():
     except Exception as e:
         print(f"停止服务时出错: {e}")
 
-if __name__ == '__main__':
+
+def io_loop():
     try:
         while True:
-            command = input("请输入命令 (run/stop/exit): ")
-            if command == "run":
-                start_server()
-            elif command == "stop":
-                stop_server()
-            elif command == "exit":
-                if 'process' in globals() and process.poll() is None:
+                command = input("请输入命令 (run/stop/exit): ")
+                if command == "run":
+                    start_server()
+                elif command == "stop":
                     stop_server()
-                break
-            else:
-                print("命令错误！可用命令：run, stop, exit")
+                elif command == "exit":
+                    if 'process' in globals() and process.poll() is None:
+                        stop_server()
+                    break
+                elif command:
+                    print("命令错误！可用命令：run, stop, exit")
     except KeyboardInterrupt:
         print("\n正在退出程序...")
         if 'process' in globals() and process.poll() is None:
             stop_server()
+    

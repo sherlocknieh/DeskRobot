@@ -160,6 +160,10 @@ if __name__ == "__main__":
     from EventBus import EventBus
     from pydub import generators
     
+    import os
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    music_path = os.path.join(project_root, "Creamy.ogg")
+    
     # 生成测试音频
     test_sound = generators.Sine(440).to_audio_segment(duration=10000)
     test_sound.export("test.mp3", format="mp3")
