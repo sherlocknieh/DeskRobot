@@ -5,8 +5,8 @@ pip install pydub simpleaudio
 # Ubuntu
 sudo apt install ffmpeg
 
-# Windows (通过choco)
-choco install ffmpeg
+# Windows
+winget install ffmpeg
 
 音乐播放模块
 
