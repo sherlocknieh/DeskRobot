@@ -1,5 +1,7 @@
 from gpiozero import PWMOutputDevice, DigitalOutputDevice
 from time import sleep
+import threading
+
 
 class Wheel:
     def __init__(self, in1, in2, pwm):
@@ -27,26 +29,39 @@ class Wheel:
         if speed > 1:
             speed = 1
         self.pwm.value = speed
-    
+
+
 class Car:
+    _instance = None
+    _lock = threading.Lock()
+    def __new__(cls):
+        """实现单例模式"""
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
     def __init__(self):
+        # 避免多次初始化
+        if hasattr(self, 'A'):
+            return
         self.A = Wheel(14, 15, 18)
         self.B = Wheel(23, 24, 19)
+
         self.A.speed(0)
         self.B.speed(0)
     
     def speed(self, L, R):
-        self.A.speed(L*1.4)
+        self.A.speed(L*1.13)
         self.B.speed(R)
 
     def steer(self, x, y):
-        L = (y + x/2) / 1.4
-        R = (y - x/2) / 1.4
+        L = (y + x/(1+abs(2*y))) / 1.4
+        R = (y - x/(1+abs(2*y))) / 1.4
         print(L, R)
         self.speed(L, R)
 
 if __name__ == '__main__':
     car = Car()
-    car.speed(-0.3, -0.3)
-    #car.steer(1, 0)
-    sleep(1)
+    car.steer(-1, 0)
+    sleep(3)
