@@ -1,5 +1,6 @@
 pyaudio
 torch
+torchaudio
 requests
 edge-tts
 pydub

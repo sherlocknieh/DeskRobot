@@ -12,6 +12,7 @@ langgraph
 # [ Voice Processing ]
 pyaudio
 torch
+torchaudio
 edge-tts
 pydub
 websocket-client
