@@ -24,12 +24,27 @@
 - TTS_STARTED: 当 TTS 开始播放时，进入“打断模式”。
 - TTS_FINISHED: 当 TTS 结束播放时，回到“聆- 听模式”。
 - EXIT: 停止线程。
+- ADD_AUDIO_STREAM: 当添加音频流时发布。
+    - data: {"track_id": str, "sample_rate": int, "channels": int, "sample_width": int, "file_path": str, "audio_data": bytes} 从文件（file_path）或从音频数据（audio_data）添加音频流。
+- REMOVE_AUDIO_STREAM: 当移除音频流时发布。
+    - data: {"track_id": str}
+- PAUSE_AUDIO_STREAM: 当暂停音频流时发布。
+    - data: {"track_id": str}
+- RESUME_AUDIO_STREAM: 当恢复音频流时发布。
+    - data: {"track_id": str}
 
 发布 (Publish):
 - VOICE_COMMAND_DETECTED: 当检测到一段完整的用户语音时发布（无论是正常聆听还是打断）。
     - data: {"audio_data": bytes, "sample_rate": int, "channels": int, "sample_width": int}
 - INTERRUPTION_DETECTED: 在“打断模式”下，检测到用户语音的瞬间发布，用于立即停止TTS。
-
+- AUDIO_STREAM_ADDED: 当添加音频流时发布。
+    - data: {"track_id": str, "sample_rate": int, "channels": int, "sample_width": int}
+- AUDIO_STREAM_REMOVED: 当移除音频流时发布。
+    - data: {"track_id": str}
+- AUDIO_STREAM_PAUSED: 当暂停音频流时发布。
+    - data: {"track_id": str}  
+- AUDIO_STREAM_RESUMED: 当恢复音频流时发布。
+    - data: {"track_id": str}
 """
 
 import logging
@@ -38,6 +53,7 @@ import time
 from queue import Queue
 
 from .API_Voice.IO.io import VoiceIO
+from .API_Voice.IO.mixer import AudioMixer
 from .API_Voice.VAD.vad import SileroVAD
 from .EventBus import EventBus
 
@@ -100,6 +116,7 @@ class VoiceThread(threading.Thread):
         self.is_speaking_tts = False  # 新增：用于跟踪TTS播放状态
         self.is_detecting_speech = False  # 新增：用于跟踪VAD检测状态
         self.speech_frames = []
+        self.current_tts_track_id = None  # 记录当前TTS音轨的track_id
 
         logger.info("VoiceThread 初始化完成。")
 
@@ -115,9 +132,20 @@ class VoiceThread(threading.Thread):
             self.vad = SileroVAD(
                 sample_rate=self.sample_rate, threshold=self.vad_threshold
             )
+
+            self.mixer = AudioMixer(self.voice_io)
+            # 绑定音轨结束回调
+            self.mixer.on_track_finished = self.on_track_finished
+            self.mixer.start()
+
             self.event_bus.subscribe("EXIT", self.event_queue)
             self.event_bus.subscribe("TTS_STARTED", self.event_queue)
             self.event_bus.subscribe("TTS_FINISHED", self.event_queue)
+            self.event_bus.subscribe("ADD_AUDIO_STREAM", self.event_queue)
+            self.event_bus.subscribe("REMOVE_AUDIO_STREAM", self.event_queue)
+            self.event_bus.subscribe("PAUSE_AUDIO_STREAM", self.event_queue)
+            self.event_bus.subscribe("RESUME_AUDIO_STREAM", self.event_queue)
+
             logger.info("VoiceThread 底层组件设置成功。")
             return True
         except Exception as e:
@@ -183,8 +211,15 @@ class VoiceThread(threading.Thread):
         logger.info("VoiceThread 循环已结束。")
         self._cleanup()
 
+    def on_track_finished(self, track_id):
+        """当mixer检测到某个音轨播放完毕时调用。"""
+        if str(track_id).startswith("tts_"):
+            logger.info(f"TTS音轨 {track_id} 播放完毕，自动发布TTS_FINISHED事件")
+            self.event_bus.publish("TTS_FINISHED")
+
     def _handle_events(self):
         """处理来自事件总线的事件，用于更新内部状态。"""
+        from queue import Empty
         try:
             while not self.event_queue.empty():
                 event = self.event_queue.get_nowait()
@@ -199,8 +234,30 @@ class VoiceThread(threading.Thread):
                         self.speech_frames = []
                 elif event["type"] == "TTS_FINISHED":
                     self.is_speaking_tts = False
-        except Queue.Empty:
+                    # 自动移除当前TTS音轨
+                    if self.current_tts_track_id:
+                        logger.info(f"TTS_FINISHED: 自动移除TTS音轨 {self.current_tts_track_id}")
+                        self.event_bus.publish("REMOVE_AUDIO_STREAM", {"track_id": self.current_tts_track_id})
+                        self.current_tts_track_id = None
+                elif event["type"] == "ADD_AUDIO_STREAM":
+                    track_id = event["data"].get("track_id")
+                    # 只记录TTS音轨（track_id以tts_开头）
+                    if track_id and str(track_id).startswith("tts_"):
+                        self.current_tts_track_id = track_id
+                    if "file_path" in event["data"]:
+                        self.mixer.add_stream_from_file(track_id, event["data"]["file_path"])
+                    elif "audio_data" in event["data"]:
+                        self.mixer.add_stream(track_id, event["data"]["audio_data"])
+                elif event["type"] == "REMOVE_AUDIO_STREAM":
+                    self.mixer.remove_stream(event["data"]["track_id"])
+                elif event["type"] == "PAUSE_AUDIO_STREAM":
+                    self.mixer.pause_stream(event["data"]["track_id"])
+                elif event["type"] == "RESUME_AUDIO_STREAM":
+                    self.mixer.resume_stream(event["data"]["track_id"])
+        except Empty:
             pass  # 队列为空是正常情况
+        except Exception as e:
+            logger.error(f"事件处理异常: {e}", exc_info=True)
 
     def stop(self):
         """设置停止事件以终止线程。"""
@@ -212,6 +269,8 @@ class VoiceThread(threading.Thread):
         logger.info("正在清理 VoiceThread 资源...")
         if self.voice_io:
             self.voice_io.close()
+        if self.mixer:
+            self.mixer.stop()
         logger.info("VoiceThread 已成功清理并停止。")
 
 

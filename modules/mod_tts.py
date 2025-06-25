@@ -66,13 +66,11 @@ class TTSThread(threading.Thread):
         self.event_bus = EventBus()
         self.event_queue = Queue()
         self.stop_event = threading.Event()
-        self.playback_handle = None  # 用于跟踪播放进程
+        # self.playback_handle = None  # 已弃用
         self.temp_audio_file_path = None  # 用于跟踪临时音频文件
 
         self.tts_client = EdgeTTS()
-        # 注意：这里我们不直接使用VoiceIO，因为播放功能更适合封装在TTS API内部
-        # 或者使用一个更简单的播放库，以避免管理复杂的PyAudio流。
-        # 我们将使用pydub的播放功能。
+        # 注意：播放功能已交由 mod_voice 的 mixer 统一管理
 
         logger.info("TTSThread 初始化完成。")
 
@@ -96,19 +94,10 @@ class TTSThread(threading.Thread):
         logger.info("TTSThread 已启动，等待文本转语音请求...")
         while not self.stop_event.is_set():
             try:
-                event = self.event_queue.get(
-                    timeout=0.1
-                )  # 使用短暂超时以保持循环的响应性
+                event = self.event_queue.get(timeout=0.1)
                 self._handle_event(event)
             except Empty:
-                pass  # 超时后继续执行，以检查播放状态
-
-            # 检查播放是否已结束
-            if self.playback_handle and self.playback_handle.poll() is not None:
-                # poll() 在进程结束时返回退出码，否则返回 None
-                logger.info("TTS 音频播放完成。")
-                self.event_bus.publish("TTS_FINISHED")
-                self._cleanup_playback()
+                pass  # 超时后继续执行
 
         logger.info("TTSThread 循环已结束。")
 
@@ -124,47 +113,18 @@ class TTSThread(threading.Thread):
         elif event_type == "EXIT":
             self.stop()
 
-    def _cleanup_playback(self):
-        """清理播放句柄和临时文件，带重试机制"""
-        self.playback_handle = None
-        if self.temp_audio_file_path:
-            # ffplay 进程在 Windows 上可能不会立即释放文件句柄，
-            # 因此我们添加一个短暂的重试循环来删除文件。
-            for i in range(5):  # 重试5次
-                try:
-                    os.remove(self.temp_audio_file_path)
-                    logger.info(f"已删除TTS临时文件: {self.temp_audio_file_path}")
-                    self.temp_audio_file_path = None
-                    return  # 删除成功，退出函数
-                except OSError as e:
-                    if i < 4:  # 如果不是最后一次尝试
-                        logger.warning(
-                            f"删除TTS临时文件失败 (尝试 {i + 1}/5): {e}。0.1秒后重试..."
-                        )
-                        time.sleep(0.1)
-                    else:  # 最后一次尝试仍然失败
-                        logger.error(f"删除TTS临时文件失败: {e}")
-            self.temp_audio_file_path = None  # 即使删除失败，也要清空路径
+    # _cleanup_playback 已弃用，播放交由 mixer 统一管理
 
     def _interrupt_playback(self):
-        """如果当前有音频在播放，则中断它。"""
-        if hasattr(self, "playback_handle") and self.playback_handle:
-            if self.playback_handle.poll() is None:  # 进程仍在运行
-                logger.info("正在中断当前 TTS 播放...")
-                self.playback_handle.terminate()
-                self.playback_handle.wait()  # 等待进程完全终止
-                logger.info("TTS 播放已中断。")
-                # 发布一个被中断的结束事件
-                self.event_bus.publish("TTS_FINISHED", data={"interrupted": True})
-            self._cleanup_playback()
+        """TTS打断时，直接发布TTS_FINISHED事件（实际播放交由mixer管理）"""
+        self.event_bus.publish("TTS_FINISHED", data={"interrupted": True})
 
     def _process_text(self, text: str):
         logger.info(f"TTSThread: 接收到文本 '{text}'，开始处理...")
 
         # 先中断任何可能正在播放的音频
-        self._interrupt_playback()
+        #self._interrupt_playback()
 
-        # 我们将自己管理临时文件，所以不用 with 语句的自动删除
         tmp_file = None
         try:
             # 1. 使用 EdgeTTS 生成 MP3 文件
@@ -179,14 +139,17 @@ class TTSThread(threading.Thread):
                 self.event_bus.publish("TTS_STARTED")
                 self.temp_audio_file_path = tmp_file_path
 
-                # 2. 直接使用 ffplay 播放 MP3 文件，绕过 pydub 的播放问题
-                player = get_player_name()
-                self.playback_handle = subprocess.Popen(
-                    [player, "-nodisp", "-autoexit", "-hide_banner", tmp_file_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
+                # 2. 通过 EventBus 发布 ADD_AUDIO_STREAM 事件，由 mod_voice 的 mixer 播放
+                self.event_bus.publish(
+                    "ADD_AUDIO_STREAM",
+                    {
+                        "track_id": f"tts_{int(time.time()*1000)}",
+                        "file_path": tmp_file_path,
+                        "sample_rate": 16000,  # 可根据实际参数调整
+                        "channels": 1,
+                        "sample_width": 2
+                    }
                 )
-
             else:
                 logger.error("TTS未能生成音频文件。")
                 if tmp_file_path and os.path.exists(tmp_file_path):
@@ -194,7 +157,6 @@ class TTSThread(threading.Thread):
 
         except Exception as e:
             logger.error(f"处理文本转语音时发生错误: {e}", exc_info=True)
-            # 如果出错，也尝试清理临时文件
             if tmp_file and os.path.exists(tmp_file.name):
                 os.remove(tmp_file.name)
 
