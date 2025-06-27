@@ -1,5 +1,5 @@
 if __name__ != '__main__':
-    from .API_Car.Car_API import Car
+    from .API_Car.Car import Car
     from .EventBus import EventBus
 
 
@@ -105,11 +105,11 @@ class GamePad(threading.Thread):
             if "xbox" in device.name.lower():
                 logger.info(f"手柄已连接: {device.name}")
                 return device
-        logger.info("未发现手柄")
+        #logger.info("未发现手柄")
         return None
 
 if __name__ == '__main__':
-    from API_Car.Car_API import Car
+    from modules.API_Car.Car import Car
     from EventBus import EventBus
     pad = GamePad()
     pad.start()

@@ -43,7 +43,7 @@ class STTThread(threading.Thread):
 
     def _setup(self):
         """根据配置初始化 STT 客户端。"""
-        stt_provider = self.config.get("stt_provider", "iflytek").lower()
+        stt_provider = self.config.get("stt_provider", "siliconflow").lower()
         logger.info(f"正在设置 STT 提供商: {stt_provider}")
 
         try:

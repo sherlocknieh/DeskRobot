@@ -1,8 +1,9 @@
 import logging
 from typing import Dict, Optional
-
 import numpy as np
 import torch
+import os
+
 
 logger = logging.getLogger("SileroVAD")
 
@@ -15,13 +16,7 @@ class SileroVAD:
     来处理音频块，并使用 VADIterator 检测语音的开始和结束。
     """
 
-    def __init__(self, threshold: float = 0.5, sample_rate: int = 16000):
-        """
-        初始化 SileroVAD。
-
-        :param threshold: VAD 阈值。较高的值使VAD对语音的判断更保守。
-        :param sample_rate: 音频采样率。Silero VAD 支持 8000 或 16000 Hz。
-        """
+    def __init__(self, threshold: float = 0.9, sample_rate: int = 16000):
         self.threshold = threshold
         self.sample_rate = sample_rate
 
@@ -29,12 +24,15 @@ class SileroVAD:
             raise ValueError("Silero VAD anly supports 8000 or 16000 sample rate.")
 
         logger.info("正在加载 Silero VAD 模型...")
+        
+        # 从本地缓存加载模型
+        local_model_path = os.path.expanduser("~/.cache/torch/hub/snakers4_silero-vad_master")
         try:
             self.model, self.utils = torch.hub.load(
-                repo_or_dir="snakers4/silero-vad",
+                repo_or_dir=local_model_path,
                 model="silero_vad",
-                force_reload=False,
-                onnx=False,  # 使用 PyTorch JIT 模型
+                source="local",
+                force_reload=False
             )
             
             (
@@ -60,13 +58,14 @@ class SileroVAD:
         """
         if not chunk:
             return None
-
+        
         # 将 bytes 转换为 float32 tensor
         audio_int16 = np.frombuffer(chunk, np.int16)
         audio_float32 = audio_int16.astype(np.float32) / 32768.0
 
-        # VADIterator 是有状态的，它会处理流式音频
+        # 处理流式音频
         speech_dict = self.vad_iterator(audio_float32, return_seconds=False)
+
         return speech_dict
 
     def reset_states(self):
@@ -111,7 +110,9 @@ if __name__ == "__main__":
     voice_io = None
     try:
         voice_io = VoiceIO(
-            rate=SAMPLE_RATE, frames_per_buffer=FRAMES_PER_BUFFER, channels=CHANNELS
+            rate=SAMPLE_RATE,
+            frames_per_buffer=FRAMES_PER_BUFFER,
+            channels=CHANNELS
         )
         vad = SileroVAD(sample_rate=SAMPLE_RATE)
 

@@ -82,7 +82,7 @@ config = {}
 # ==============================================================================
 
 # STT 服务商, 可选 'iflytek' 或 'siliconflow'
-config["stt_provider"] = os.getenv("STT_PROVIDER", "iflytek")
+config["stt_provider"] = os.getenv("STT_PROVIDER", "siliconflow")
 
 # --- 讯飞语音配置 (stt_provider = 'iflytek' 时使用) ---
 config["iflytek_app_id"] = os.getenv("IFLYTEK_APP_ID")

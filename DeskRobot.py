@@ -39,7 +39,10 @@ class DeskRobot:
     def stop(self):
         self.event_bus.publish("EXIT", "DeskRobot") # 发布"EXIT"事件
         for task in self.tasklist:
-            task.join()                        # 等待所有任务结束
+            task.join(timeout=2)                    # 等待所有任务结束
+            if task.is_alive():
+                logger.warning(f"线程 {task.name} 未能正常停止")
+
         logger.info("所有子线程已停止")
         self.thread_flag.clear()               # 设本线程为停止状态
 
@@ -84,7 +87,7 @@ if __name__ == "__main__":
     
     logger.info("加载手柄模块")
     logger.info("依赖的库: pip install evdev")
-    from modules.mod_gamepad import GamePad
+    from modules.mod_game_pad import GamePad
     robot.add_task(GamePad())
 
 
@@ -157,37 +160,32 @@ if __name__ == "__main__":
     )
 
 
-    # logger.info("加载 AI Agent 模块")
-    # logger.info("依赖: pip install langchain langchain-openai langgraph")
-    # from modules.mod_ai_agent import AiThread
-    # robot.add_task(
-    #     AiThread(
-    #         llm_base_url = config["llm_base_url"],
-    #         llm_api_key = config["llm_api_key"],
-    #         llm_model_name = config["llm_model_name"],
-    #     )
-    # )
+    logger.info("加载 AI Agent 模块")
+    logger.info("依赖: pip install langchain langchain-openai langgraph")
+    from modules.mod_ai_agent import AiThread
+    robot.add_task(
+        AiThread(
+            llm_base_url = config["llm_base_url"],
+            llm_api_key = config["llm_api_key"],
+            llm_model_name = config["llm_model_name"],
+        )
+    )
 
 
-    # logger.info("加载 STT 模块")
-    # from modules.mod_stt import STTThread
-    # robot.add_task(STTThread(config=config))
+    logger.info("加载 STT 模块")
+    from modules.mod_stt import STTThread
+    robot.add_task(STTThread(config=config))
 
 
-    # logger.info("加载 TTS 模块")
-    # from modules.mod_tts import TTSThread
-    # robot.add_task(TTSThread())
+    logger.info("加载 TTS 模块")
+    from modules.mod_tts import TTSThread
+    robot.add_task(TTSThread())
 
 
-    # logger.info("加载语音控制模块")
-    # from modules.mod_voice import VoiceThread
-    # robot.add_task(
-    #     VoiceThread(
-    #         sample_rate = config["voice_sample_rate"],
-    #         channels = config["voice_channels"],
-    #         vad_threshold = config["voice_vad_threshold"],
-    #         frames_per_buffer = config["voice_frames_per_buffer"],
-    #     )
-    # )
+    logger.info("加载语音控制模块")
+    from modules.mod_voice import VoiceThread
+    robot.add_task(
+        VoiceThread()
+    )
 
     robot.run()

@@ -1,6 +1,7 @@
 if __name__ != '__main__':
-    from .API_Car.Car_API import Car
+    from .API_Car.Car import Car
     from .EventBus import EventBus
+    from .API_Servo.Servo import HeadServo
 
 
 import threading
@@ -12,12 +13,14 @@ class CarControl(threading.Thread):
         super().__init__()
 
         self.car = Car()
+        self.head_servo = HeadServo()
+
         self.event_queue = Queue()
         self.event_bus = EventBus()
         self.event_bus.subscribe("EXIT", self.event_queue, "小车控制模块")
         self.event_bus.subscribe("CAR_SPEED", self.event_queue, "小车控制模块")
         self.event_bus.subscribe("CAR_STEER", self.event_queue, "小车控制模块")
-
+        self.event_bus.subscribe("NOD", self.event_queue, "小车控制模块")
         self._stop_event = threading.Event()
 
 
@@ -39,6 +42,9 @@ class CarControl(threading.Thread):
                     x = float(data.get("x", 0))
                     y = float(data.get("y", 0))
                     self.car.steer(x, y)
+                elif event_type == "NOD":
+                    times = int(data.get("times", 1))
+                    self.head_servo.nod(times)
             except:
                 pass
 
