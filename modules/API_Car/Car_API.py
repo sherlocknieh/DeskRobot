@@ -57,8 +57,7 @@ class Car:
 
     def steer(self, x, y):
         L = (y + x/(1+abs(2*y))) / 1.4
-        R = (y - x/(1+abs(2*y))) / 1.4
-        print(L, R)
+        R = (y - x/(1+abs(y))) / 1.4
         self.speed(L, R)
 
 if __name__ == '__main__':

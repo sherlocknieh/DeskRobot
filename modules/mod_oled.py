@@ -136,7 +136,6 @@ class OLEDThread(threading.Thread):
         """请求线程停止。"""
         logger.info("OLEDThread 正在停止...")
         self._stop_event.set()
-        self.event_bus.publish("THREAD_STOPPED", source=self.__class__.__name__)
         logger.info("OLEDThread 已停止。")
 
     def _process_event_queue(self):
@@ -171,6 +170,7 @@ class OLEDThread(threading.Thread):
                     self.needs_render.set()  # 触发重绘以确保图层消失
             elif event["type"] == "EXIT":
                 self.stop()
+                break
             else:
                 logger.warning(f"未知事件类型: {event['type']}")
 

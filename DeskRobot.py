@@ -10,6 +10,7 @@ logger = logging.getLogger("DeskRobot") # 日志工具
 
 class DeskRobot:
     def __init__(self):
+        self.mode = "DEBUG"  # 调试模式
         self.tasklist: list[threading.Thread] = [] # 活动任务列表
         
         self.event_queue = queue.Queue()        # 事件队列
@@ -51,9 +52,6 @@ class DeskRobot:
             print("例如: led_off")
             print("例如: exit")
             # 接收指令
-            # 去掉前后 " 号 并按空格分割
-
-
             cmd = input('> ').strip().split()
             if not cmd:
                 continue
@@ -83,67 +81,80 @@ if __name__ == "__main__":
 
     robot = DeskRobot()
 
-
-    logger.info("加载音乐播放器模块")
-    logger.info("依赖的库: pip install pygame")
-    from modules.mod_music_player import MusicPlayerThread
-    robot.add_task(MusicPlayerThread())
-
-
-    # logger.info("加载 RGB 灯模块")
-    # logger.info("依赖: pip install gpiozero rpi-gpio lgpio")
-    # from modules.mod_led_control import LEDControl
-    # robot.add_task(LEDControl())
+    
+    logger.info("加载手柄模块")
+    logger.info("依赖的库: pip install evdev")
+    from modules.mod_gamepad import GamePad
+    robot.add_task(GamePad())
 
 
-    # logger.info("加载 OLED 模块")
-    # logger.info("依赖: pip install luma.core luma.oled pillow")
-    # from modules.mod_oled import OLEDThread
-    # robot.add_task(
-    #     OLEDThread(
-    #         width = config.get("oled_width", 128),
-    #         height = config.get("oled_height", 64),
-    #         fps = config.get("oled_fps", 50),
-    #         i2c_address = config.get("oled_i2c_address", 0x3C),
-    #         is_simulation = config.get("oled_is_simulation", False),
-    #     )
-    # )
+    logger.info("加载车轮控制模块")  
+    logger.info("依赖: pip install gpiozero evdev")
+    from modules.mod_car_control import CarControl
+    robot.add_task(CarControl())
 
 
-    # logger.info("加载OLED 表情模块")
-    # logger.info("依赖: pip install pillow")
-    # from modules.mod_roboeyes import RoboeyesThread
-    # robot.add_task(
-    #     RoboeyesThread(
-    #         config.get("roboeyes_frame_rate", 50),
-    #         config.get("roboeyes_width", 128),
-    #         config.get("roboeyes_height", 64),
-    #     )
-    # )
+    # logger.info("加载音乐播放器模块")
+    # logger.info("依赖的库: pip install pygame")
+    # from modules.mod_music_player import MusicPlayerThread
+    # robot.add_task(MusicPlayerThread())
 
 
-    # logger.info("加载 OLED 文本模块")
-    # logger.info("依赖: sudo apt install fonts-wqy-microhei")
-    # from modules.mod_text_display import TextDisplayThread
-    # robot.add_task(
-    #     TextDisplayThread(
-    #         config.get("text_renderer_font_path", "arial.ttf"),
-    #         config.get("oled_width", 128),
-    #         config.get("oled_height", 64),
-    #         config.get("oled_fps", 50),
-    #     )
-    # )
+    logger.info("加载 RGB 灯模块")
+    logger.info("依赖: pip install gpiozero rpi-gpio lgpio")
+    from modules.mod_led_control import LEDControl
+    robot.add_task(LEDControl())
 
 
-    # logger.info("加载思考中动画模块")
-    # from modules.mod_thinking_animation import ThinkingAnimationThread
-    # robot.add_task(
-    #     ThinkingAnimationThread(
-    #         frame_rate = config.get("thinking_animation_frame_rate", 20),
-    #         width = config.get("oled_width", 128),
-    #         height = config.get("oled_height", 64),
-    #     )
-    # )
+    logger.info("加载 OLED 模块")
+    logger.info("依赖: pip install luma.core luma.oled pillow")
+    from modules.mod_oled import OLEDThread
+    robot.add_task(
+        OLEDThread(
+            width = config.get("oled_width", 128),
+            height = config.get("oled_height", 64),
+            fps = config.get("oled_fps", 50),
+            i2c_address = config.get("oled_i2c_address", 0x3C),
+            is_simulation = config.get("oled_is_simulation", False),
+        )
+    )
+
+
+
+    logger.info("加载OLED 表情模块")
+    logger.info("依赖: pip install pillow")
+    from modules.mod_roboeyes import RoboeyesThread
+    robot.add_task(
+        RoboeyesThread(
+            config.get("roboeyes_frame_rate", 50),
+            config.get("roboeyes_width", 128),
+            config.get("roboeyes_height", 64),
+        )
+    )
+
+
+    logger.info("加载 OLED 文本模块")
+    logger.info("依赖: sudo apt install fonts-wqy-microhei")
+    from modules.mod_text_display import TextDisplayThread
+    robot.add_task(
+        TextDisplayThread(
+            config.get("text_renderer_font_path", "arial.ttf"),
+            config.get("oled_width", 128),
+            config.get("oled_height", 64),
+            config.get("oled_fps", 50),
+        )
+    )
+
+
+    logger.info("加载思考中动画模块")
+    from modules.mod_thinking_animation import ThinkingAnimationThread
+    robot.add_task(
+        ThinkingAnimationThread(
+            frame_rate = config.get("thinking_animation_frame_rate", 20),
+            width = config.get("oled_width", 128),
+            height = config.get("oled_height", 64),
+        )
+    )
 
 
     # logger.info("加载 AI Agent 模块")
@@ -178,11 +189,5 @@ if __name__ == "__main__":
     #         frames_per_buffer = config["voice_frames_per_buffer"],
     #     )
     # )
-
-
-    # logger.info("加载车轮控制模块")  
-    # logger.info("依赖: pip install gpiozero evdev")
-    # from modules.mod_car_control import CarControl
-    # robot.add_task(CarControl())
 
     robot.run()
