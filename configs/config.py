@@ -104,6 +104,7 @@ config["voice_sample_rate"] = 16000  # 采样率
 config["voice_channels"] = 1  # 声道数
 config["voice_vad_threshold"] = 0.5  # VAD 灵敏度
 config["voice_frames_per_buffer"] = 512  # 音频帧大小
+config["silero_vad_model_path"] = "~/.cache/torch/hub/snakers4_silero-vad_master"
 
 # ==============================================================================
 # OLED 屏幕配置

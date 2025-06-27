@@ -17,36 +17,33 @@ class SileroVAD:
     """
 
     def __init__(self, threshold: float = 0.9, sample_rate: int = 16000):
-        self.threshold = threshold
-        self.sample_rate = sample_rate
 
-        if self.sample_rate not in [8000, 16000]:
+
+        if sample_rate not in [8000, 16000]:
             raise ValueError("Silero VAD anly supports 8000 or 16000 sample rate.")
 
-        logger.info("正在加载 Silero VAD 模型...")
-        
-        # 从本地缓存加载模型
+        # 加载模型
+        logger.info("正在从本地缓存加载 Silero VAD 模型...")
         local_model_path = os.path.expanduser("~/.cache/torch/hub/snakers4_silero-vad_master")
         try:
-            self.model, self.utils = torch.hub.load(
-                repo_or_dir=local_model_path,
-                model="silero_vad",
-                source="local",
-                force_reload=False
-            )
+            model, utils = torch.hub.load(
+                repo_or_dir = local_model_path,
+                model       = "silero_vad",
+                source      = "local",
+                force_reload= False) # type: ignore
             
-            (
-                get_speech_timestamps,
-                save_audio,
-                read_audio,
-                self.VADIterator,
-                collect_chunks,
-            ) = self.utils
-            self.vad_iterator = self.VADIterator(self.model, threshold=self.threshold)
+            (get_speech_timestamps,
+            save_audio,
+            read_audio,
+            VADIterator,
+            collect_chunks) = utils
+
+            self.vad_iterator = VADIterator(model, threshold)
             logger.info("Silero VAD 模型加载成功。")
         except Exception as e:
-            logger.error(f"加载 Silero VAD 模型失败: {e}", exc_info=True)
+            logger.error(f"Silero VAD 模型加失败: {e}", exc_info=True)
             raise
+
 
     def process_chunk(self, chunk: bytes) -> Optional[Dict]:
         """
@@ -68,6 +65,7 @@ class SileroVAD:
 
         return speech_dict
 
+
     def reset_states(self):
         """
         重置 VAD 迭代器的内部状态。
@@ -80,17 +78,14 @@ class SileroVAD:
 if __name__ == "__main__":
     import os
     import sys
-
-    # 将项目根目录添加到 sys.path，以解决模块导入问题
-    project_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..")
-    )
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
-
     import wave
 
+    # 将项目根目录添加到 sys.path，以解决模块导入问题
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    sys.path.insert(0, project_root)
     from modules.API_Voice.IO.io import VoiceIO
+    sys.path.pop(0)
+
 
     logging.basicConfig(
         level=logging.INFO,
@@ -98,10 +93,10 @@ if __name__ == "__main__":
     )
 
     # --- 配置 ---
-    SAMPLE_RATE = 16000
     # Silero VAD 模型在 16kHz 采样率下期望的帧大小为 512。
     # 不要使用其他值，否则会引发模型内部错误。
     # (512 samples / 16000 Hz = 32 ms)
+    SAMPLE_RATE = 16000
     FRAMES_PER_BUFFER = 512
     CHANNELS = 1
     RECORD_SECONDS = 15
@@ -144,7 +139,7 @@ if __name__ == "__main__":
                     filename = f"vad_test_output_{file_counter}.wav"
                     with wave.open(filename, "wb") as wf:
                         wf.setnchannels(CHANNELS)
-                        wf.setsampwidth(voice_io.p.get_sample_size(voice_io.format))
+                        wf.setsampwidth(voice_io.p.get_sample_size(voice_io.format)) # type: ignore
                         wf.setframerate(SAMPLE_RATE)
                         wf.writeframes(b"".join(speech_frames))
                     print(f"语音已保存到: {filename}")
