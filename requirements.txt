@@ -34,3 +34,7 @@ flask
 
 # --- Car Control ---
 evdev; sys_platform == 'linux'
+
+# --- 语音唤醒 ---
+openwakeword
+speexdsp-ns  # apt-get install libspeex-dev libspeexdsp-dev
