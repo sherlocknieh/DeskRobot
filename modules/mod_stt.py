@@ -71,7 +71,9 @@ class STTThread(threading.Thread):
                 logger.error(f"不支持的 STT 提供商: {stt_provider}")
                 return False
 
-            self.event_bus.subscribe("VOICE_COMMAND_DETECTED", self.event_queue, self.name)
+            self.event_bus.subscribe(
+                "VOICE_COMMAND_DETECTED", self.event_queue, self.name
+            )
             self.event_bus.subscribe("EXIT", self.event_queue, self.name)
             logger.info("STTThread 底层组件设置成功。")
             return True
@@ -139,7 +141,8 @@ class STTThread(threading.Thread):
 
             if recognized_text:
                 logger.info(f"识别结果: '{recognized_text}'")
-                self.event_bus.publish("STT_RESULT_RECEIVED", {"text":recognized_text})
+                self.event_bus.publish("STT_RESULT_RECEIVED", {"text": recognized_text})
+                self.event_bus.publish("INTERRUPTION_DETECTED", source=self.name)
             else:
                 logger.warning("STT 未返回有效文本。")
 
