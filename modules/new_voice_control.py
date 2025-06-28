@@ -74,7 +74,7 @@ if __name__ == '__main__':
     from EventBus import EventBus
     from time import sleep
 
-    test = VoiceCMD()
+    test = VoiceControl()
     print("测试开始")
     test.start()
 

@@ -44,6 +44,9 @@ class LEDControl(threading.Thread):
         self.thread_flag = threading.Event() # 线程控制标志位
         self.logger = logging.getLogger(self.name) # 日志工具
         
+
+    def run(self):
+
         # 订阅消息
         self.event_bus.subscribe("EXIT", self.event_queue, "LED灯模块")
         self.event_bus.subscribe("LED_ON", self.event_queue, "LED灯模块")
@@ -51,9 +54,6 @@ class LEDControl(threading.Thread):
         self.event_bus.subscribe("LED_FLASH", self.event_queue, "LED灯模块")
         self.event_bus.subscribe("LED_BREEZE", self.event_queue, "LED灯模块")
 
-
-
-    def run(self):
         self.thread_flag.set()              # 线程标志位设为 True
         while self.thread_flag.is_set():     # 线程循环条件: thread_flag 状态为 True
 
@@ -81,9 +81,9 @@ class LEDControl(threading.Thread):
             elif event['type'] == "LED_BREEZE":  # 接收到"LED_BREEZE"消息
                 speed = event['data'].get("speed", 1)   # 获取事件数据中的speed参数, 若不存在则默认为1
                 self.rgb.breeze(speed)
+        self.logger.info("LED 控制模块已停止")
     
     def stop(self):
-        self.logger.info("LED 控制模块已停止")
         self.thread_flag.clear()    # 线程标志位设为 False, 停止线程
 
 

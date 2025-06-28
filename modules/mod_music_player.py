@@ -175,10 +175,11 @@ class MusicPlayerThread(threading.Thread):
 if __name__ == "__main__":
     # 测试代码
     import numpy as np
+    from EventBus import EventBus
     
     import os
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    music_path = os.path.join(project_root, "Creamy.ogg")
+    music_path = os.path.join(project_root, "tools/Creamy.ogg")
     
     # 生成测试音频
     sample_rate = 44100
@@ -187,41 +188,49 @@ if __name__ == "__main__":
     tone = np.sin(440 * 2 * np.pi * t)
     audio = np.int16(tone * 32767)
     
+    # 转为立体声（2列）
+    audio = np.column_stack((audio, audio))
+    
     pygame.mixer.init()
     sound = pygame.sndarray.make_sound(audio)
-    sound.save("test.wav")  # 保存为WAV格式
-    
-    # 初始化事件总线
-    event_bus = EventBus()
+
+    # 保存为WAV格式
+    #sound.save("test.wav")
+    import scipy.io.wavfile
+    audio = np.column_stack((audio, audio))
+    scipy.io.wavfile.write("test.wav", sample_rate, audio)
+
     
     # 创建并启动播放器线程
     player = MusicPlayerThread()
     player.start()
 
     # 播放单个文件
-    event_bus.publish("PLAY_MUSIC", path="test.wav")
+    player.event_bus.publish("PLAY_MUSIC", {"path": "test.wav"})
 
     # 播放列表 
-    event_bus.publish("PLAY_MUSIC", path=["song1.wav", "song2.wav", "song3.wav"])
+    player.event_bus.publish("PLAY_MUSIC", {"path": ["song1.wav", "song2.wav", "song3.wav"]})
 
     # 切歌控制
-    event_bus.publish("NEXT_SONG")
-    event_bus.publish("PREVIOUS_SONG")
+    player.event_bus.publish("NEXT_SONG")
+    player.event_bus.publish("PREVIOUS_SONG")
+
+    
     # 测试暂停
     print("暂停播放")
-    player.event_bus.publish("PAUSE_MUSIC")
+    player.player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 测试恢复
     print("恢复播放")
-    player.event_bus.publish("PAUSE_MUSIC")
+    player.player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 停止播放
     print("停止播放")
-    player.event_bus.publish("STOP_MUSIC")
+    player.player.event_bus.publish("STOP_MUSIC")
 
     # 退出播放器
     print("退出播放器")
-    player.event_bus.publish("EXIT")
+    player.player.event_bus.publish("EXIT")
     player.join()

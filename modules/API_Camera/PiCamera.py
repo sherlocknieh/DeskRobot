@@ -63,46 +63,39 @@ class PiCamera:
             self._running = False
 
 
-def test():
+
+
+if __name__ == '__main__':
     from flask import Flask, render_template, Response, jsonify  # 导入Flask相关模块
-    import time
 
     app = Flask(__name__)
     cam = PiCamera()
 
-    @app.route('/')
-    def index():
-        return render_template('camera.html')
-    
+    def register_routes():
+        def index():
+            return render_template('camera.html')
 
-    @app.route('/stream')
-    def stream():
-        cam.start()  # 每次访问流时尝试启动摄像头
-        def gen_frames():
-            try:
+        def stream():
+            cam.start()
+            def gen_frames():
                 while True:
                     frame = cam.get_frame('stream')
                     yield frame
-                    time.sleep(0.04) # 控制帧率减少延迟
-            finally:
-                cam.stop()
-        return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame') # type: ignore
+            return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame') # type: ignore
 
+        def shutdown():
+            cam.stop()
+            return jsonify({'status': 'camera stopped'})
 
-    @app.route('/shutdown', methods=['POST'])
-    def shutdown():
-        cam.stop()
-        return jsonify({'status': 'camera stopped'})
+        def capture():
+            frame = cam.get_frame('jpeg')
+            return Response(frame, mimetype='image/jpeg')
 
+        app.add_url_rule('/', view_func=index)
+        app.add_url_rule('/stream', view_func=stream)
+        app.add_url_rule('/shutdown', view_func=shutdown, methods=['POST'])
+        app.add_url_rule('/capture', view_func=capture)
 
-    @app.route('/capture')
-    def capture():
-        frame = cam.get_frame('jpeg')
-        return Response(frame, mimetype='image/jpeg')
-
+    register_routes()
 
     app.run(host='0.0.0.0', port=5000, debug=False)
-
-
-if __name__ == '__main__':
-    test()

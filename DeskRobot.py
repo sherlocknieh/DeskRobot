@@ -40,12 +40,10 @@ class DeskRobot:
     def stop(self):
         self.event_bus.publish("EXIT", "DeskRobot") # 发布"EXIT"事件
         for task in self.tasklist:
-            task.join(timeout=3)                    # 等待所有任务结束
+            task.join(timeout=5)                    # 等待所有任务结束
             if task.is_alive():
                 logger.warning(f"线程 {task.name} 未能正常停止")
-            logger.info(f"线程 {task.name} 已停止")
 
-        logger.info("所有子线程已停止")
         self.thread_flag.clear()               # 设本线程为停止状态
 
     def io_loop(self):
@@ -79,37 +77,54 @@ class DeskRobot:
                 data[key.strip()] = value
             # 发布事件
             self.event_bus.publish(event_type, data, "DeskRobot")
-        logger.info(f"DeskRobot 已退出调试终端")
+        logger.info(f"已退出调试终端")
 
 if __name__ == "__main__":
 
     robot = DeskRobot()
 
-    logger.info("加载手柄模块")
-    logger.info("依赖的库: pip install evdev")
-    from modules.mod_game_pad import GamePad
-    robot.add_task(GamePad())
+    # logger.info("加载 RGB 灯模块")
+    # logger.info("依赖: pip install gpiozero rpi-gpio lgpio")
+    # from modules.mod_led_control import LEDControl
+    # robot.add_task(LEDControl())
 
-    logger.info("加载运动控制模块")  
-    logger.info("依赖: pip install gpiozero evdev")
-    logger.info("依赖: sudo pigpiod")
-    from modules.mod_car_control import CarControl
-    robot.add_task(CarControl())
 
-    logger.info("加载网络摄像头模块")
-    logger.info("依赖: pip install opencv-python")
-    from modules.new_web_camera import WebCamera
-    robot.add_task(WebCamera())
+    # logger.info("加载运动控制模块")  
+    # logger.info("依赖: pip install gpiozero evdev")
+    # logger.info("依赖: sudo pigpiod")
+    # from modules.mod_car_control import CarControl
+    # robot.add_task(CarControl())
 
-    logger.info("加载 RGB 灯模块")
-    logger.info("依赖: pip install gpiozero rpi-gpio lgpio")
-    from modules.mod_led_control import LEDControl
-    robot.add_task(LEDControl())
+    # logger.info("加载手柄模块")
+    # logger.info("依赖的库: pip install evdev")
+    # from modules.mod_game_pad import GamePad
+    # robot.add_task(GamePad())
+
+    # logger.info("加载网络摄像头模块")
+    # logger.info("依赖: pip install opencv-python")
+    # from modules.new_web_camera import WebCamera
+    # robot.add_task(WebCamera())
+
+
+
+    # logger.info("加载 STT 模块")
+    # from modules.mod_stt import STTThread
+    # robot.add_task(STTThread(config=config))
+
+    # logger.info("加载 TTS 模块")
+    # from modules.mod_tts import TTSThread
+    # robot.add_task(TTSThread())
+
+    # logger.info("加载语音检测模块")
+    # from modules.mod_voice import VoiceThread
+    # robot.add_task(VoiceThread())
 
     # logger.info("加载音乐播放器模块")
     # logger.info("依赖的库: pip install pygame")
     # from modules.mod_music_player import MusicPlayerThread
     # robot.add_task(MusicPlayerThread())
+
+
 
     # logger.info("加载 OLED 模块")
     # logger.info("依赖: pip install luma.core luma.oled pillow")
@@ -157,6 +172,7 @@ if __name__ == "__main__":
     #     )
     # )
 
+
     # logger.info("加载 AI Agent 模块")
     # logger.info("依赖: pip install langchain langchain-openai langgraph")
     # from modules.mod_ai_agent import AiThread
@@ -167,17 +183,5 @@ if __name__ == "__main__":
     #         llm_model_name = config["llm_model_name"],
     #     )
     # )
-
-    # logger.info("加载 STT 模块")
-    # from modules.mod_stt import STTThread
-    # robot.add_task(STTThread(config=config))
-
-    # logger.info("加载 TTS 模块")
-    # from modules.mod_tts import TTSThread
-    # robot.add_task(TTSThread())
-
-    # logger.info("加载语音检测模块")
-    # from modules.mod_voice import VoiceThread
-    # robot.add_task(VoiceThread())
 
     robot.run()
