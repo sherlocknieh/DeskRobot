@@ -16,11 +16,12 @@ logger = logging.getLogger("手柄模块")
 class GamePad(threading.Thread):
     def __init__(self):
         super().__init__()
+        self.name = "手柄模块"
         self.car = Car()
         self.event_queue = Queue()
         self.event_bus = EventBus()
         self.thread_flag = threading.Event()
-        self.event_bus.subscribe("EXIT", self.event_queue, "手柄模块")
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         self.reconnect_event = threading.Event()
         self.reconnecting = False
 
@@ -68,7 +69,7 @@ class GamePad(threading.Thread):
 
     def update_xy(self):
         try:
-            for event in self.gamepad.read_loop():
+            for event in self.gamepad.read_loop():  # type: ignore
                 with self.lock:
                     if event.type == evdev.ecodes.EV_ABS:
                         if event.code == 0:

@@ -12,12 +12,14 @@ class CarControl(threading.Thread):
     def __init__(self):
         super().__init__()
 
+        self.name = "小车控制"
+
         self.car = Car()
         self.head_servo = HeadServo()
 
         self.event_queue = Queue()
         self.event_bus = EventBus()
-        self.event_bus.subscribe("EXIT", self.event_queue, "小车控制模块")
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         self.event_bus.subscribe("CAR_SPEED", self.event_queue, "小车控制模块")
         self.event_bus.subscribe("CAR_STEER", self.event_queue, "小车控制模块")
         self.event_bus.subscribe("NOD", self.event_queue, "小车控制模块")

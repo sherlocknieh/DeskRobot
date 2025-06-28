@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络摄像头</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-photo-row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            gap: 32px;
+        }
+
+        #video {
+            background-color: #000;
+            min-height: 480px;
+            min-width: 640px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body>
+
+    <body>
+        <div class="container">
+            <h1>网络摄像头</h1>
+            <div class="video-photo-row">
+                <img id="video" src="/stream">
+                <div style="position: relative; display: inline-block;">
+                    <img id="snapshot" style="display:none; border:1px solid #ccc; max-width:320px;">
+                    <button id="deleteSnapshotBtn"
+                        style="display:none; position:absolute; top:5px; right:5px; z-index:2;"
+                        class="btn btn-sm btn-danger">删除</button></div></div>
+            <div class="mt-3">
+                <button id="startBtn" class="btn btn-primary">开启相机</button>
+                <button id="stopBtn" class="btn btn-primary">关闭相机</button>
+                <button id="captureBtn" class="btn btn-primary">拍照</button></div></div>
+
+        <script>
+            window.addEventListener('beforeunload', function () {
+                navigator.sendBeacon('/shutdown');
+            }); // 关闭窗口时发送请求
+
+            const video = document.getElementById('video');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const captureBtn = document.getElementById('captureBtn');
+            const snapshot = document.getElementById('snapshot');
+            const deleteSnapshotBtn = document.getElementById('deleteSnapshotBtn');
+
+            startBtn.onclick = function () {
+                video.src = '/stream';
+            }; // 重新请求视频流
+
+            stopBtn.onclick = function () {
+                video.src = '';
+                fetch('/shutdown', { method: 'POST' });
+            };
+
+            captureBtn.onclick = function () {
+                fetch('/capture')
+                    .then(res => res.blob())
+                    .then(blob => {
+                        snapshot.src = URL.createObjectURL(blob);
+                        snapshot.style.display = 'block';
+                        deleteSnapshotBtn.style.display = 'block';
+                    });
+            };
+
+            deleteSnapshotBtn.onclick = function () {
+                snapshot.src = '';
+                snapshot.style.display = 'none';
+                deleteSnapshotBtn.style.display = 'none';
+            };
+        </script>
+    </body>
+
+</html>

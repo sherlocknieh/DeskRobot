@@ -1,51 +1,121 @@
-import sys
-sys.path.insert(0, '/usr/lib/python3/dist-packages') # 为 picamera2 添加系统库路径
-from picamera2 import Picamera2
-sys.path.pop(0)  # 导入 picamera2 后立即移除系统库路径，避免影响其他模块
+"""网络摄像头模块
+"""
+
+# 标准库
+import queue
+import threading
+import logging
+import time
 
 
-from flask import Flask, render_template, request, jsonify, Response  # 导入Flask相关模块
-import cv2
+# 第三方库
+from flask import Flask, render_template, Response, jsonify  # 导入Flask相关模块
+
+
+# 自定义模块
+if __name__ != '__main__':
+    from .EventBus import EventBus
+    from .API_Camera.PiCamera import PiCamera
+
+
+class WebCamera(threading.Thread):
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.name = "网络摄像头"              # 模块名称
+        self.logger = logging.getLogger(self.name) # 日志工具
+        self.event_queue = queue.Queue()     # 事件队列
+        self.event_bus = EventBus()          # 事件总线
+        self.cam = PiCamera()                # 相机接口
+        self.app = Flask(__name__)           # Flask应用
+        self.thread_flag = threading.Event() # 线程控制标志位
+
+        # 路由注册
+        self.app.add_url_rule('/', 'index', self.index)
+        self.app.add_url_rule('/stream', 'stream', self.stream)
+        self.app.add_url_rule('/shutdown', 'shutdown', self.shutdown, methods=['POST'])
+        self.app.add_url_rule('/capture', 'capture', self.capture)
+    
+    def index(self):
+        return render_template('camera.html')
+
+    def stream(self):
+        self.cam.start()
+        def gen_frames():
+            try:
+                while True:
+                    frame = self.cam.get_frame('stream')
+                    yield frame
+                    #time.sleep(0.04)
+            finally:
+                self.cam.stop()
+        return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame') # type: ignore
+
+    def shutdown(self):
+        self.cam.stop()
+        return jsonify({'status': 'camera stopped'})
+
+
+    def capture(self):
+        frame = self.cam.get_frame('jpeg')
+        return Response(frame, mimetype='image/jpeg')
+
+    def run(self):
+        threading.Thread(target=self.web_server, name="网页服务", daemon=True).start()
+        self.event_handler()
+    
+    def web_server(self):
+        self.logger.info("启动网络服务")
+        self.app.run(host='0.0.0.0', port=5000, debug=False)
+        self.logger.info("网络服务已关闭")
 
 
 
-# 创建Flask应用实例
-app = Flask(__name__)
+    def event_handler(self):
+        
+        # 订阅消息
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
+        
+        self.logger.info("开始事件监听")
+        self.thread_flag.set()
+        while self.thread_flag.is_set():
+            event = self.event_queue.get()
+            event_type = event["type"]
+            self.logger.info(f"收到 {event_type} 消息")
+            if event_type == "EXIT":
+                self.stop()
+                break
+            else:
+                self.logger.info(f"收到事件 {event['type']}")
 
-# 路由：处理根URL的请求
-@app.route('/')
-def index():
-    # 返回渲染后的index.html模板
-    return render_template('camera.html')
+    def stop(self):
+        self.cam.stop()
+        self.thread_flag.clear()
+        self.logger.info(f"已停止事件监听")
 
-# 路由：处理视频流请求
-@app.route('/stream')
-def stream():
-    # 返回帧生成函数生成的视频流
-    # mimetype指定响应的MIME类型为multipart，用于流式传输
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame') # 使用可迭代函数生成视频流
 
-def gen_frames():
-    # 打开摄像头
-    picam2 = Picamera2()
-    picam2.configure(picam2.create_still_configuration(main={"size": (640, 480)}))
-    picam2.start()
-    while True:
-        # 捕获帧
-        frame = picam2.capture_array()
-        # 转换为BGR格式（Flask需要JPEG，OpenCV处理BGR）
-        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        # 编码为JPEG
-        ret, buffer = cv2.imencode('.jpg', frame_bgr)
-        frame = buffer.tobytes()
-        # 添加帧头尾标识符
-        yield (b'--frame\r\n' 
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    # 释放摄像头
-    picam2.stop()
 
-# 程序入口点
+
+"""测试代码:
+"""
+
 if __name__ == '__main__':
-    # 启动Flask应用
-    # debug=False 表示关闭调试模式，用于生产环境
-    app.run(debug=False)
+
+    from API_Camera.PiCamera import PiCamera
+    from EventBus import EventBus
+    from time import sleep
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(threadName)s - %(levelname)s - %(message)s",
+    )
+
+    test = WebCamera()
+    print("测试开始")
+    test.start()
+    for i in range(5):
+        print("倒计时:", 5-i)
+        sleep(1)
+    test.event_bus.publish("EXIT")
+    print("测试结束")
+
+

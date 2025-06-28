@@ -56,10 +56,10 @@ def detect_faces(img):
 
 
 if __name__ != '__main__':
-    from .API_Camera.PiCamera import PiCamera
-    from .API_Car.Car import Car
-    from .API_Servo.Servo import HeadServo
     from .EventBus import EventBus
+    from .API_Camera.PiCamera import PiCamera
+    from .API_Servo.Servo import HeadServo
+    from .API_Car.Car import Car
 
 
 class FaceTrack(threading.Thread):
@@ -71,8 +71,8 @@ class FaceTrack(threading.Thread):
         self.cam = PiCamera()                # 相机接口
         self.car = Car()                     # 小车接口
         self.head = HeadServo()              # 舵机接口
-        self.thread_flag = threading.Event() # 线程控制标志位
-        self.face_track_flag = False         # 人脸追踪标志位
+        self.thread_flag = threading.Event()      # 线程控制标志位
+        self.face_track_flag = threading.Event()  # 人脸追踪标志位
         self.logger = logging.getLogger(self.name) # 日志工具
 
         # 订阅消息
@@ -91,21 +91,25 @@ class FaceTrack(threading.Thread):
                 self.stop()
                 break
 
-            elif event['type'] == "FACE_TRACK_ON":    # 接收到"LED_OFF"消息
-                self.face_track_flag = True
+            elif event['type'] == "FACE_TRACK_ON":    # 接收到"FACE_TRACK_ON"消息
+                self.face_track_flag.set()
                 self.logger.info("开启人脸追踪")
 
-            elif event['type'] == "FACE_TRACK_OFF":    # 接收到"LED_OFF"消息
-                self.face_track_flag = False
+            elif event['type'] == "FACE_TRACK_OFF":    # 接收到"FACE_TRACK_OFF"消息
+                self.face_track_flag.clear()
                 self.logger.info("关闭人脸追踪")
 
 
     def trackloop(self):
-        frame = self.get_frame() # type: ignore
-        face_center = detect_face(frame)
-        if face_center:
-                dx = face_center.x - frame_center.x  # 左右偏移
-                dy = face_center.y - frame_center.y  # 上下偏移
+        """
+        人脸追踪循环
+        """
+        while self.face_track_flag.is_set():
+            frame = self.get_frame() # type: ignore
+            face_center = detect_face(frame)
+            if face_center:
+                    dx = face_center.x - frame_center.x  # 左右偏移
+                    dy = face_center.y - frame_center.y  # 上下偏移
 
                 if abs(dx) > 阈值:
                     控制左右轮速度(dx)  # 向左/右旋转机器人
@@ -139,8 +143,9 @@ class FaceTrack(threading.Thread):
 
 
     def stop(self):
-        self.thread_flag.clear()    # 线程标志位设为 False, 停止线程
-        self.logger.info(f"{self.name} 已停止")
+        self.face_track_flag.clear()    # 停止人脸追踪
+        self.thread_flag.clear()        # 停止线程
+        self.logger.info(f"{self.name} 线程已停止")
 
 
 

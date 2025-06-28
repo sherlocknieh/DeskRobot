@@ -22,16 +22,19 @@ class HeadServo:
     def set_angle(self, angle):
         """
             平视:   0 度
-            仰视: -85 度
-            低头:  45 度
+            仰视:  85 度
+            低头: -45 度
         """
-        if angle < -85:
-            angle = -85
-        elif angle > 45:
-            angle = 45
-        self.servo.angle = angle
+        if angle >  85:
+            angle = 85
+        elif angle < -45:
+            angle = -45
+        self.servo.angle = -angle
 
-    def nod(self, times=1, down_angle=30, up_angle=0, delay=0.4):
+    def nod(self, times=1, down_angle=-30, up_angle=0, delay=0.4):
+        """
+        点头
+        """
         for _ in range(times):
             self.set_angle(down_angle)
             time.sleep(delay/2)

@@ -1,6 +1,8 @@
 import sys
+print("导入系统库 libcamera")
 sys.path.insert(0, '/usr/lib/python3/dist-packages')
 from picamera2 import Picamera2
+print("已导入 libcamera")
 sys.path.pop(0)
 
 import cv2
