@@ -1,11 +1,12 @@
 '''
-pip install pigpio
+pip install pigpio gpiozero
 sudo pigpiod
 '''
 
 from gpiozero import AngularServo
 from gpiozero.pins.pigpio import PiGPIOFactory
 
+import time
 
 class HeadServo:
     def __init__(self):
@@ -19,13 +20,25 @@ class HeadServo:
         )
 
     def set_angle(self, angle):
+        """
+            平视:   0 度
+            仰视: -85 度
+            低头:  45 度
+        """
         if angle < -85:
             angle = -85
         elif angle > 45:
             angle = 45
         self.servo.angle = angle
 
+    def nod(self, times=1, down_angle=30, up_angle=0, delay=0.4):
+        for _ in range(times):
+            self.set_angle(down_angle)
+            time.sleep(delay/2)
+            self.set_angle(up_angle)
+            time.sleep(delay)
+
 
 if __name__ == '__main__':
     head_servo = HeadServo()
-    head_servo.set_angle(-45)
+    head_servo.nod(times=2)  # 点头两次

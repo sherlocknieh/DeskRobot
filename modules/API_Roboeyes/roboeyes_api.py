@@ -7,7 +7,7 @@ import logging
 
 from .roboeyes import ANGRY, DEFAULT, HAPPY, TIRED, RoboEyes
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("RoboeyesAPI")
 
 
 class RoboeyesAPI:

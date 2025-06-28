@@ -5,7 +5,7 @@ import requests
 # 从环境变量或配置文件中获取API密钥
 SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/audio/transcriptions"
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("SiliconFlowSTT")
 
 
 class SiliconFlowSTT:
@@ -37,7 +37,7 @@ class SiliconFlowSTT:
         """
         try:
             with open(audio_file_path, "rb") as audio_file:
-                payload = {"model": self.model_name, "language": self.language}
+                data = {"model": self.model_name, "language": self.language}
                 files = {
                     "file": (
                         "audio.wav",
@@ -45,9 +45,9 @@ class SiliconFlowSTT:
                         "audio/wav",
                     )
                 }
-                logger.info(f"正在调用 SiliconFlow API (文件)... payload: {payload}")
+                logger.info(f"正在调用 SiliconFlow API (文件)... data: {data}")
                 response = requests.post(
-                    SILICONFLOW_API_URL, headers=self.headers, data=payload, files=files
+                    SILICONFLOW_API_URL, headers=self.headers, data=data, files=files
                 )
                 response.raise_for_status()
                 result = response.json()

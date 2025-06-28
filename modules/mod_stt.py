@@ -9,7 +9,7 @@ from .API_Voice.STT.iflytek_stt import IflytekSTTClient
 from .API_Voice.STT.siliconflow_stt import SiliconFlowSTT
 from .EventBus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("STT模块")
 
 
 class STTThread(threading.Thread):
@@ -20,21 +20,21 @@ class STTThread(threading.Thread):
 
     subscribe:
     - VOICE_COMMAND_DETECTED: 接收到完整的语音指令时触发。
-        - payload: {"audio_data": bytes, "sample_rate": int, "channels": int}
-    - STOP_THREADS: 停止线程。
+        - data: {"audio_data": bytes, "sample_rate": int, "channels": int}
+    - EXIT: 停止线程。
 
     publish:
     - STT_RESULT_RECEIVED: 成功识别出文本后发布。
-        - payload: {"text": str}
+        - data: {"text": str}
     - ERROR: 发生错误时发布。
-        - payload: {"message": str}
+        - data: {"message": str}
     """
 
-    def __init__(self, event_bus: EventBus, config: dict):
+    def __init__(self, config: dict):
         super().__init__()
         self.daemon = True
         self.name = "STT Thread"
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self.config = config
         self.event_queue = Queue()
         self.stop_event = threading.Event()
@@ -43,7 +43,7 @@ class STTThread(threading.Thread):
 
     def _setup(self):
         """根据配置初始化 STT 客户端。"""
-        stt_provider = self.config.get("stt_provider", "iflytek").lower()
+        stt_provider = self.config.get("stt_provider", "siliconflow").lower()
         logger.info(f"正在设置 STT 提供商: {stt_provider}")
 
         try:
@@ -71,16 +71,14 @@ class STTThread(threading.Thread):
                 logger.error(f"不支持的 STT 提供商: {stt_provider}")
                 return False
 
-            self.event_bus.subscribe(
-                "VOICE_COMMAND_DETECTED", self.event_queue, self.name
-            )
-            self.event_bus.subscribe("STOP_THREADS", self.event_queue, self.name)
+            self.event_bus.subscribe("VOICE_COMMAND_DETECTED", self.event_queue, self.name)
+            self.event_bus.subscribe("EXIT", self.event_queue, self.name)
             logger.info("STTThread 底层组件设置成功。")
             return True
 
         except Exception as e:
             logger.error(f"STTThread 设置失败: {e}", exc_info=True)
-            self.event_bus.publish("ERROR", message=f"STTThread 设置失败: {e}")
+            self.event_bus.publish("ERROR", {"message": f"STTThread 设置失败: {e}"})
             return False
 
     def run(self):
@@ -102,16 +100,16 @@ class STTThread(threading.Thread):
     def _handle_event(self, event):
         event_type = event.get("type")
         if event_type == "VOICE_COMMAND_DETECTED":
-            payload = event.get("payload", {})
-            audio_data = payload.get("audio_data")
+            data = event.get("data", {})
+            audio_data = data.get("audio_data")
             if audio_data:
                 self._process_audio(
                     audio_data=audio_data,
-                    sample_rate=payload.get("sample_rate", 16000),
-                    channels=payload.get("channels", 1),
-                    sample_width=payload.get("sample_width", 2),
+                    sample_rate=data.get("sample_rate", 16000),
+                    channels=data.get("channels", 1),
+                    sample_width=data.get("sample_width", 2),
                 )
-        elif event_type == "STOP_THREADS":
+        elif event_type == "EXIT":
             self.stop()
 
     def _process_audio(
@@ -141,13 +139,13 @@ class STTThread(threading.Thread):
 
             if recognized_text:
                 logger.info(f"识别结果: '{recognized_text}'")
-                self.event_bus.publish("STT_RESULT_RECEIVED", text=recognized_text)
+                self.event_bus.publish("STT_RESULT_RECEIVED", {"text":recognized_text})
             else:
                 logger.warning("STT 未返回有效文本。")
 
         except Exception as e:
             logger.error(f"处理音频时发生错误: {e}", exc_info=True)
-            self.event_bus.publish("ERROR", message=f"STT 处理失败: {e}")
+            self.event_bus.publish("ERROR", {"message": f"STT 处理失败: {e}"})
         finally:
             # 确保临时文件被删除
             if tmp_file_path and os.path.exists(tmp_file_path):

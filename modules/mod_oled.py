@@ -4,7 +4,7 @@ OLED 显示线程
 
 subscribe:
 - UPDATE_LAYER: 更新或创建图层
-    - payload格式:
+    - data格式:
   {
     "layer_id": str,  # 图层唯一标识符
     "image": PIL.Image.Image,  # 要显示的图像
@@ -13,17 +13,17 @@ subscribe:
     "duration": int  # 图像显示的持续时间（秒）
   }
 - SET_LAYER_VISIBILITY: 设置图层可见性
-    - payload格式:
+    - data格式:
   {
     "layer_id": str,  # 图层唯一标识符
     "visible": bool  # 图层是否可见
   }
 - DELETE_LAYER: 删除图层
-    - payload格式:
+    - data格式:
     {
     "layer_id": str  # 图层唯一标识符
     }
-- STOP_THREADS: 停止线程
+- EXIT: 停止线程
 
 """
 
@@ -31,13 +31,13 @@ import logging
 import queue
 import threading
 import time
-from queue import Queue
 
 from PIL import Image, ImageDraw, ImageFont
+if __name__ != "__main__":
+    from .API_OLED.OLED_API import OLED
+    from .EventBus import EventBus
 
-from .API_OLED.OLED_API import OLED
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("OLED模块")
 
 
 class Layer:
@@ -77,7 +77,6 @@ class Layer:
 class OLEDThread(threading.Thread):
     def __init__(
         self,
-        event_bus,
         width=128,
         height=64,
         fps=50,
@@ -96,17 +95,16 @@ class OLEDThread(threading.Thread):
             i2c_address=i2c_address,
             is_simulation=is_simulation,
         )
-        self.event_bus = event_bus
-
         self.layers = {}  # 存储所有图层，用 layer_id 作为 key
-        self.event_queue = Queue()  # 用于接收来自事件监听器的请求
+        self.event_bus = EventBus()
+        self.event_queue = queue.Queue()  # 用于接收来自事件监听器的请求
         self.needs_render = threading.Event()  # 用于通知渲染线程需要重新合成
         self._stop_event = threading.Event()
 
         self.event_bus.subscribe("UPDATE_LAYER", self.event_queue, "OLED模块")
         self.event_bus.subscribe("SET_LAYER_VISIBILITY", self.event_queue, "OLED模块")
         self.event_bus.subscribe("DELETE_LAYER", self.event_queue, "OLED模块")
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "OLED模块")
+        self.event_bus.subscribe("EXIT", self.event_queue, "OLED模块")
 
     def run(self):
         """线程主循环"""
@@ -138,27 +136,19 @@ class OLEDThread(threading.Thread):
         """请求线程停止。"""
         logger.info("OLEDThread 正在停止...")
         self._stop_event.set()
-        self.event_bus.publish("THREAD_STOPPED", name=self.__class__.__name__)
         logger.info("OLEDThread 已停止。")
 
     def _process_event_queue(self):
         # 处理队列中的所有待办事项
         while not self.event_queue.empty():
             event = self.event_queue.get()
-            # event["type"] & event["payload"]  # 获取事件类型和负载
+            # event["type"] & event["data"]  # 获取事件类型和负载
             if event["type"] == "UPDATE_LAYER":
-                payload = event.get("payload", {})
-                layer_id = payload.get("layer_id")
-
-                # 如果没有 layer_id，这是一个无效事件，记录并跳过
-                if not layer_id:
-                    logger.warning("收到无效的 UPDATE_LAYER 事件，缺少 layer_id")
-                    continue
-
-                image = payload.get("image")
-                z_index = payload.get("z_index", 0)  # 提供默认值
-                position = payload.get("position", (0, 0))  # 提供默认值
-                duration = payload.get("duration")
+                layer_id = event["data"]["layer_id"]
+                image = event["data"]["image"]
+                z_index = event["data"]["z_index"]
+                position = event["data"]["position"]
+                duration = event["data"].get("duration")
 
                 if layer_id in self.layers:
                     self.layers[layer_id].update(image, z_index, position, duration)
@@ -167,29 +157,20 @@ class OLEDThread(threading.Thread):
 
                 self.needs_render.set()
             elif event["type"] == "SET_LAYER_VISIBILITY":
-                payload = event.get("payload", {})
-                layer_id = payload.get("layer_id")
-                if not layer_id:
-                    logger.warning(
-                        "收到无效的 SET_LAYER_VISIBILITY 事件，缺少 layer_id"
-                    )
-                    continue
-                visible = payload.get("visible", True)
+                layer_id = event["data"]["layer_id"]
+                visible = event["data"]["visible"]
 
                 if layer_id in self.layers:
                     self.layers[layer_id].visible = visible
                     self.needs_render.set()
             elif event["type"] == "DELETE_LAYER":
-                payload = event.get("payload", {})
-                layer_id = payload.get("layer_id")
-                if not layer_id:
-                    logger.warning("收到无效的 DELETE_LAYER 事件，缺少 layer_id")
-                    continue
+                layer_id = event["data"]["layer_id"]
                 if layer_id in self.layers:
                     del self.layers[layer_id]
                     self.needs_render.set()  # 触发重绘以确保图层消失
-            elif event["type"] == "STOP_THREADS":
+            elif event["type"] == "EXIT":
                 self.stop()
+                break
             else:
                 logger.warning(f"未知事件类型: {event['type']}")
 
@@ -266,6 +247,11 @@ class OLEDThread(threading.Thread):
 
 
 if __name__ == "__main__":
+    
+    from PIL import Image, ImageDraw, ImageFont
+    from EventBus import EventBus
+    from API_OLED.OLED_API import OLED
+
     # ==================================================================
     # 测试 OLEDThread 的功能
     # ==================================================================
@@ -274,11 +260,9 @@ if __name__ == "__main__":
         format="%(asctime)s - %(threadName)s - %(levelname)s - %(message)s",
     )
 
-    # EventBus 是单例，所以这里获取的是全局唯一的实例
-    from EventBus import event_bus
 
     # 创建并启动OLED管理线程，并将事件总线实例传入
-    oled_thread = OLEDThread(event_bus=event_bus, width=128, height=64, fps=15)
+    oled_thread = OLEDThread(width=128, height=64, fps=15)
     oled_thread.start()
 
     # !!! 关键：等待 OLED 线程准备就绪后再发布事件，避免竞态条件 !!!
@@ -291,12 +275,14 @@ if __name__ == "__main__":
         draw = ImageDraw.Draw(base_image)
         draw.rectangle((28, 20, 58, 44), outline=1, fill=0)  # 左眼
         draw.rectangle((70, 20, 100, 44), outline=1, fill=0)  # 右眼
-        event_bus.publish(
+        oled_thread.event_bus.publish(
             "UPDATE_LAYER",
-            layer_id="eyes",
-            image=base_image,
-            z_index=0,
-            position=(0, 0),
+            {
+                "layer_id": "eyes",
+                "image": base_image,
+                "z_index": 0,
+                "position": (0, 0),
+            },
         )
         time.sleep(3)
 
@@ -310,13 +296,15 @@ if __name__ == "__main__":
         except IOError:
             font = ImageFont.load_default()
         draw.text((0, 0), "Hello, Layers!", font=font, fill=1)
-        event_bus.publish(
+        oled_thread.event_bus.publish(
             "UPDATE_LAYER",
-            layer_id="info_text",
-            image=text_image,
-            z_index=10,
-            position=(14, 24),
-            duration=5,  # 5秒后自动消失
+            {
+                "layer_id": "info_text",
+                "image": text_image,
+                "z_index": 5,
+                "position": (14, 24),
+                "duration": 5,  # 5秒后自动消失
+            },
         )
         logger.info("主线程: 等待文本图层自动消失...")
 

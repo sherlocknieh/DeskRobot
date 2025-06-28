@@ -2,11 +2,8 @@
 官网: https://georgielabs.net/
 
 # 必要依赖
-sudo apt install libportaudio2
-sudo apt install pulseaudio
-sudo apt install pavucontrol
+sudo apt install libportaudio2 pulseaudio pavucontrol
 
-# 可能需要的依赖
-sudo apt install libqt5widgets5
-sudo apt install libcurl4
+# 可能需要
+sudo apt install libqt5widgets5 libcurl4
 

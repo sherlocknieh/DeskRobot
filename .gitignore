@@ -1,0 +1,8 @@
+__pycache__/
+.env
+logs/
+downloads/
+.python-version
+pyproject.toml
+uv.lock
+.backup/

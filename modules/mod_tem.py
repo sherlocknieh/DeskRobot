@@ -3,11 +3,11 @@
 
 Subscribe:
 - GET_TEMPERATURE: 请求获取温湿度数据
-- STOP_THREADS: 停止线程
+- EXIT: 停止线程
 
 Publish:
 - METER_DATA: 温湿度数据更新事件
-    - payload格式:
+    - data格式:
     {
         "temperature": float,
         "humidity": float
@@ -17,19 +17,19 @@ Publish:
 
 if __name__ == '__main__':
     from API_DHT.DHT import DHT11
-    from EventBus import event_bus
+    from EventBus import EventBus
 else:
-    from modules.API_DHT.DHT import DHT11
-    from modules.EventBus import event_bus
+    from .API_DHT.DHT import DHT11
+    from .EventBus import EventBus
 
 import threading
 import queue
 import time
 
 class TemperatureSensorThread(threading.Thread):
-    def __init__(self, event_bus, gpio_pin=4):
+    def __init__(self, gpio_pin=4):
         super().__init__(daemon=True, name="TemperatureSensorThread")
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self.gpio_pin = gpio_pin  # 默认使用BCM编号的GPIO4
         self.sensor = DHT11(self.gpio_pin)
         self.event_queue = queue.Queue()
@@ -37,7 +37,7 @@ class TemperatureSensorThread(threading.Thread):
         
         # 事件订阅
         self.event_bus.subscribe("GET_TEMPERATURE", self.event_queue, "温湿度模块")
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "温湿度模块")
+        self.event_bus.subscribe("EXIT", self.event_queue, "温湿度模块")
         
         # 防止频繁读取的最小间隔（秒）
         self.min_interval = 2  
@@ -47,7 +47,7 @@ class TemperatureSensorThread(threading.Thread):
         while not self._stop_event.is_set():
             try:
                 event = self.event_queue.get(timeout=1)
-                if event['type'] == "STOP_THREADS":
+                if event['type'] == "EXIT":
                     self.stop()
                     break
                 elif event['type'] == "GET_TEMPERATURE":
@@ -78,7 +78,7 @@ class TemperatureSensorThread(threading.Thread):
         self._stop_event.set()
 
 if __name__ == '__main__':
-    from mod_terminal_io import IOThread
+    from .mod_io_terminal import IOThread
     
     io_thread = IOThread(event_bus)
     sensor_thread = TemperatureSensorThread(event_bus)

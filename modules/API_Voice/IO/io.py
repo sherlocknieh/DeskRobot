@@ -1,10 +1,10 @@
 import logging
 import wave
-
+import numpy as np
 import pyaudio
-
-logger = logging.getLogger(__name__)
-
+import warnings
+logger = logging.getLogger("VoiceIOAPI")
+warnings.filterwarnings("ignore", module="pyaudio")
 
 class VoiceIO:
     """
@@ -95,6 +95,7 @@ class VoiceIO:
         """
         try:
             return self.input_stream.read(self.frames_per_buffer)
+
         except IOError as e:
             logger.error(f"录制音频时发生IO错误: {e}")
             # 返回静音数据以避免上层应用崩溃
@@ -108,10 +109,16 @@ class VoiceIO:
     def play_audio_chunk(self, chunk: bytes):
         """
         播放一个音频数据块。
-
         :param chunk: 要播放的音频数据 (bytes)
         """
+        self.volume = 10
         if self.output_stream:
+            # 音量调整
+            if self.volume != 1.0:
+                # 以int16为例
+                audio_data = np.frombuffer(chunk, dtype=np.int16)
+                audio_data = np.clip(audio_data * self.volume, -32768, 32767).astype(np.int16)
+                chunk = audio_data.tobytes()
             self.output_stream.write(chunk)
 
     def close(self):

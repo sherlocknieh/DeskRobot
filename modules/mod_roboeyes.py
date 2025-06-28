@@ -4,19 +4,19 @@ RoboEyes 动画线程
 
 Subscribe:
 - SET_EXPRESSION: 设置表情
-    - payload格式:
+    - data格式:
     {
         "expression": str  # 表情名称（如："happy", "sad", "angry", "surprised"等）
     }
 - TRIGGER_QUICK_EXPRESSION: 触发快速表情
-    - payload格式:
+    - data格式:
     {
         "expression": str,  # 表情名称
         "duration": float  # 表情持续时间（秒）（可选）
     }
 - OPEN_EYES: 打开眼睛
 - CLOSE_EYES: 关闭眼睛
-- STOP_THREADS: 停止线程
+- EXIT: 停止线程
 - ENABLE_AUTOBLINKER: 开启自动眨眼
 - DISABLE_AUTOBLINKER: 关闭自动眨眼
 - ENABLE_IDLE_MODE: 开启闲置模式
@@ -34,36 +34,32 @@ import queue
 import threading
 import time
 
-from modules.API_Roboeyes.roboeyes_api import RoboeyesAPI
-from modules.EventBus.event_bus import EventBus
+from .API_Roboeyes.roboeyes_api import RoboeyesAPI
+from .EventBus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('OLED表情模块')
 
 
 class RoboeyesThread(threading.Thread):
-    def __init__(self, event_bus: EventBus, frame_rate=50, width=128, height=64):
+    def __init__(self, frame_rate=50, width=128, height=64):
         super().__init__(daemon=True, name="RoboeyesThread")
-        self.event_bus = event_bus
+        self.name = "OLED表情模块"
+        self.event_queue = queue.Queue()        # 事件队列
+        self.event_bus = EventBus()
         self.api = RoboeyesAPI(frame_rate, width, height)
-        self._stop_event = threading.Event()
         self.frame_interval = 1.0 / frame_rate
+        self._stop_event = threading.Event()
 
-        # 创建私有事件队列并订阅
-        self.event_queue = queue.Queue()
-        self.event_bus.subscribe("SET_EXPRESSION", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe(
-            "TRIGGER_QUICK_EXPRESSION", self.event_queue, "OLED表情模块"
-        )
-        self.event_bus.subscribe("OPEN_EYES", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe("CLOSE_EYES", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe("ENABLE_AUTOBLINKER", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe(
-            "DISABLE_AUTOBLINKER", self.event_queue, "OLED表情模块"
-        )
-        self.event_bus.subscribe("ENABLE_IDLE_MODE", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe("DISABLE_IDLE_MODE", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe("CENTER_EYES", self.event_queue, "OLED表情模块")
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue, "OLED表情模块")
+        self.event_bus.subscribe("SET_EXPRESSION", self.event_queue, self.name)
+        self.event_bus.subscribe("TRIGGER_QUICK_EXPRESSION", self.event_queue, self.name)
+        self.event_bus.subscribe("OPEN_EYES", self.event_queue, self.name)
+        self.event_bus.subscribe("CLOSE_EYES", self.event_queue, self.name)
+        self.event_bus.subscribe("ENABLE_AUTOBLINKER", self.event_queue, self.name)
+        self.event_bus.subscribe("DISABLE_AUTOBLINKER", self.event_queue, self.name)
+        self.event_bus.subscribe("ENABLE_IDLE_MODE", self.event_queue, self.name)
+        self.event_bus.subscribe("DISABLE_IDLE_MODE", self.event_queue, self.name)
+        self.event_bus.subscribe("CENTER_EYES", self.event_queue, self.name)
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
 
         # 默认开启闲置和眨眼
         self.api.set_autoblinker(True)
@@ -72,7 +68,7 @@ class RoboeyesThread(threading.Thread):
     def run(self):
         """线程主循环"""
         logger.info(f"{self.name} 启动")
-        self.event_bus.publish("THREAD_STARTED", name="OLED表情模块")
+        self.event_bus.publish("THREAD_STARTED", self.name)
 
         while not self._stop_event.is_set():
             start_time = time.monotonic()
@@ -91,12 +87,13 @@ class RoboeyesThread(threading.Thread):
             if image:
                 self.event_bus.publish(
                     "UPDATE_LAYER",
-                    source=self.__class__.__name__,
-                    layer_id="roboeyes",
-                    image=image,
-                    z_index=0,  # 总是在底层
-                    position=(0, 0),  # 图像位置，左上角
-                    duration=None,  # 持续时间为 None，表示永久显示
+                    {
+                        "layer_id": "roboeyes",
+                        "image": image,
+                        "z_index": 0,  # 总是在底层
+                        "position": (0, 0),  # 图像位置，左上角
+                        "duration": None,  # 持续时间为 None，表示永久显示
+                    }
                 )
             # 控制帧率
             elapsed_time = time.monotonic() - start_time
@@ -112,15 +109,15 @@ class RoboeyesThread(threading.Thread):
             while not self.event_queue.empty():
                 event = self.event_queue.get_nowait()
                 event_type = event.get("type")
-                payload = event.get("payload", {})
+                data = event.get("data", {})
 
-                if event_type == "STOP_THREADS":
+                if event_type == "EXIT":
                     logger.debug(f"{self.name} 收到停止事件。")
                     self.stop()
                     break  # 退出事件处理循环
 
                 elif event_type == "SET_EXPRESSION":
-                    expression = payload.get("expression", "default")
+                    expression = data.get("expression", "default")
                     logger.info(f"接收到 SET_EXPRESSION 事件, 设置为 '{expression}'")
                     result = self.api.set_expression(expression)
                     logger.debug(f"API 调用结果: {result}")
@@ -146,7 +143,7 @@ class RoboeyesThread(threading.Thread):
                     logger.info("接收到 CENTER_EYES 事件, 眼睛中置")
                     self.api.center_eyes()
                 elif event_type == "TRIGGER_QUICK_EXPRESSION":
-                    expression = payload.get("expression")
+                    expression = data.get("expression")
                     if expression:
                         logger.info(
                             f"接收到 TRIGGER_QUICK_EXPRESSION 事件, 触发 '{expression}'"

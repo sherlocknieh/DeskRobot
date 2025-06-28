@@ -14,7 +14,7 @@ from wsgiref.handlers import format_date_time
 
 import websocket
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("IflySTTClient")
 
 # 全局变量来存储最终识别结果和控制流程
 final_result = ""

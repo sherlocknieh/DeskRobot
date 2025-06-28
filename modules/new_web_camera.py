@@ -1,11 +1,11 @@
 import sys
-sys.path.insert(0, '/usr/lib/python3/dist-packages') # 为 picamera2 引入系统库路径
+sys.path.insert(0, '/usr/lib/python3/dist-packages') # 为 picamera2 添加系统库路径
 from picamera2 import Picamera2
 sys.path.pop(0)  # 导入 picamera2 后立即移除系统库路径，避免影响其他模块
 
 
-import cv2
 from flask import Flask, render_template, request, jsonify, Response  # 导入Flask相关模块
+import cv2
 
 
 
@@ -48,4 +48,4 @@ def gen_frames():
 if __name__ == '__main__':
     # 启动Flask应用
     # debug=False 表示关闭调试模式，用于生产环境
-    app.run(debug=True)
+    app.run(debug=False)

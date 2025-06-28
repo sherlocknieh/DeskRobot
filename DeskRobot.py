@@ -1,78 +1,146 @@
+import threading
 import logging
 import queue
-import threading
 
-from modules.EventBus import EventBus
+
+from configs.config import config       # 导入配置文件
+from modules.EventBus import EventBus   # 导入事件总线
+logger = logging.getLogger("DeskRobot") # 日志工具
 
 
 class DeskRobot:
-    def __init__(self, event_bus: EventBus):
-        self.threads = []
-        self.event_bus = event_bus
-        self.stop_event = threading.Event()
-        self.event_queue = queue.Queue()
-        self.event_bus.subscribe("EXIT", self.event_queue)
+    def __init__(self):
+        self.mode = "DEBUG"  # 调试模式
+        self.tasklist: list[threading.Thread] = [] # 活动任务列表
+        
+        self.event_queue = queue.Queue()        # 事件队列
+        self.event_bus = EventBus()             # 事件总线
 
-    def add_thread(self, thread: threading.Thread):
-        """添加一个要管理的线程"""
-        self.threads.append(thread)
+        self.thread_flag = threading.Event()    # 线程控制标志位
+        # 调用 is_set() 获取状态, 初始状态为 False
+        # 调用 set() 设为 True
+        # 调用 clear() 设为 False
+        # 调用 wait() 阻塞线程, 直到被其它线程调用 set()
+
+    def add_task(self, task: threading.Thread): # 添加任务
+        self.tasklist.append(task)
 
     def run(self):
-        """启动所有已添加的线程"""
-        logger.info("DeskRobot 启动，开始启动所有线程...")
-        for thread in self.threads:
-            thread.start()
+        self.thread_flag.set()  # 设为运行状态
+        logger.info("DeskRobot 已启动")
 
-        while True:
-            event = self.event_queue.get()
-            if event["type"] == "EXIT":
-                self.stop()
-                break
-        print("DeskRobot 已退出。")
+        for task in self.tasklist:  # 启动所有任务
+            task.start()
+        
+        self.io_loop()  # 开启终端调试
+
+        logger.info("DeskRobot 已退出")
 
     def stop(self):
-        logger.info("正在通过发布STOP_THREADS事件来停止所有线程...")
-        self.event_bus.publish("STOP_THREADS")
-        for thread in self.threads:
-            thread.join()
-        logger.info("所有线程已停止")
+        self.event_bus.publish("EXIT", "DeskRobot") # 发布"EXIT"事件
+        for task in self.tasklist:
+            task.join(timeout=2)                    # 等待所有任务结束
+            if task.is_alive():
+                logger.warning(f"线程 {task.name} 未能正常停止")
 
+        logger.info("所有子线程已停止")
+        self.thread_flag.clear()               # 设本线程为停止状态
+
+    def io_loop(self):
+
+        while self.thread_flag.is_set():
+            print("调试终端已启用, 输入指令以发布事件")
+            print("格式: 事件类型 [参数=值] [参数:值]")
+            print("例如: led_on r=0 g=1 b=0.5")
+            print("例如: led_off")
+            print("例如: exit")
+            # 接收指令
+            cmd = input('> ').strip().split()
+            if not cmd:
+                continue
+            # 提取类型
+            event_type = cmd[0].strip('"').replace('-', '_')
+            if event_type.lower() == 'exit':
+                self.stop()  # 停止所有任务
+                break
+            # 提取数据
+            data = {}
+            for arg in cmd[1:]:
+                if '=' in arg:
+                    key, value = arg.split('=')
+                elif ':' in arg:
+                    key, value = arg.split(':')
+                try:
+                    value = float(value)
+                except ValueError:
+                    value = str(value)
+                data[key.strip()] = value
+            # 发布事件
+            self.event_bus.publish(event_type, data, "DeskRobot")
+        logger.info(f"DeskRobot 已退出调试终端")
 
 if __name__ == "__main__":
-    event_bus = EventBus()  # 获取事件总线单例
 
-    print("加载主控模块")
-    robot = DeskRobot(event_bus)
 
-    print("加载配置文件")
-    """安装依赖: pip install python-dotenv"""
-    from configs.config import config, setup_logging
+    robot = DeskRobot()
 
-    logger = logging.getLogger(__name__)
-    setup_logging(level=logging.INFO)
+    
+    logger.info("加载手柄模块")
+    logger.info("依赖的库: pip install evdev")
+    from modules.mod_game_pad import GamePad
+    robot.add_task(GamePad())
 
-    print("加载 OLED 模块")
-    """安装依赖: pip install luma.core luma.oled pillow"""
+
+    logger.info("加载车轮控制模块")  
+    logger.info("依赖: pip install gpiozero evdev")
+    from modules.mod_car_control import CarControl
+    robot.add_task(CarControl())
+
+
+    # logger.info("加载音乐播放器模块")
+    # logger.info("依赖的库: pip install pygame")
+    # from modules.mod_music_player import MusicPlayerThread
+    # robot.add_task(MusicPlayerThread())
+
+
+    logger.info("加载 RGB 灯模块")
+    logger.info("依赖: pip install gpiozero rpi-gpio lgpio")
+    from modules.mod_led_control import LEDControl
+    robot.add_task(LEDControl())
+
+
+    logger.info("加载 OLED 模块")
+    logger.info("依赖: pip install luma.core luma.oled pillow")
     from modules.mod_oled import OLEDThread
-
-    robot.add_thread(
+    robot.add_task(
         OLEDThread(
-            event_bus,
-            config.get("oled_width", 128),
-            config.get("oled_height", 64),
-            config.get("oled_fps", 50),
-            config.get("oled_i2c_address", 0x3C),
-            config.get("oled_is_simulation", False),
+            width = config.get("oled_width", 128),
+            height = config.get("oled_height", 64),
+            fps = config.get("oled_fps", 50),
+            i2c_address = config.get("oled_i2c_address", 0x3C),
+            is_simulation = config.get("oled_is_simulation", False),
         )
     )
 
-    print("加载 OLED 文本模块")
-    "安装字体: sudo apt install fonts-wqy-microhei"
-    from modules.mod_text_display import TextDisplayThread
 
-    robot.add_thread(
+
+    logger.info("加载OLED 表情模块")
+    logger.info("依赖: pip install pillow")
+    from modules.mod_roboeyes import RoboeyesThread
+    robot.add_task(
+        RoboeyesThread(
+            config.get("roboeyes_frame_rate", 50),
+            config.get("roboeyes_width", 128),
+            config.get("roboeyes_height", 64),
+        )
+    )
+
+
+    logger.info("加载 OLED 文本模块")
+    logger.info("依赖: sudo apt install fonts-wqy-microhei")
+    from modules.mod_text_display import TextDisplayThread
+    robot.add_task(
         TextDisplayThread(
-            event_bus,
             config.get("text_renderer_font_path", "arial.ttf"),
             config.get("oled_width", 128),
             config.get("oled_height", 64),
@@ -80,100 +148,44 @@ if __name__ == "__main__":
         )
     )
 
-    print("加载 OLED 表情模块")
-    "安装依赖: pip install pillow"
-    from modules.mod_roboeyes import RoboeyesThread
 
-    robot.add_thread(
-        RoboeyesThread(
-            event_bus,
-            config.get("roboeyes_frame_rate", 50),
-            config.get("roboeyes_width", 128),
-            config.get("roboeyes_height", 64),
-        )
-    )
-
-    print("加载思考中动画模块")
+    logger.info("加载思考中动画模块")
     from modules.mod_thinking_animation import ThinkingAnimationThread
-
-    robot.add_thread(
+    robot.add_task(
         ThinkingAnimationThread(
-            event_bus,
-            frame_rate=config.get("thinking_animation_frame_rate", 20),
-            width=config.get("oled_width", 128),
-            height=config.get("oled_height", 64),
+            frame_rate = config.get("thinking_animation_frame_rate", 20),
+            width = config.get("oled_width", 128),
+            height = config.get("oled_height", 64),
         )
     )
 
-    # print("加载 LED 三色灯模块")
-    # """安装依赖 : pip install gpiozero rpi-gpio lgpio"""
-    # from modules.mod_led import LED_Control
-    # robot.add_thread(LED_Control(event_bus))
 
-    # print("加载小车控制模块")
-    # """安装依赖 : pip install gpiozero evdev"""
-    # from modules.mod_car_control import CarControl
-    # robot.add_thread(CarControl(event_bus))
-
-    print("加载 AI Agent 模块")
-    """安装依赖 : pip install langchain langchain-openai langgraph"""
+    logger.info("加载 AI Agent 模块")
+    logger.info("依赖: pip install langchain langchain-openai langgraph")
     from modules.mod_ai_agent import AiThread
-
-    robot.add_thread(
+    robot.add_task(
         AiThread(
-            event_bus,
-            llm_base_url=config.get("llm_base_url", None),
-            llm_api_key=config.get("llm_api_key", None),
-            llm_model_name=config.get("llm_model_name", None),
+            llm_base_url = config["llm_base_url"],
+            llm_api_key = config["llm_api_key"],
+            llm_model_name = config["llm_model_name"],
         )
     )
 
-    print("加载 STT 模块")
+
+    logger.info("加载 STT 模块")
     from modules.mod_stt import STTThread
+    robot.add_task(STTThread(config=config))
 
-    robot.add_thread(
-        STTThread(
-            event_bus=event_bus,
-            config=config,
-        )
-    )
 
-    print("加载 TTS 模块")
+    logger.info("加载 TTS 模块")
     from modules.mod_tts import TTSThread
+    robot.add_task(TTSThread())
 
-    robot.add_thread(TTSThread(event_bus=event_bus))
 
-    print("加载语音模块")
-    # from modules.mod_voice import VoiceThreads
-    # # 强制 frames_per_buffer=512，确保与 VAD 兼容
-    # robot.add_thread(
-    #     VoiceThreads(
-    #         event_bus,
-    #         channels=config.get("voice_channels", 1),
-    #         rate=config.get("voice_rate", 16000),
-    #         frames_per_buffer=512,  # 强制512
-    #     )
-    # )
+    logger.info("加载语音控制模块")
     from modules.mod_voice import VoiceThread
-
-    robot.add_thread(
-        VoiceThread(
-            event_bus=event_bus,
-            sample_rate=config.get("voice_sample_rate"),
-            channels=config.get("voice_channels"),
-            vad_threshold=config.get("voice_vad_threshold"),
-            frames_per_buffer=config.get("voice_frames_per_buffer"),
-        )
+    robot.add_task(
+        VoiceThread()
     )
 
-    # print("加载摄像头模块")
-    # """安装依赖 : picamera"""
-    # ...
-
-    print("加载终端IO模块")
-    from modules.mod_terminal_io import IOThread
-
-    robot.add_thread(IOThread(event_bus))
-
-    print("启动!")
     robot.run()

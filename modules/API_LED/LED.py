@@ -42,7 +42,6 @@ class RGB:
 
     def on(self, r=1.0, g=1.0, b=1.0):
         self.off()
-        print('LED On, RGB:', r, g, b)
         self._red.value = r
         self._green.value = g
         self._blue.value = b
@@ -63,7 +62,6 @@ class RGB:
     
     def _flash_loop(self, speed=1):
         """交替闪烁循环"""
-        print('Flash On, Speed:', speed)
         lights = [self._red, self._green, self._blue]
         current_color = 0
         while self._running:
@@ -73,11 +71,9 @@ class RGB:
             sleep(1/speed)
             lights[current_color].off()
             current_color = (current_color + 1) % 3
-        print('Flash Off')
 
     def _breeze_loop(self, speed=1):
         """交替呼吸循环"""
-        print('Breeze On, Speed:', speed)
         lights = [self._red, self._green, self._blue]
         current_color = 0
         brightness = 0
@@ -93,8 +89,6 @@ class RGB:
                 current_color = (current_color + 1) % 3
             lights[current_color].value = brightness # 设置当前颜色的亮度
             sleep(0.01/speed)  # 根据速度调整延时
-        print('Breeze Off')
-
 
 
 if __name__ == '__main__':

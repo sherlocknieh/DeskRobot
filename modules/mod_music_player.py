@@ -5,21 +5,21 @@ pip install pydub simpleaudio
 # Ubuntu
 sudo apt install ffmpeg
 
-# Windows (通过choco)
-choco install ffmpeg
+# Windows
+winget install ffmpeg
 
 音乐播放模块
 
 Subscribe:
 - PLAY_MUSIC: 开始播放音乐
-    - payload格式:
+    - data格式:
     {
         "path": str,  # 本地文件路径或URL
         "loop": bool   # 是否循环播放（可选）
     }
 - PAUSE_MUSIC: 暂停/恢复播放
 - STOP_MUSIC: 停止播放
-- STOP_THREADS: 停止线程
+- EXIT: 停止线程
 
 Publish:
 - MUSIC_STARTED: 音乐开始播放时发布
@@ -36,14 +36,15 @@ from queue import Queue
 from urllib.request import urlretrieve
 import pygame
 
-from modules.EventBus import EventBus
+if __name__ != "__main__":
+    from .EventBus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("音乐播放器")
 
 class MusicPlayerThread(threading.Thread):
-    def __init__(self, event_bus: EventBus):
+    def __init__(self):
         super().__init__(daemon=True, name="MusicPlayerThread")
-        self.event_bus = event_bus
+        self.event_bus = EventBus()
         self.event_queue = Queue()
         self._stop_event = threading.Event()
         
@@ -51,9 +52,10 @@ class MusicPlayerThread(threading.Thread):
         self.event_bus.subscribe("PLAY_MUSIC", self.event_queue, self.name)
         self.event_bus.subscribe("PAUSE_MUSIC", self.event_queue, self.name)
         self.event_bus.subscribe("STOP_MUSIC", self.event_queue, self.name)
-        self.event_bus.subscribe("STOP_THREADS", self.event_queue, self.name)
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         
         # 播放器状态
+        self.playback_thread = None
         self.current_player = None
         self.is_playing = False
         self.is_paused = False
@@ -83,24 +85,24 @@ class MusicPlayerThread(threading.Thread):
                 
     def _handle_event(self, event):
         event_type = event.get("type")
-        payload = event.get("payload", {})
+        data = event.get("data", {})
 
         if event_type == "PLAY_MUSIC":
-            self._handle_play(payload)
+            self._handle_play(data)
         elif event_type == "PAUSE_MUSIC":
             self._handle_pause()
         elif event_type == "STOP_MUSIC":
             self._handle_stop()
-        elif event_type == "STOP_THREADS":
+        elif event_type == "EXIT":
             self.stop()
         elif event_type == "NEXT_SONG":
             self._handle_next()
         elif event_type == "PREVIOUS_SONG":
             self._handle_previous()
 
-    def _handle_play(self, payload):
-        source = payload.get("path")
-        self.loop = payload.get("loop", False)
+    def _handle_play(self, data):
+        source = data.get("path")
+        self.loop = data.get("loop", False)
 
         # 新增播放列表支持
         if isinstance(source, list):
@@ -127,7 +129,7 @@ class MusicPlayerThread(threading.Thread):
             
         except Exception as e:
             logger.error(f"播放失败: {e}")
-            self.event_bus.publish("ERROR", message=str(e))
+            self.event_bus.publish("ERROR", {"message":str(e)})
 
     def _handle_pause(self):
         if self.is_playing:
@@ -174,6 +176,10 @@ if __name__ == "__main__":
     # 测试代码
     import numpy as np
     
+    import os
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    music_path = os.path.join(project_root, "Creamy.ogg")
+    
     # 生成测试音频
     sample_rate = 44100
     duration = 2  # 秒
@@ -189,7 +195,7 @@ if __name__ == "__main__":
     event_bus = EventBus()
     
     # 创建并启动播放器线程
-    player = MusicPlayerThread(event_bus)
+    player = MusicPlayerThread()
     player.start()
 
     # 播放单个文件
@@ -202,13 +208,20 @@ if __name__ == "__main__":
     event_bus.publish("NEXT_SONG")
     event_bus.publish("PREVIOUS_SONG")
     # 测试暂停
-    event_bus.publish("PAUSE_MUSIC")
+    print("暂停播放")
+    player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 测试恢复
-    event_bus.publish("PAUSE_MUSIC")
+    print("恢复播放")
+    player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 停止播放
-    event_bus.publish("STOP_MUSIC")
+    print("停止播放")
+    player.event_bus.publish("STOP_MUSIC")
+
+    # 退出播放器
+    print("退出播放器")
+    player.event_bus.publish("EXIT")
     player.join()
