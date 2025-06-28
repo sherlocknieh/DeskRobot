@@ -34,8 +34,7 @@ import threading
 import time
 from queue import Queue
 from urllib.request import urlretrieve
-from pydub import AudioSegment
-from pydub.playback import play
+import pygame
 
 from modules.EventBus import EventBus
 
@@ -60,6 +59,19 @@ class MusicPlayerThread(threading.Thread):
         self.is_paused = False
         self.loop = False
         self.temp_files = []
+        
+        # 新增播放列表相关属性
+        self.playlist = []
+        self.current_index = 0
+        self.volume = 0.5
+        
+        # 初始化pygame mixer
+        pygame.mixer.init()
+        pygame.mixer.music.set_volume(self.volume)
+        
+        # 新增事件订阅
+        self.event_bus.subscribe("NEXT_SONG", self.event_queue, self.name)
+        self.event_bus.subscribe("PREVIOUS_SONG", self.event_queue, self.name)
 
     def run(self):
         while not self._stop_event.is_set():
@@ -81,83 +93,98 @@ class MusicPlayerThread(threading.Thread):
             self._handle_stop()
         elif event_type == "STOP_THREADS":
             self.stop()
+        elif event_type == "NEXT_SONG":
+            self._handle_next()
+        elif event_type == "PREVIOUS_SONG":
+            self._handle_previous()
 
     def _handle_play(self, payload):
         source = payload.get("path")
         self.loop = payload.get("loop", False)
 
+        # 新增播放列表支持
+        if isinstance(source, list):
+            self.playlist = source
+            self.current_index = 0
+            source = self.playlist[self.current_index]
+        else:
+            self.playlist = [source]
+            self.current_index = 0
+
         try:
-            # 如果是网络资源则下载
+            # 统一处理本地和网络资源
             if source.startswith(("http://", "https://")):
                 filename = os.path.basename(source)
                 local_path, _ = urlretrieve(source, filename)
                 self.temp_files.append(local_path)
-                audio = AudioSegment.from_file(local_path)
-            else:
-                audio = AudioSegment.from_file(source)
+                source = local_path
 
-            self._stop_playback()
-            
-            self.current_player = audio
+            # 使用pygame加载音乐
+            pygame.mixer.music.load(source)
             self.is_playing = True
-            self._play_audio()
-            
+            pygame.mixer.music.play(loops=-1 if self.loop else 0)
             self.event_bus.publish("MUSIC_STARTED", source=source)
+            
         except Exception as e:
             logger.error(f"播放失败: {e}")
             self.event_bus.publish("ERROR", message=str(e))
 
-    def _play_audio(self):
-        def playback():
-            try:
-                while self.is_playing and not self._stop_event.is_set():
-                    play(self.current_player)
-                    if not self.loop:
-                        break
-                self._stop_playback()
-            except Exception as e:
-                logger.error(f"播放错误: {e}")
-
-        self.playback_thread = threading.Thread(target=playback)
-        self.playback_thread.start()
-
     def _handle_pause(self):
         if self.is_playing:
-            if self.is_paused:
-                self.is_paused = False
-                self.event_bus.publish("MUSIC_RESUMED")
-            else:
+            if not self.is_paused:
+                pygame.mixer.music.pause()
                 self.is_paused = True
                 self.event_bus.publish("MUSIC_PAUSED")
-
+            else:
+                pygame.mixer.music.unpause()
+                self.is_paused = False
+                self.event_bus.publish("MUSIC_RESUMED")
     def _handle_stop(self):
-        self._stop_playback()
+        pygame.mixer.music.stop()
+        self.is_playing = False
         self.event_bus.publish("MUSIC_STOPPED")
 
-    def _stop_playback(self):
-        self.is_playing = False
-        self.is_paused = False
-        if self.playback_thread and self.playback_thread.is_alive():
-            self.playback_thread.join()
+    def _handle_next(self):
+        if len(self.playlist) == 0:
+            return
+        self.current_index = (self.current_index + 1) % len(self.playlist)
+        self._play_by_index()
 
+    def _handle_previous(self):
+        if len(self.playlist) == 0:
+            return
+        self.current_index = (self.current_index - 1) % len(self.playlist)
+        self._play_by_index()
+
+    def _play_by_index(self):
+        if 0 <= self.current_index < len(self.playlist):
+            source = self.playlist[self.current_index]
+            self._handle_play({"path": source, "loop": self.loop})
     def stop(self):
-        """停止线程并清理资源"""
+        """新增清理方法"""
+        self._handle_stop()
         self._stop_event.set()
-        self._stop_playback()
+        # 清理临时文件
         for f in self.temp_files:
             try:
                 os.remove(f)
             except:
                 pass
-
 if __name__ == "__main__":
     # 测试代码
-    from pydub import generators
+    import numpy as np
     
     # 生成测试音频
-    test_sound = generators.Sine(440).to_audio_segment(duration=2000)
-    test_sound.export("test.mp3", format="mp3")
-
+    sample_rate = 44100
+    duration = 2  # 秒
+    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    tone = np.sin(440 * 2 * np.pi * t)
+    audio = np.int16(tone * 32767)
+    
+    pygame.mixer.init()
+    sound = pygame.sndarray.make_sound(audio)
+    sound.save("test.wav")  # 保存为WAV格式
+    
     # 初始化事件总线
     event_bus = EventBus()
     
@@ -165,10 +192,15 @@ if __name__ == "__main__":
     player = MusicPlayerThread(event_bus)
     player.start()
 
-    # 测试播放
-    event_bus.publish("PLAY_MUSIC", path="test.mp3")
-    time.sleep(5)
-    
+    # 播放单个文件
+    event_bus.publish("PLAY_MUSIC", path="test.wav")
+
+    # 播放列表 
+    event_bus.publish("PLAY_MUSIC", path=["song1.wav", "song2.wav", "song3.wav"])
+
+    # 切歌控制
+    event_bus.publish("NEXT_SONG")
+    event_bus.publish("PREVIOUS_SONG")
     # 测试暂停
     event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
