@@ -1,7 +1,7 @@
 """
 语音处理与语音活动检测(VAD)模块。
 
-本模块是机器人系统的“耳朵”，它持续监听麦克风，并根据机器人的状态（是否正在说话）
+本模块是机器人系统的"耳朵"，它持续监听麦克风，并根据机器人的状态（是否正在说话）
 来智能地处理用户的语音输入。
 
 核心功能:
@@ -11,9 +11,9 @@
   1.  **聆听模式**: 当机器人自身未在说话时，它会录制用户的完整一句话，
       并将其作为 `VOICE_COMMAND_DETECTED` 事件发布出去。
   2.  **打断模式**: 当机器人正在说话时（通过监听 `TTS_STARTED` 和 `TTS_FINISHED`
-      事件得知），它会将用户的任何语音输入视为一次“打断”。此时，它会立即
+      事件得知），它会将用户的任何语音输入视为一次"打断"。此时，它会立即
       发布 `INTERRUPTION_DETECTED` 事件（用于通知TTS模块停止播放），然后
-      无缝切换到“聆听模式”，开始录制用户的“打断”内容，并最终同样发布
+      无缝切换到"聆听模式"，开始录制用户的"打断"内容，并最终同样发布
       `VOICE_COMMAND_DETECTED` 事件。
 
 这种设计使得用户打断交互变得无缝且自然。
@@ -21,14 +21,14 @@
 ---------------------------------------------------------------------
 
 订阅 (Subscribe):
-- TTS_STARTED: 当 TTS 开始播放时，进入“打断模式”。
-- TTS_FINISHED: 当 TTS 结束播放时，回到“聆- 听模式”。
+- TTS_STARTED: 当 TTS 开始播放时，进入"打断模式"。
+- TTS_FINISHED: 当 TTS 结束播放时，回到"聆- 听模式"。
 - EXIT: 停止线程。
 
 发布 (Publish):
 - VOICE_COMMAND_DETECTED: 当检测到一段完整的用户语音时发布（无论是正常聆听还是打断）。
     - data: {"audio_data": bytes, "sample_rate": int, "channels": int, "sample_width": int}
-- INTERRUPTION_DETECTED: 在“打断模式”下，检测到用户语音的瞬间发布，用于立即停止TTS。
+- INTERRUPTION_DETECTED: 在"打断模式"下，检测到用户语音的瞬间发布，用于立即停止TTS。
 
 """
 
@@ -169,8 +169,10 @@ class VoiceThread(threading.Thread):
                                 "audio_data": full_speech_audio,
                                 "sample_rate": self.sample_rate,
                                 "channels": self.channels,
-                                "sample_width": self.voice_io.p.get_sample_size(self.voice_io.format),
-                            }
+                                "sample_width": self.voice_io.p.get_sample_size(
+                                    self.voice_io.format
+                                ),
+                            },
                         )
                 elif self.is_detecting_speech:
                     logger.info("正在收集语音中的音频块。")
@@ -192,10 +194,10 @@ class VoiceThread(threading.Thread):
                     logger.info("收到 TTS_STARTED 事件，进入TTS打断模式。")
                     self.is_speaking_tts = True
                     # TTS开始时，如果正在检测语音，应取消
-                    if self.is_detecting_speech:
-                        logger.info("TTS开始，取消当前的语音检测。")
-                        self.is_detecting_speech = False
-                        self.speech_frames = []
+                    # if self.is_detecting_speech:
+                    #     logger.info("TTS开始，取消当前的语音检测。")
+                    #     self.is_detecting_speech = False
+                    #     self.speech_frames = []
                 elif event["type"] == "TTS_FINISHED":
                     logger.info("收到 TTS_FINISHED 事件，退出TTS打断模式。")
                     self.is_speaking_tts = False
