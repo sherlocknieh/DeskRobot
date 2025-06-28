@@ -47,16 +47,16 @@ class EventBus:
         return cls._instance
 
     def __init__(self):
-        if getattr(self, "_initialized", False): return # 只初始化一次
         # 创建一个空字典, 用于存放订阅队列
-        self.listeners = {}
-        """实际结构:
-        self.listeners = {
-            "TYPE1": [queue1, queue2, queue3],
-            "TYPE2": [queue1, queue4],
-            "TYPE3": [queue2],
-        }
-        """
+        if not hasattr(self, "listeners"):   # 避免多次初始化
+            self.listeners = {}
+            """实际结构:
+            self.listeners = {
+                "TYPE1": [queue1, queue2, queue3],
+                "TYPE2": [queue1, queue4],
+                "TYPE3": [queue2],
+            }
+            """
 
     def subscribe(self, event_type, event_queue, name = ""):
         if not isinstance(event_queue, queue.Queue):

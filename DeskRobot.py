@@ -89,6 +89,11 @@ if __name__ == "__main__":
     # robot.add_task(LEDControl())
 
 
+    logger.info("加载关键词唤醒模块")
+    from modules.mod_awak import AwakenThread
+    robot.add_task(AwakenThread())
+
+
     # logger.info("加载运动控制模块")  
     # logger.info("依赖: pip install gpiozero evdev")
     # logger.info("依赖: sudo pigpiod")

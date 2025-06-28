@@ -9,6 +9,7 @@ import numpy as np
 from queue import Queue
 from openwakeword.model import Model
 import openwakeword
+from modules.EventBus import EventBus
 
 logger = logging.getLogger("AwakenModule")
 
@@ -91,12 +92,12 @@ class AwakenThread(threading.Thread):
             # 检测唤醒词
             for model_name, score in predictions.items():
                 if score >= self.threshold:
-                    self._handle_activation(model_name)
+                    self._handle_activation(model_name, score)
                     
-    def _handle_activation(self, model_name):
+    def _handle_activation(self, model_name, score):
         """处理唤醒事件"""
         logger.info(f"检测到唤醒词: {model_name} (得分: {score:.2f})")
-        
+        score = float(score)  # 转为原生float，便于json序列化
         if self.is_speaking_tts:
             # 打断处理
             self.event_bus.publish("INTERRUPTION_DETECTED")
