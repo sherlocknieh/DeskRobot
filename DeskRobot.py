@@ -126,51 +126,51 @@ if __name__ == "__main__":
 
 
 
-    # logger.info("加载 OLED 模块")
-    # logger.info("依赖: pip install luma.core luma.oled pillow")
-    # from modules.mod_oled import OLEDThread
-    # robot.add_task(
-    #     OLEDThread(
-    #         width = config.get("oled_width", 128),
-    #         height = config.get("oled_height", 64),
-    #         fps = config.get("oled_fps", 50),
-    #         i2c_address = config.get("oled_i2c_address", 0x3C),
-    #         is_simulation = config.get("oled_is_simulation", False),
-    #     )
-    # )
+    logger.info("加载 OLED 模块")
+    logger.info("依赖: pip install luma.core luma.oled pillow")
+    from modules.mod_oled import OLEDThread
+    robot.add_task(
+        OLEDThread(
+            width = config.get("oled_width", 128),
+            height = config.get("oled_height", 64),
+            fps = config.get("oled_fps", 50),
+            i2c_address = config.get("oled_i2c_address", 0x3C),
+            is_simulation = config.get("oled_is_simulation", False),
+        )
+    )
 
-    # logger.info("加载OLED 表情模块")
-    # logger.info("依赖: pip install pillow")
-    # from modules.mod_roboeyes import RoboeyesThread
-    # robot.add_task(
-    #     RoboeyesThread(
-    #         config.get("roboeyes_frame_rate", 50),
-    #         config.get("roboeyes_width", 128),
-    #         config.get("roboeyes_height", 64),
-    #     )
-    # )
+    logger.info("加载OLED 表情模块")
+    logger.info("依赖: pip install pillow")
+    from modules.mod_roboeyes import RoboeyesThread
+    robot.add_task(
+        RoboeyesThread(
+            config.get("roboeyes_frame_rate", 50),
+            config.get("roboeyes_width", 128),
+            config.get("roboeyes_height", 64),
+        )
+    )
 
-    # logger.info("加载 OLED 文本模块")
-    # logger.info("依赖: sudo apt install fonts-wqy-microhei")
-    # from modules.mod_text_display import TextDisplayThread
-    # robot.add_task(
-    #     TextDisplayThread(
-    #         config.get("text_renderer_font_path", "arial.ttf"),
-    #         config.get("oled_width", 128),
-    #         config.get("oled_height", 64),
-    #         config.get("oled_fps", 50),
-    #     )
-    # )
+    logger.info("加载 OLED 文本模块")
+    logger.info("依赖: sudo apt install fonts-wqy-microhei")
+    from modules.mod_text_display import TextDisplayThread
+    robot.add_task(
+        TextDisplayThread(
+            config.get("text_renderer_font_path", "arial.ttf"),
+            config.get("oled_width", 128),
+            config.get("oled_height", 64),
+            config.get("oled_fps", 50),
+        )
+    )
 
-    # logger.info("加载思考中动画模块")
-    # from modules.mod_thinking_animation import ThinkingAnimationThread
-    # robot.add_task(
-    #     ThinkingAnimationThread(
-    #         frame_rate = config.get("thinking_animation_frame_rate", 20),
-    #         width = config.get("oled_width", 128),
-    #         height = config.get("oled_height", 64),
-    #     )
-    # )
+    logger.info("加载思考中动画模块")
+    from modules.mod_thinking_animation import ThinkingAnimationThread
+    robot.add_task(
+        ThinkingAnimationThread(
+            frame_rate = config.get("thinking_animation_frame_rate", 20),
+            width = config.get("oled_width", 128),
+            height = config.get("oled_height", 64),
+        )
+    )
 
 
     # logger.info("加载 AI Agent 模块")
