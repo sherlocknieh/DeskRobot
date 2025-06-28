@@ -47,7 +47,6 @@ class EventBus:
         return cls._instance
 
     def __init__(self):
-        if getattr(self, "_initialized", False): return # 只初始化一次
         # 创建一个空字典, 用于存放订阅队列
         self.listeners = {}
         """实际结构:

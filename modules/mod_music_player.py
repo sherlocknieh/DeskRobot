@@ -68,7 +68,7 @@ class MusicPlayerThread(threading.Thread):
         self.volume = 0.5
         
         # 初始化pygame mixer
-        pygame.mixer.init()
+        pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)
         pygame.mixer.music.set_volume(self.volume)
         
         # 新增事件订阅
@@ -178,59 +178,47 @@ if __name__ == "__main__":
     from EventBus import EventBus
     
     import os
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     music_path = os.path.join(project_root, "tools/Creamy.ogg")
     
-    # 生成测试音频
-    sample_rate = 44100
-    duration = 2  # 秒
-    t = np.linspace(0, duration, int(sample_rate * duration), False)
-    tone = np.sin(440 * 2 * np.pi * t)
-    audio = np.int16(tone * 32767)
     
-    # 转为立体声（2列）
-    audio = np.column_stack((audio, audio))
-    
-    pygame.mixer.init()
-    sound = pygame.sndarray.make_sound(audio)
-
-    # 保存为WAV格式
-    #sound.save("test.wav")
-    import scipy.io.wavfile
-    audio = np.column_stack((audio, audio))
-    scipy.io.wavfile.write("test.wav", sample_rate, audio)
-
+    #pygame.mixer.init()
+    pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)
     
     # 创建并启动播放器线程
     player = MusicPlayerThread()
     player.start()
 
     # 播放单个文件
-    player.event_bus.publish("PLAY_MUSIC", {"path": "test.wav"})
+    player.event_bus.publish("PLAY_MUSIC", {"path": music_path})
+    time.sleep(5)
+    # # 播放列表 
+    player.event_bus.publish("PLAY_MUSIC", {"path": ["song1.wav", "song2.ogg"]})
 
-    # 播放列表 
-    player.event_bus.publish("PLAY_MUSIC", {"path": ["song1.wav", "song2.wav", "song3.wav"]})
 
-    # 切歌控制
+    # # 切歌控制
     player.event_bus.publish("NEXT_SONG")
-    player.event_bus.publish("PREVIOUS_SONG")
+    time.sleep(4)
 
+
+    player.event_bus.publish("PREVIOUS_SONG")
+    time.sleep(4)
     
     # 测试暂停
     print("暂停播放")
-    player.player.event_bus.publish("PAUSE_MUSIC")
+    player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 测试恢复
     print("恢复播放")
-    player.player.event_bus.publish("PAUSE_MUSIC")
+    player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
     # 停止播放
     print("停止播放")
-    player.player.event_bus.publish("STOP_MUSIC")
+    player.event_bus.publish("STOP_MUSIC")
 
     # 退出播放器
     print("退出播放器")
-    player.player.event_bus.publish("EXIT")
+    player.event_bus.publish("EXIT")
     player.join()
