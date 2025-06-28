@@ -57,6 +57,7 @@ class EventBus:
             "TYPE3": [queue2],
         }
         """
+        self._initialized = True  # 标记已初始化, 防止重复初始化
 
     def subscribe(self, event_type, event_queue, name = ""):
         if not isinstance(event_queue, queue.Queue):
