@@ -23,6 +23,10 @@
 订阅 (Subscribe):
 - TTS_STARTED: 当 TTS 开始播放时，进入"打断模式"。
 - TTS_FINISHED: 当 TTS 结束播放时，回到"聆- 听模式"。
+- WAKE_WORD_DETECTED: 当检测到唤醒词时，进入"聆听模式"。
+- SLEEP_VOICE_MODULE: 让 VoiceThread 进入休眠状态，停止监听麦克风。
+- STT_RESULT_RECEIVED: 当 STT 模块接收到语音识别结果时，
+  如果当前处于"打断模式"，则立即发布 `INTERRUPTION_DETECTED
 - EXIT: 停止线程。
 
 发布 (Publish):
@@ -59,7 +63,9 @@ class VoiceThread(threading.Thread):
     subscribe:
     - TTS_STARTED: TTS 开始播放
     - TTS_FINISHED: TTS 结束播放
+    - WAKE_WORD_DETECTED: 检测到唤醒词
     - EXIT: 停止线程。
+
 
     publish:
     - VOICE_COMMAND_DETECTED: 当检测到完整的语音指令时发布。
@@ -89,6 +95,8 @@ class VoiceThread(threading.Thread):
         self.event_bus = EventBus()
         self.stop_event = threading.Event()
         self.event_queue = Queue()
+        self.is_wakened = False
+        logger.info("VoiceThread 初始化为休眠状态。")
 
         self.sample_rate = sample_rate
         self.channels = channels
@@ -102,7 +110,11 @@ class VoiceThread(threading.Thread):
         self.is_detecting_speech = False  # 新增：用于跟踪VAD检测状态
         self.speech_frames = []
         self.event_bus.subscribe("STT_RESULT_RECEIVED", self.event_queue, "语音模块")
-        
+        self.event_bus.subscribe("TTS_STARTED", self.event_queue, "语音模块")
+        self.event_bus.subscribe("TTS_FINISHED", self.event_queue, "语音模块")
+        self.event_bus.subscribe("EXIT", self.event_queue, "语音模块")
+        self.event_bus.subscribe("WAKE_WORD_DETECTED", self.event_queue, "语音模块")
+        self.event_bus.subscribe("SLEEP_VOICE_MODULE", self.event_queue, "语音模块")
 
         logger.info("VoiceThread 初始化完成。")
 
@@ -118,15 +130,12 @@ class VoiceThread(threading.Thread):
             self.vad = SileroVAD(
                 sample_rate=self.sample_rate, threshold=self.vad_threshold
             )
-            self.event_bus.subscribe("EXIT", self.event_queue)
-            self.event_bus.subscribe("TTS_STARTED", self.event_queue)
-            self.event_bus.subscribe("TTS_FINISHED", self.event_queue)
+
             logger.info("VoiceThread 底层组件设置成功。")
             return True
         except Exception as e:
             logger.error(f"VoiceThread 设置失败: {e}", exc_info=True)
             return False
-# ...existing code...
 
     def run(self):
         """线程主循环。"""
@@ -139,44 +148,44 @@ class VoiceThread(threading.Thread):
         while not self.stop_event.is_set():
             self._handle_events()  # 处理来自总线的事件
 
-            chunk = self.voice_io.record_chunk()
-            if not chunk:
-                logger.info("未获取到音频块，等待0.01秒后重试。")
-                time.sleep(0.01)
-                continue
+            if self.is_wakened:  # 如果目前处于唤醒状态
+                chunk = self.voice_io.record_chunk()
+                if not chunk:
+                    logger.info("未获取到音频块，等待0.01秒后重试。")
+                    time.sleep(0.01)
+                    continue
+                vad_event = self.vad.process_chunk(chunk)
 
-            vad_event = self.vad.process_chunk(chunk)
+                if not self.is_speaking_tts:                
+                    # 正常语音检测逻辑
+                    if vad_event:
+                        if "start" in vad_event and not self.is_detecting_speech:
+                            self.is_detecting_speech = True
+                            logger.info("检测到语音开始，开始收集音频块。")
+                            self.speech_frames = [chunk]
+                        elif "end" in vad_event and self.is_detecting_speech:
+                            self.is_detecting_speech = False
+                            self.speech_frames.append(chunk)
+                            logger.info("检测到语音结束。正在发布事件...")
 
-            if not self.is_speaking_tts:                
-                # 正常语音检测逻辑
-                if vad_event:
-                    if "start" in vad_event and not self.is_detecting_speech:
-                        self.is_detecting_speech = True
-                        logger.info("检测到语音开始，开始收集音频块。")
-                        self.speech_frames = [chunk]
-                    elif "end" in vad_event and self.is_detecting_speech:
-                        self.is_detecting_speech = False
+                            full_speech_audio = b"".join(self.speech_frames)
+                            self.speech_frames = []
+
+                            logger.info("发布 VOICE_COMMAND_DETECTED 事件。")
+                            self.event_bus.publish(
+                                "VOICE_COMMAND_DETECTED",
+                                {
+                                    "audio_data": full_speech_audio,
+                                    "sample_rate": self.sample_rate,
+                                    "channels": self.channels,
+                                    "sample_width": self.voice_io.p.get_sample_size(
+                                        self.voice_io.format
+                                    ),
+                                },
+                            )
+                    elif self.is_detecting_speech:
+                        logger.info("正在收集语音中的音频块。")
                         self.speech_frames.append(chunk)
-                        logger.info("检测到语音结束。正在发布事件...")
-
-                        full_speech_audio = b"".join(self.speech_frames)
-                        self.speech_frames = []
-
-                        logger.info("发布 VOICE_COMMAND_DETECTED 事件。")
-                        self.event_bus.publish(
-                            "VOICE_COMMAND_DETECTED",
-                            {
-                                "audio_data": full_speech_audio,
-                                "sample_rate": self.sample_rate,
-                                "channels": self.channels,
-                                "sample_width": self.voice_io.p.get_sample_size(
-                                    self.voice_io.format
-                                ),
-                            },
-                        )
-                elif self.is_detecting_speech:
-                    logger.info("正在收集语音中的音频块。")
-                    self.speech_frames.append(chunk)
 
         logger.info("VoiceThread 循环已结束。")
         self._cleanup()
@@ -190,6 +199,12 @@ class VoiceThread(threading.Thread):
                 if event["type"] == "EXIT":
                     logger.info("收到 EXIT 事件，准备停止线程。")
                     self.stop()
+                elif event["type"] == "WAKE_WORD_DETECTED":
+                    logger.info("收到 WAKE_WORD_DETECTED 事件，准备唤醒。")
+                    self.is_wakened = True
+                elif event["type"] == "SLEEP_VOICE_MODULE":
+                    logger.info("收到 SLEEP_VOICE_MODULE 事件，准备进入休眠状态。")
+                    self.is_wakened = False
                 elif event["type"] == "TTS_STARTED":
                     logger.info("收到 TTS_STARTED 事件，进入TTS打断模式。")
                     self.is_speaking_tts = True

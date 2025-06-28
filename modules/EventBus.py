@@ -48,6 +48,8 @@ class EventBus:
 
     def __init__(self):
         # 创建一个空字典, 用于存放订阅队列
+        if getattr(self, '_initialized', False):
+            return
         self.listeners = {}
         """实际结构:
         self.listeners = {
