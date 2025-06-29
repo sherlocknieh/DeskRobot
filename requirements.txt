@@ -38,3 +38,8 @@ evdev; sys_platform == 'linux'
 # --- 语音唤醒 ---
 openwakeword
 speexdsp-ns  # apt-get install libspeex-dev libspeexdsp-dev
+
+# --- 人脸跟踪 ---
+onnx
+onnx-tf
+simple_pid

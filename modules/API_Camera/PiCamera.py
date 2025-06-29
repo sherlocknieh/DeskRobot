@@ -5,6 +5,7 @@ from picamera2 import Picamera2
 print("已导入 libcamera")
 sys.path.pop(0)
 
+
 import cv2
 import threading
 
@@ -38,7 +39,7 @@ class PiCamera:
         frame = cv2.cvtColor(raw, cv2.COLOR_RGB2BGR)
         if format == 'numpy':
             return frame
-        elif format == 'jpeg':
+        elif format in ['jpeg','jpg']:
             _, buf = cv2.imencode('.jpg', frame)
             return buf.tobytes()
         elif format == 'png':
@@ -63,10 +64,9 @@ class PiCamera:
             self._running = False
 
 
-
-
 if __name__ == '__main__':
     from flask import Flask, render_template, Response, jsonify  # 导入Flask相关模块
+    from time import sleep
 
     app = Flask(__name__)
     cam = PiCamera()
@@ -81,6 +81,7 @@ if __name__ == '__main__':
                 while True:
                     frame = cam.get_frame('stream')
                     yield frame
+                    sleep(0.02)
             return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame') # type: ignore
 
         def shutdown():

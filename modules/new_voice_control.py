@@ -49,8 +49,6 @@ class VoiceControl(threading.Thread):
                 self.stop()
                 break
 
-                    
-
 
     def stop(self):
         self.thread_flag.clear()    # 线程标志位设为 False, 停止线程

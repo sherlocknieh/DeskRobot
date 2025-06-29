@@ -41,6 +41,15 @@ if __name__ != "__main__":
 
 logger = logging.getLogger("音乐播放器")
 
+
+
+# 获取项目根目录
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 加载歌曲列表
+music_files = [os.path.join(PROJECT_ROOT, "tools/songs", f) 
+                 for f in os.listdir(os.path.join(PROJECT_ROOT, "tools/songs"))]
+
+
 class MusicPlayerThread(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True, name="MusicPlayerThread")
@@ -63,7 +72,7 @@ class MusicPlayerThread(threading.Thread):
         self.temp_files = []
         
         # 新增播放列表相关属性
-        self.playlist = []
+        self.playlist = music_files
         self.current_index = 0
         self.volume = 0.5
         
@@ -102,17 +111,23 @@ class MusicPlayerThread(threading.Thread):
 
     def _handle_play(self, data):
         source = data.get("path")
+        source = music_files[0] if source is None else source
+        print(f"播放音乐: {source}")
         self.loop = data.get("loop", False)
-
-        # 新增播放列表支持
+    
+        # 仅当明确传入新列表时才更新播放列表
         if isinstance(source, list):
             self.playlist = source
             self.current_index = 0
             source = self.playlist[self.current_index]
         else:
-            self.playlist = [source]
-            self.current_index = 0
-
+            # 如果当前播放列表不为空且source在其中，则只切换索引
+            if hasattr(self, "playlist") and source in self.playlist:
+                self.current_index = self.playlist.index(source)
+            else:
+                self.playlist = [source]
+                self.current_index = 0
+    
         try:
             # 统一处理本地和网络资源
             if source.startswith(("http://", "https://")):
@@ -120,7 +135,7 @@ class MusicPlayerThread(threading.Thread):
                 local_path, _ = urlretrieve(source, filename)
                 self.temp_files.append(local_path)
                 source = local_path
-
+    
             # 使用pygame加载音乐
             pygame.mixer.music.load(source)
             self.is_playing = True
@@ -161,6 +176,7 @@ class MusicPlayerThread(threading.Thread):
     def _play_by_index(self):
         if 0 <= self.current_index < len(self.playlist):
             source = self.playlist[self.current_index]
+            print(f"播放歌曲: {source}")
             self._handle_play({"path": source, "loop": self.loop})
     def stop(self):
         """新增清理方法"""
@@ -189,18 +205,21 @@ if __name__ == "__main__":
     player = MusicPlayerThread()
     player.start()
 
-    # 播放单个文件
-    player.event_bus.publish("PLAY_MUSIC", {"path": music_path})
-    time.sleep(5)
     # # 播放列表 
-    player.event_bus.publish("PLAY_MUSIC", {"path": ["song1.wav", "song2.ogg"]})
+    player.event_bus.publish("PLAY_MUSIC", {"path": music_files})
+    time.sleep(3)
 
 
     # # 切歌控制
+    print("下一首歌")
     player.event_bus.publish("NEXT_SONG")
     time.sleep(4)
 
+    print("下一首歌")
+    player.event_bus.publish("NEXT_SONG")
+    time.sleep(4)
 
+    print("上一首歌")
     player.event_bus.publish("PREVIOUS_SONG")
     time.sleep(4)
     

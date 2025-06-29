@@ -62,5 +62,5 @@ class Car:
 
 if __name__ == '__main__':
     car = Car()
-    car.steer(-1, 0)
-    sleep(3)
+    car.steer(0, 0)
+    sleep(1)

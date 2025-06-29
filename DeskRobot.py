@@ -71,17 +71,26 @@ if __name__ == "__main__":
     # from modules.mod_led_control import LEDControl
     # robot.add_task(LEDControl())
 
-    # logger.info("加载小车控制模块")
-    # from modules.mod_car_control import CarControl
-    # robot.add_task(CarControl())
+    logger.info("加载小车控制模块")
+    from modules.mod_car_control import CarControl
+    robot.add_task(CarControl())
 
-    # logger.info("加载手柄模块")
-    # from modules.mod_game_pad import GamePad
-    # robot.add_task(GamePad())
+    logger.info("加载手柄模块")
+    from modules.mod_game_pad import GamePad
+    robot.add_task(GamePad())
 
-    # logger.info("加载网络摄像头模块")
-    # from modules.new_web_camera import WebCamera
-    # robot.add_task(WebCamera())
+    logger.info("加载网络摄像头模块")
+    from modules.new_web_camera import WebCamera
+    robot.add_task(WebCamera())
+
+    logger.info("加载人脸追踪模块")
+    from modules.new_face_tracking import FaceTrack
+    robot.add_task(FaceTrack())
+
+    logger.info("加载音乐播放器模块")
+    logger.info("依赖的库: pip install pygame")
+    from modules.mod_music_player import MusicPlayerThread
+    robot.add_task(MusicPlayerThread())
 
     # logger.info("加载语音唤醒模块")
     # from modules.mod_awak import AwakenThread
@@ -98,12 +107,6 @@ if __name__ == "__main__":
     # logger.info("加载 TTS 模块")
     # from modules.mod_tts import TTSThread
     # robot.add_task(TTSThread())
-
-    # logger.info("加载音乐播放器模块")
-    # logger.info("依赖的库: pip install pygame")
-    # from modules.mod_music_player import MusicPlayerThread
-    # robot.add_task(MusicPlayerThread())
-
     # logger.info("加载 OLED 模块")
     # logger.info("依赖: pip install luma.core luma.oled pillow")
     # from modules.mod_oled import OLEDThread

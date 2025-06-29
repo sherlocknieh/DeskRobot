@@ -18,7 +18,11 @@ class HeadServo:
             min_pulse_width=0.0005,
             max_pulse_width=0.0025
         )
+        self.current_angle = 0
 
+    def get_angle(self):
+        return self.current_angle
+    
     def set_angle(self, angle):
         """
             平视:   0 度
@@ -29,9 +33,10 @@ class HeadServo:
             angle = 85
         elif angle < -45:
             angle = -45
+        self.current_angle = angle
         self.servo.angle = -angle
 
-    def nod(self, times=1, down_angle=-30, up_angle=0, delay=0.4):
+    def nod(self, times=1, down_angle=-30, up_angle=32, delay=0.4):
         """
         点头
         """
