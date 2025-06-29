@@ -29,45 +29,14 @@ DeskRobot.py 项目入口。
 
 ### 主要模块
 
-- 主控模块：使用...实现机器人状态控制。
-- 运动控制模块：使用...实现机器人运动控制。
+- 主控模块：使用 EventBus 实现机器人状态控制。
+- 运动控制模块：使用 gpiozero 实现机器人电机控制。
 - 语音交互模块：
-    - STT: 使用 FunASR /Fast_Whisper/ Vosk 实现语音转文字。
-    - TTS: 使用 edge-tts/piper/Coqui 实现文字转语音。
-    - 唤醒: 使用 SnowBoy 实现语音唤醒。
-- AI对话模块：使用 DeepseekAPI 实现机器人对话。
+    - 语音唤醒: 使用 openwakeword 实现语音唤醒。
+    - 话语检测: 使用 SileroVAD 实现语音断句。
+    - STT: 使用 siliconflow_stt 和 iflytek_stt 实现语音转文字。
+    - TTS: 使用 edge-tts 实现文字转语音。
+- AI对话模块：使用 langchain_openai 和 SiliconFlow API 实现机器人对话。
 - OLED显示模块：输入系统状态, 输出表情/内容。
-- 人脸跟踪模块：使用...实现人脸跟踪。
-
-
-## GPIO使用情况
-
-GPIO 0:  空闲
-GPIO 1:  空闲
-GPIO 2:  OLED_I2C_SDA
-GPIO 3:  OLED_I2C_SCL
-GPIO 4:  空闲
-GPIO 5:  空闲
-GPIO 6:  空闲
-GPIO 7:  空闲
-GPIO 8:  空闲
-GPIO 9:  LED_R
-GPIO 10: LED_G
-GPIO 11: LED_B
-GPIO 12: 空闲
-GPIO 13: 空闲
-GPIO 14: Car Motor 1
-GPIO 15: Car Motor 1
-GPIO 16: 空闲
-GPIO 17: 空闲
-GPIO 18: Car PWM 1
-GPIO 19: Car PWM 2
-GPIO 20: 空闲
-GPIO 21: 空闲
-GPIO 22: 空闲
-GPIO 23: Car Motor 2
-GPIO 24: Car Motor 2
-GPIO 25: 空闲
-GPIO 26: 空闲
-GPIO 27: 空闲
+- 人脸跟踪模块：使用 opencv 内置 CascadeClassifier + simple_pid 实现人脸跟踪。
 

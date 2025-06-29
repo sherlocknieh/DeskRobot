@@ -20,16 +20,15 @@ websocket
 # [ Hardware Drivers (Platform-Specific) ]
 # --- General GPIO ---
 gpiozero; sys_platform == 'linux'
-
-pigpio 
+pigpio
 lgpio; sys_platform == 'linux'
 
 # RPi.GPIO; sys_platform == 'linux'
 # rpi-lgpio; sys_platform == 'linux'
 
 # --- OLED Display ---
-# luma.oled; sys_platform == 'linux'
-# luma.core; sys_platform == 'linux'
+luma.oled; sys_platform == 'linux'
+luma.core; sys_platform == 'linux'
 
 # --- Camera ---
 picamera2; sys_platform == 'linux'
