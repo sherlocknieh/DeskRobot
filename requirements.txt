@@ -12,20 +12,24 @@ langgraph
 # [ Voice Processing ]
 pyaudio
 torch
+torchaudio
 edge-tts
 pydub
-websocket-client
-
+# websocket-client
+websocket 
 # [ Hardware Drivers (Platform-Specific) ]
 # --- General GPIO ---
 gpiozero; sys_platform == 'linux'
-RPi.GPIO; sys_platform == 'linux'
+
+pigpio 
 lgpio; sys_platform == 'linux'
-rpi-lgpio; sys_platform == 'linux'
+
+# RPi.GPIO; sys_platform == 'linux'
+# rpi-lgpio; sys_platform == 'linux'
 
 # --- OLED Display ---
-luma.oled; sys_platform == 'linux'
-luma.core; sys_platform == 'linux'
+# luma.oled; sys_platform == 'linux'
+# luma.core; sys_platform == 'linux'
 
 # --- Camera ---
 picamera2; sys_platform == 'linux'
@@ -34,12 +38,10 @@ flask
 
 # --- Car Control ---
 evdev; sys_platform == 'linux'
-
+pygame
 # --- 语音唤醒 ---
 openwakeword
 speexdsp-ns  # apt-get install libspeex-dev libspeexdsp-dev
-
+#pip install --upgrade "numpy<2"
 # --- 人脸跟踪 ---
-onnx
-onnx-tf
 simple_pid

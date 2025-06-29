@@ -138,7 +138,7 @@ class AiAPI:
             tools=tools,
             checkpointer=InMemorySaver(),
             prompt=SYSTEM_PROMPT,
-            debug=True,
+            debug=False,
         )
         self.logger.info("LangChain Agent 设置成功。")
 
@@ -183,6 +183,27 @@ class AiAPI:
         self.logger.info(f"计算结果: {result}")
         return result
 
+    def _tool_music_controller_tool(self, action: str) -> str:
+        """
+        【工具逻辑】控制音乐播放器的播放、暂停、上一曲,下一曲等操作。
+        """
+        self.logger.info(f"工具[music_controller]被调用，参数: action='{action}'")
+        # 不再直接发布事件，而是将动作加入队列
+        if action == "play":
+            self.event_bus.publish("PLAY_MUSIC")
+            return "好的，我会播放音乐。"
+        elif action == "pause":
+            self.event_bus.publish("PAUSE_MUSIC")
+            return "好的，我会暂停音乐。"
+        elif action == "previous":
+            self.event_bus.publish("PREVIOUS_SONG")
+            return "好的，我会播放上一曲。"
+        elif action == "next":
+            self.event_bus.publish("NEXT_SONG")
+            return "好的，我会播放下一曲。"
+        else:
+            return "抱歉，我不明白你的意思。"
+
     def __get_tools(self):
         """
         定义并返回 Agent 可用的工具列表。
@@ -224,7 +245,17 @@ class AiAPI:
             description="获取一个秘密数字，这只是一个示例工具。",
         )
 
-        tools = [set_expr_tool, trigger_expr_tool, get_secret_number_tool]
+        music_controller_tool = StructuredTool(
+            name="music_controller",
+            func=self._tool_music_controller_tool,
+            args_schema={"action": {"type": "string"}},
+            description="音乐播放器有 play, pause, previous, next 等操作。调用此工具来控制音乐播放器的播放、暂停、上一曲,下一曲等操作。",
+        )
+
+        tools = [set_expr_tool,
+                 trigger_expr_tool, 
+                 get_secret_number_tool,
+                 music_controller_tool]
         self.logger.info(f"成功加载 {len(tools)} 个工具。")
         return tools
 

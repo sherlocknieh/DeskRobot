@@ -14,6 +14,7 @@ import cv2
 import threading
 import queue
 import logging
+from time import sleep
 
 WIDTH = 640.0
 HEIGHT = 480.0
@@ -24,13 +25,13 @@ class FaceTrack(threading.Thread):
         self.name = "人脸追踪"                # 模块名称
         self.event_queue = queue.Queue()     # 事件队列
         self.event_bus = EventBus()          # 事件总线
-#        self.cam = PiCamera()                # 相机接口
+        self.cam = PiCamera()                # 相机接口
         self.car = Car()                     # 小车接口
         self.head = HeadServo()              # 舵机接口
         self.trackloop_flag = threading.Event()  # 人脸追踪标志位
         self.logger = logging.getLogger(self.name) # 日志工具
-        self.pid_x = PID(0.006, 0.001, 0.0005, setpoint=0)  # PID控制器
-        self.pid_y = PID(0.05, 0.01, 0.001, setpoint=0)      # PID控制器
+        self.pid_x = PID(0.004, 0.001, 0.001, setpoint=0)  # PID控制器
+        self.pid_y = PID(0.06, 0.01, 0.001, setpoint=0)      # PID控制器
         self.pid_z = PID(0.006, 0.00, 0, setpoint=0)      # PID控制器
 
         self.frame = None                    # 当前帧图像
@@ -50,12 +51,12 @@ class FaceTrack(threading.Thread):
             self.trackloop_flag.wait()
             self.head.set_angle(32)
             while self.trackloop_flag.is_set():
-                frame = self.frame
+                frame = self.cam.get_frame()
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)      # type: ignore
                 faces = face_cascade.detectMultiScale(              # 人脸位置检测
                     gray,
-                    scaleFactor=2,    # 图像缩放比例
-                    minNeighbors=3,     # 检测敏感度（数值越大要求越严格）
+                    scaleFactor=1.8,    # 图像缩放比例
+                    minNeighbors= 4,    # 检测敏感度（数值越大要求越严格）
                     minSize=(20, 20)    # 最小人脸尺寸
                 )
                 dx, dy, dz = 0.0, 0.0, 0.0
@@ -71,6 +72,10 @@ class FaceTrack(threading.Thread):
                 vy = self.pid_y(dy)
                 vz = self.pid_z(dz)
 
+                print(f"dx:{dx:.2f}, vx:{vx:.2f}")
+                #print(f"dy:{dy:.2f}, vy:{vy:.2f}")
+                # print(f"dz:{dz:.2f}, vz:{vz:.2f}")
+
                 if abs(dx) < 15:
                     vx = 0.0
                 if abs(dy) < 8:
@@ -78,9 +83,10 @@ class FaceTrack(threading.Thread):
                 y0 = self.head.get_angle()
 
 
-                print(f"dz:{dz:.2f}, vz:{vz:.2f}")
+                #print(f"dz:{dz:.2f}, vz:{vz:.2f}")
                 self.car.steer(vx, vz)
                 self.head.set_angle(y0 + vy)
+                sleep(0.02)
                 
     
 
@@ -104,7 +110,7 @@ class FaceTrack(threading.Thread):
         print(f"{self.name} 线程已停止")
 
     def stop(self):
-        #self.cam.stop()
+        self.cam.stop()
         self.car.speed(0, 0)
         self.trackloop_flag.clear()
 
@@ -115,6 +121,7 @@ if __name__ == '__main__':
     
     from EventBus import EventBus
     from API_Servo.Servo import HeadServo
+    from API_Camera.PiCamera import PiCamera
     from API_Car.Car import Car
     from time import sleep
 
