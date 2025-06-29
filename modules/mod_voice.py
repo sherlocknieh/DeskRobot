@@ -156,36 +156,35 @@ class VoiceThread(threading.Thread):
                     continue
                 vad_event = self.vad.process_chunk(chunk)
 
-                if not self.is_speaking_tts:                
-                    # 正常语音检测逻辑
-                    if vad_event:
-                        if "start" in vad_event and not self.is_detecting_speech:
-                            self.is_detecting_speech = True
-                            logger.info("检测到语音开始，开始收集音频块。")
-                            self.speech_frames = [chunk]
-                        elif "end" in vad_event and self.is_detecting_speech:
-                            self.is_detecting_speech = False
-                            self.speech_frames.append(chunk)
-                            logger.info("检测到语音结束。正在发布事件...")
-
-                            full_speech_audio = b"".join(self.speech_frames)
-                            self.speech_frames = []
-
-                            logger.info("发布 VOICE_COMMAND_DETECTED 事件。")
-                            self.event_bus.publish(
-                                "VOICE_COMMAND_DETECTED",
-                                {
-                                    "audio_data": full_speech_audio,
-                                    "sample_rate": self.sample_rate,
-                                    "channels": self.channels,
-                                    "sample_width": self.voice_io.p.get_sample_size(
-                                        self.voice_io.format
-                                    ),
-                                },
-                            )
-                    elif self.is_detecting_speech:
-                        logger.info("正在收集语音中的音频块。")
+                # 统一的语音检测逻辑，无论TTS是否在播放
+                if vad_event:
+                    if "start" in vad_event and not self.is_detecting_speech:
+                        self.is_detecting_speech = True
+                        logger.info("检测到语音开始，开始收集音频块。")
+                        self.speech_frames = [chunk]
+                    elif "end" in vad_event and self.is_detecting_speech:
+                        self.is_detecting_speech = False
                         self.speech_frames.append(chunk)
+                        logger.info("检测到语音结束。正在发布事件...")
+
+                        full_speech_audio = b"".join(self.speech_frames)
+                        self.speech_frames = []
+
+                        logger.info("发布 VOICE_COMMAND_DETECTED 事件。")
+                        self.event_bus.publish(
+                            "VOICE_COMMAND_DETECTED",
+                            {
+                                "audio_data": full_speech_audio,
+                                "sample_rate": self.sample_rate,
+                                "channels": self.channels,
+                                "sample_width": self.voice_io.p.get_sample_size(
+                                    self.voice_io.format
+                                ),
+                            },
+                        )
+                elif self.is_detecting_speech:
+                    logger.info("正在收集语音中的音频块。")
+                    self.speech_frames.append(chunk)
 
         logger.info("VoiceThread 循环已结束。")
         self._cleanup()
@@ -218,17 +217,16 @@ class VoiceThread(threading.Thread):
                     self.is_speaking_tts = False
                 elif event["type"] == "STT_RESULT_RECEIVED":
                     if self.is_speaking_tts:
-                # 在TTS播放期间，只关心语音的开始，这表示打断
-                        logger.info("在TTS播放期间检测到语音，触发打断并开始录制新指令...")
+                        # 在TTS播放期间，收到有效的STT结果，这表示一次成功的打断
+                        logger.info("在TTS播放期间收到STT结果，触发打断...")
                         # 1. 发布打断事件，让TTS停止
                         self.event_bus.publish("INTERRUPTION_DETECTED")
-                        # 2. 立即切换到正常的语音检测模式
+                        # 2. 立即退出TTS模式，因为打断已经发生
                         self.is_speaking_tts = False
-                        self.is_detecting_speech = True
-                        #self.speech_frames = [chunk]
+                        # 3. 清空任何可能残留的音频帧
+                        self.is_detecting_speech = False
                         self.speech_frames = []
-                        logger.info("已切换到正常检测模式，开始录制新指令。")
-                    # 后续的循环将自动像正常检测一样处理语音结束和发布
+                        logger.info("打断完成，已重置语音检测状态。")
         except Queue.Empty:
             logger.info("事件队列为空。")
             pass  # 队列为空是正常情况

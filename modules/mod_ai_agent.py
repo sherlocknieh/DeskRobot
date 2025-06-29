@@ -142,7 +142,7 @@ class AiThread(threading.Thread):
                             f"正在执行 {len(self.actions_on_speak)} 个暂存的动作..."
                         )
                         for action in self.actions_on_speak:
-                            self.event_bus.publish(action["type"], **action["data"])
+                            self.event_bus.publish(action["type"], data=action["data"])
                         self.actions_on_speak = []  # 执行后清空
 
                 elif event_type == "TTS_FINISHED":
