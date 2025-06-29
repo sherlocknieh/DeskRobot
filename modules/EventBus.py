@@ -48,15 +48,17 @@ class EventBus:
 
     def __init__(self):
         # 创建一个空字典, 用于存放订阅队列
-        if not hasattr(self, "listeners"):   # 避免多次初始化
-            self.listeners = {}
-            """实际结构:
-            self.listeners = {
-                "TYPE1": [queue1, queue2, queue3],
-                "TYPE2": [queue1, queue4],
-                "TYPE3": [queue2],
-            }
-            """
+        if getattr(self, '_initialized', False):
+            return
+        self.listeners = {}
+        """实际结构:
+        self.listeners = {
+            "TYPE1": [queue1, queue2, queue3],
+            "TYPE2": [queue1, queue4],
+            "TYPE3": [queue2],
+        }
+        """
+        self._initialized = True  # 标记已初始化, 防止重复初始化
 
     def subscribe(self, event_type, event_queue, name = ""):
         if not isinstance(event_queue, queue.Queue):
