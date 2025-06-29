@@ -79,18 +79,10 @@ if __name__ == "__main__":
     from modules.mod_game_pad import GamePad
     robot.add_task(GamePad())
 
-    logger.info("加载网络摄像头模块")
-    from modules.new_web_camera import WebCamera
-    robot.add_task(WebCamera())
-
-    logger.info("加载人脸追踪模块")
-    from modules.new_face_tracking import FaceTrack
-    robot.add_task(FaceTrack())
-
-    logger.info("加载音乐播放器模块")
-    logger.info("依赖的库: pip install pygame")
-    from modules.mod_music_player import MusicPlayerThread
-    robot.add_task(MusicPlayerThread())
+    # logger.info("加载音乐播放器模块")
+    # logger.info("依赖的库: pip install pygame")
+    # from modules.mod_music_player import MusicPlayerThread
+    # robot.add_task(MusicPlayerThread())
 
     # logger.info("加载语音唤醒模块")
     # from modules.mod_awak import AwakenThread
@@ -163,5 +155,13 @@ if __name__ == "__main__":
     #         llm_model_name = config["llm_model_name"],
     #     )
     # )
+    logger.info("加载网络摄像头模块")
+    from modules.new_web_camera import WebCamera
+    robot.add_task(WebCamera())
+
+    logger.info("加载人脸追踪模块")
+    from modules.new_face_tracking import FaceTrack
+    robot.add_task(FaceTrack())
+
 
     robot.run()

@@ -86,7 +86,7 @@ class FaceTrack(threading.Thread):
                 #print(f"dz:{dz:.2f}, vz:{vz:.2f}")
                 self.car.steer(vx, vz)
                 self.head.set_angle(y0 + vy)
-                sleep(0.02)
+                #sleep(0.02)
                 
     
 
