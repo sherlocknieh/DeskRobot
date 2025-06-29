@@ -111,7 +111,7 @@ class IflytekSTTClient:
         )
         transcription_finished.set()
 
-    def _on_open(self, ws, audio_file_path):
+    def _on_open(self, ws, audio_source):
         def run(*args):
             frame_size = 1280  # 80ms
             intervel = 0.04  # 40ms
@@ -119,7 +119,16 @@ class IflytekSTTClient:
                 0  # Frame status: 0 for first frame, 1 for intermediate, 2 for last
             )
 
-            with open(audio_file_path, "rb") as f:
+            # 根据 audio_source 的类型来决定如何读取数据
+            is_file = isinstance(audio_source, str)
+            if is_file:
+                f = open(audio_source, "rb")
+            else:
+                # 如果是 bytes, 使用 io.BytesIO 来模拟文件读取
+                import io
+                f = io.BytesIO(audio_source)
+
+            try:
                 while True:
                     buf = f.read(frame_size)
                     # First frame
@@ -130,7 +139,7 @@ class IflytekSTTClient:
                                 "language": "zh_cn",
                                 "domain": "iat",
                                 "accent": "mandarin",
-                                "dwa": "wpgs",  # 开启动态修正
+                                "dwa": "wpgs",
                             },
                             "data": {
                                 "status": 0,
@@ -139,14 +148,12 @@ class IflytekSTTClient:
                                 "audio": base64.b64encode(buf).decode("utf-8"),
                             },
                         }
-                        status = 1  # Move to intermediate frame status
+                        status = 1
 
                     # Intermediate and last frames
                     else:
-                        # Determine if this is the last frame
                         if not buf or len(buf) < frame_size:
                             status = 2
-
                         data = {
                             "data": {
                                 "status": status,
@@ -161,10 +168,15 @@ class IflytekSTTClient:
                         break
 
                     time.sleep(intervel)
+            finally:
+                f.close()
 
         threading.Thread(target=run).start()
 
-    def speech_to_text_from_file(self, audio_file_path: str) -> str:
+    def speech_to_text(self, audio_source) -> str:
+        """
+        通用方法，可以接受文件路径 (str) 或音频字节 (bytes)。
+        """
         global final_result, transcription_finished
 
         # Reset state for a new transcription
@@ -178,7 +190,7 @@ class IflytekSTTClient:
             on_error=self._on_error,
             on_close=self._on_close,
         )
-        ws.on_open = lambda ws: self._on_open(ws, audio_file_path)
+        ws.on_open = lambda ws: self._on_open(ws, audio_source)
 
         ws_thread = threading.Thread(
             target=ws.run_forever, kwargs={"sslopt": {"cert_reqs": ssl.CERT_NONE}}
@@ -194,3 +206,9 @@ class IflytekSTTClient:
 
         with result_lock:
             return final_result
+
+    def speech_to_text_from_file(self, audio_file_path: str) -> str:
+        """
+        为了向后兼容，保留此方法。
+        """
+        return self.speech_to_text(audio_file_path)
