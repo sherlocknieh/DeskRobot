@@ -117,27 +117,31 @@ class STTThread(threading.Thread):
     def _process_audio(
         self, audio_data: bytes, sample_rate: int, channels: int, sample_width: int
     ):
-        logger.info("STTThread: 接收到音频数据，开始处理...")
+        logger.info("STTThread: 接收到音频数据，开始直接从内存处理...")
+        stt_provider = self.config.get("stt_provider", "siliconflow").lower()
 
-        # 创建一个临时文件来处理音频数据
-        tmp_file_path = ""
         try:
-            # 获取一个唯一的临时文件名
-            fd, tmp_file_path = tempfile.mkstemp(suffix=".wav")
-            os.close(fd)  # 我们只需要文件名，所以立即关闭文件描述符
+            recognized_text = ""
+            if stt_provider == "siliconflow":
+                # 将原始PCM数据包装在WAV头中，以便API可以识别
+                # 这是必要的，因为API期望一个完整的文件格式，而不仅仅是原始样本
+                import io
+                buffer = io.BytesIO()
+                with wave.open(buffer, "wb") as wf:
+                    wf.setnchannels(channels)
+                    wf.setsampwidth(sample_width)
+                    wf.setframerate(sample_rate)
+                    wf.writeframes(audio_data)
+                buffer.seek(0)
+                wav_data = buffer.read()
+                
+                logger.info(f"调用 SiliconFlow STT API (内存)...")
+                recognized_text = self.stt_client.speech_to_text(wav_data, audio_format="wav")
 
-            # 将字节数据写入WAV文件
-            with wave.open(tmp_file_path, "wb") as wf:
-                wf.setnchannels(channels)
-                wf.setsampwidth(sample_width)
-                wf.setframerate(sample_rate)
-                wf.writeframes(audio_data)
-
-            # 调用 STT API
-            logger.info(
-                f"调用 STT API ({self.config.get('stt_provider', 'iflytek')})，文件: {tmp_file_path}"
-            )
-            recognized_text = self.stt_client.speech_to_text_from_file(tmp_file_path)
+            elif stt_provider == "iflytek":
+                # 讯飞的实现可以直接处理原始PCM数据流
+                logger.info(f"调用 Iflytek STT API (内存)...")
+                recognized_text = self.stt_client.speech_to_text(audio_data)
 
             if recognized_text:
                 logger.info(f"识别结果: '{recognized_text}'")
@@ -149,11 +153,6 @@ class STTThread(threading.Thread):
         except Exception as e:
             logger.error(f"处理音频时发生错误: {e}", exc_info=True)
             self.event_bus.publish("ERROR", {"message": f"STT 处理失败: {e}"})
-        finally:
-            # 确保临时文件被删除
-            if tmp_file_path and os.path.exists(tmp_file_path):
-                os.remove(tmp_file_path)
-                logger.info(f"已删除临时文件: {tmp_file_path}")
 
     def stop(self):
         """设置停止事件以终止线程。"""

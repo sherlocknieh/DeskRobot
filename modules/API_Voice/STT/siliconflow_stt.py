@@ -31,29 +31,32 @@ class SiliconFlowSTT:
             f"SiliconFlowSTT 初始化, 模型: {self.model_name}, 语言: {self.language}"
         )
 
-    def speech_to_text_from_file(self, audio_file_path: str) -> str:
+    def speech_to_text(
+        self, audio_data: bytes, audio_format: str = "wav"
+    ) -> str:
         """
-        通过上传文件的方式，使用 SiliconFlow API 将音频转换为文本。
+        通过上传内存中的音频数据，使用 SiliconFlow API 将音频转换为文本。
+        :param audio_data: 音频数据的字节流。
+        :param audio_format: 音频格式, e.g., "wav", "mp3"。
         """
         try:
-            with open(audio_file_path, "rb") as audio_file:
-                data = {"model": self.model_name, "language": self.language}
-                files = {
-                    "file": (
-                        "audio.wav",
-                        audio_file,
-                        "audio/wav",
-                    )
-                }
-                logger.info(f"正在调用 SiliconFlow API (文件)... data: {data}")
-                response = requests.post(
-                    SILICONFLOW_API_URL, headers=self.headers, data=data, files=files
+            data = {"model": self.model_name, "language": self.language}
+            files = {
+                "file": (
+                    f"audio.{audio_format}",
+                    audio_data,
+                    f"audio/{audio_format}",
                 )
-                response.raise_for_status()
-                result = response.json()
-                recognized_text = result.get("text", "")
-                logger.info(f"SiliconFlow API 响应: {recognized_text}")
-                return recognized_text
+            }
+            logger.info(f"正在调用 SiliconFlow API (内存数据)...")
+            response = requests.post(
+                SILICONFLOW_API_URL, headers=self.headers, data=data, files=files
+            )
+            response.raise_for_status()
+            result = response.json()
+            recognized_text = result.get("text", "")
+            logger.info(f"SiliconFlow API 响应: {recognized_text}")
+            return recognized_text
         except requests.exceptions.RequestException as e:
             logger.error(f"调用 SiliconFlow API 时出错: {e}")
             if e.response:
