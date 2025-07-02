@@ -47,9 +47,11 @@ class Car:
             return
         self.A = Wheel(14, 15, 18)
         self.B = Wheel(23, 24, 19)
+        self.STBY = DigitalOutputDevice(21)
 
         self.A.speed(0)
         self.B.speed(0)
+        self.STBY.on()
     
     def speed(self, L, R):
         self.A.speed(L*1.13)
@@ -60,7 +62,18 @@ class Car:
         R = (y - x/(1+abs(y))) / 1.4
         self.speed(L, R)
 
+    def pause(self):
+        self.STBY.off()
+    
+    def resume(self):
+        self.STBY.on()
+
 if __name__ == '__main__':
     car = Car()
-    car.steer(0, 0)
+    car.steer(0, 0.5)
     sleep(1)
+    car.pause()
+    sleep(1)
+    car.resume()
+    sleep(1)
+    car.steer(0, 0)
