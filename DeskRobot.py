@@ -71,6 +71,10 @@ if __name__ == "__main__":
     # from modules.mod_led_control import LEDControl
     # robot.add_task(LEDControl())
 
+    # logger.info("加载温湿度模块")
+    # from modules.mod_temperature import Temperature
+    # robot.add_task(LEDControl())
+
     logger.info("加载小车控制模块")
     from modules.mod_car_control import CarControl
     robot.add_task(CarControl())
@@ -159,9 +163,9 @@ if __name__ == "__main__":
     from modules.new_web_camera import WebCamera
     robot.add_task(WebCamera())
 
-    logger.info("加载人脸追踪模块")
-    from modules.new_face_tracking import FaceTrack
-    robot.add_task(FaceTrack())
+    # logger.info("加载人脸追踪模块")
+    # from modules.new_face_tracking import FaceTrack
+    # robot.add_task(FaceTrack())
 
 
     robot.run()
