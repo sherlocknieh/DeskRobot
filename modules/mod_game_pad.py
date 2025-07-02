@@ -23,8 +23,8 @@ class GamePad(threading.Thread):
 
         self.car = Car()
 
-        self._gamepad_event_loop_flag = threading.Event()
-        self._gamepad_connect_loop_flag = threading.Event()
+        self._gamepad_connected = threading.Event()
+        self._gamepad_connecting = threading.Event()
         
         self.x = 0
         self.y = 0
@@ -53,16 +53,14 @@ class GamePad(threading.Thread):
         控制车轮转动
         """
         while True:
-            x, y = self.x, self.y
-            self.car.steer(x, y)
-            sleep(0.02) # 控制频率
+            self.car.steer(self.x, self.y)
+            sleep(1/50) # 控制输出频率
 
 
     def _gamepad_event_loop(self):
         """手柄事件循环
         """
         while True:
-            self._gamepad_event_loop_flag.wait()
             try:
                 for event in self.gamepad.read_loop():  # type: ignore
                     if event.type == evdev.ecodes.EV_ABS:
@@ -135,8 +133,6 @@ class GamePad(threading.Thread):
                         if event.code == 316:
                             if event.value == 1:
                                 logger.info(f'HOME键按下')
-                                self.event_bus.publish("EXIT")
-                                break
                             if event.value == 0: logger.info(f'HOME键放开')
                         if event.code == 317:
                             if event.value == 1:
@@ -157,20 +153,22 @@ class GamePad(threading.Thread):
                                      self.firstpress = True
             except Exception: 
                 logger.info("手柄已断开")
-                self._gamepad_connect_loop_flag.set()
+                self._gamepad_connecting.set()
+                self._gamepad_connected.clear()
+                self._gamepad_connected.wait()
 
 
     def _gamepad_connect_loop(self):
-        """手柄重连循环
+        """手柄连接与重连
         """
         self.gamepad = self.gamepad_connector()
         while True:
             if not self.gamepad:
-                logger.info("手柄未连接")
                 self.gamepad = self.gamepad_connector()
             if self.gamepad:
-                self._gamepad_event_loop_flag.set()
-                self._gamepad_connect_loop_flag.wait()
+                self._gamepad_connected.set()
+                self._gamepad_connecting.clear()
+                self._gamepad_connecting.wait()
             sleep(1)
 
 
