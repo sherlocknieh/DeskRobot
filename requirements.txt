@@ -44,3 +44,4 @@ speexdsp-ns  # apt-get install libspeex-dev libspeexdsp-dev
 #pip install --upgrade "numpy<2"
 # --- 人脸跟踪 ---
 simple_pid
+mediapipe==0.10.9

@@ -18,11 +18,8 @@ import threading
 import logging
 from time import sleep
 
-WIDTH = 640.0
-HEIGHT = 480.0
-
 class WebCamera(threading.Thread):
-    
+
     def __init__(self):
         super().__init__(daemon=True)
         self.name = "网络摄像头"              # 模块名称
@@ -35,38 +32,13 @@ class WebCamera(threading.Thread):
         self.register_routes()               # 路由注册统一入口
         self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         self.rect = {"x": 0, "y": 0, "w": 640, "h": 480}
-        self.stream_frame = self.cam.get_frame('numpy')
-        
-    def frame_filter(self, frame):        # 添加人脸识别框
-        # 加载预训练模型
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml') # type: ignore
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)      # 灰度化
-        faces = face_cascade.detectMultiScale(              # 人脸检测（参数可调整优化）
-            gray,
-            scaleFactor=1.5,    # 图像缩放比例
-            minNeighbors=4,     # 检测敏感度（数值越大要求越严格）
-            minSize=(50, 50)    # 最小人脸尺寸
-        )
-        # 标注结果
-        x, y, w, h = self.rect["x"], self.rect["y"], self.rect["w"], self.rect["h"]
-        if faces is not None and len(faces) > 0:
-            x, y, w, h = max(faces, key=lambda rect: rect[3])
-            self.rect = {"x": x, "y": y, "w": w, "h": h}
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 2) # 画矩形框
-        return frame
-    
+
     def gen_frames(self):
         while True:
-            frame = self.frame_filter(self.stream_frame)
-            _, buf = cv2.imencode('.jpg', frame)  # type: ignore
-            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buf.tobytes() + b'\r\n')
-            #sleep(0.02) # 控制帧率
-
-    def gen_frame_thread(self):
-        while True:
-            self.stream_frame = self.cam.get_frame('numpy')
-            self.event_bus.publish("NEW_FRAME", {"frame": self.stream_frame}, self.name)
-            sleep(0.02) # 控制帧率
+            frame, rect = self.cam.get_frame(face_detection=True)
+            jpeg = cv2.imencode('.jpg', frame)[1].tobytes()  # type: ignore
+            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + jpeg + b'\r\n')
+            sleep(1/40) # 控制帧率
 
     def register_routes(self):
         def index():
@@ -91,7 +63,6 @@ class WebCamera(threading.Thread):
 
     def run(self):
         threading.Thread(target=self.web_server, name="网页服务", daemon=True).start()
-        threading.Thread(target=self.gen_frame_thread, daemon=True).start()
         
         self.logger.info("开始事件监听")
         self.thread_flag.set()

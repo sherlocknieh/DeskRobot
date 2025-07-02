@@ -2,9 +2,27 @@ import logging
 import wave
 import numpy as np
 import pyaudio
-import warnings
 logger = logging.getLogger("VoiceIOAPI")
+
+
+
+
+
+
+
+# 抑制ALSA调试输出
+import os, warnings
+os.environ["PYTHONWARNINGS"] = "ignore"
+os.environ["ALSA_LOG_LEVEL"] = "none"
+os.environ["LIBASOUND_DEBUG"] = "0"
 warnings.filterwarnings("ignore", module="pyaudio")
+
+
+
+
+
+
+
 
 class VoiceIO:
     """

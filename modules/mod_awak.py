@@ -8,15 +8,16 @@ import threading
 import numpy as np
 from queue import Queue
 from openwakeword.model import Model
+from openwakeword.utils import download_models
 import os
 
 from modules.EventBus import EventBus
 
 # 获取项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# 获取 PROJECT_ROOT/tools 目录下的文件列表, 筛选出.tflite文件
-loacal_models = [os.path.join(PROJECT_ROOT, "tools", f) 
-                 for f in os.listdir(os.path.join(PROJECT_ROOT, "tools")) 
+# 获取 PROJECT_ROOT/files 目录下的文件列表, 筛选出.tflite文件
+loacal_models = [os.path.join(PROJECT_ROOT, "files", f) 
+                 for f in os.listdir(os.path.join(PROJECT_ROOT, "files")) 
                  if f.endswith(".tflite")]
 
 print(loacal_models)
@@ -55,11 +56,12 @@ class AwakenThread(threading.Thread):
         """初始化音频设备和唤醒模型"""
         try:
             # 自动下载预训练模型
-            # openwakeword.utils.download_models()
+
+            logger.info("下载预训练模型")
+            download_models(["hey_jarvis"])
             # 初始化openWakeWord模型
             self.oww_model = Model(
-                #wakeword_models = loacal_models,  # 预训练模型路径
-                wakeword_models = ["hey jarvis"],  # 预训练模型路径
+                wakeword_models = self.wakeword_models,  # 预训练模型路径
                 vad_threshold = 0.4,              # 语音活动检测阈值
                 enable_speex_noise_suppression = True
             )

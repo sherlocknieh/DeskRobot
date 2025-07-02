@@ -7,9 +7,43 @@ sys.path.pop(0)
 
 
 import cv2
+import numpy as np
+import mediapipe as mp
+
+
+class KalmanBoxTracker:
+    """Kalman滤波器"""
+    def __init__(self, init_state=None):
+        # 位置: x, y, w, h, 速度: dx, dy, dw, dh
+        self.kalman = cv2.KalmanFilter(8, 4)
+        self.kalman.measurementMatrix = np.eye(4, 8, dtype=np.float32)
+        self.kalman.transitionMatrix = np.eye(8, dtype=np.float32)
+        dt = 1
+        for i in range(4):
+            self.kalman.transitionMatrix[i, i+4] = dt
+        self.kalman.processNoiseCov = np.eye(8, dtype=np.float32) * 1e-2
+        self.kalman.measurementNoiseCov = np.eye(4, dtype=np.float32) * 1
+        self.kalman.errorCovPost = np.eye(8, dtype=np.float32)
+        # 初始状态
+        if init_state is None:
+            init_state = np.array([[320], [240], [0], [0], [0], [0], [0], [0]], dtype=np.float32)
+        self.kalman.statePost = init_state
+
+    def update(self, x, y, w, h):
+        """输入观测值，返回平滑后的边界框"""
+        self.kalman.predict()
+        measurement = np.array([[np.float32(x)],
+                                [np.float32(y)],
+                                [np.float32(w)],
+                                [np.float32(h)]])
+        estimate = self.kalman.correct(measurement)
+        sx, sy, sw, sh = estimate[:4].flatten()
+        return int(sx), int(sy), int(sw), int(sh)
+
+kalman_tracker = KalmanBoxTracker()
+
+
 import threading
-
-
 class PiCamera:
     _instance = None
     _lock = threading.Lock()
@@ -31,25 +65,40 @@ class PiCamera:
         print("摄像头已启动")
         self._running = True
 
-    def get_frame(self, format='numpy'):
+    def face_detection(self, BGR_frame):
+
+        mp_face_detection = mp.solutions.face_detection
+        mp_drawing = mp.solutions.drawing_utils
+        x, y, w, h = 0, 0, 0, 0
+        
+        with mp_face_detection.FaceDetection(
+            min_detection_confidence = 0.4,
+            model_selection = 0
+            ) as face_detection:
+            results = face_detection.process(cv2.cvtColor(BGR_frame, cv2.COLOR_BGR2RGB))
+            if results.detections:
+                for detection in results.detections:
+                    #绘制人脸边界框
+                    bbox = detection.location_data.relative_bounding_box
+                    ih, iw, _ = BGR_frame.shape
+                    x, y = int(bbox.xmin * iw), int(bbox.ymin * ih)
+                    w, h = int(bbox.width * iw), int(bbox.height * ih)
+                    x, y, w, h = kalman_tracker.update(x, y, w, h)
+                    cv2.rectangle(BGR_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            return BGR_frame, (x, y, w, h)
+
+    def get_frame(self, face_detection=False):
         """获取一帧图像
-           可选格式: numpy, jpeg, png, stream
         """
-        raw = self.picam2.capture_array()
-        frame = cv2.cvtColor(raw, cv2.COLOR_RGB2BGR)
-        if format == 'numpy':
-            return frame
-        elif format in ['jpeg','jpg']:
-            _, buf = cv2.imencode('.jpg', frame)
-            return buf.tobytes()
-        elif format == 'png':
-            _, buf = cv2.imencode('.png', frame)
-            return buf.tobytes()
-        elif format == 'stream' :
-            _, buf = cv2.imencode('.jpg', frame)
-            return (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buf.tobytes() + b'\r\n')
+
+        RGB_frame = self.picam2.capture_array()
+        BGR_frame = cv2.cvtColor(RGB_frame, cv2.COLOR_RGB2BGR) # 转换为 cv2 所需的 BGR 格式
+        
+        if face_detection:
+            fram, rect = self.face_detection(BGR_frame)
+            return fram, rect
         else:
-            raise ValueError("Unsupported format: {}".format(format))
+            return BGR_frame
 
     def start(self):
         if not self._running:
@@ -64,7 +113,9 @@ class PiCamera:
             self._running = False
 
 
-if __name__ == '__main__':
+
+def webtest():
+    
     from flask import Flask, render_template, Response, jsonify  # 导入Flask相关模块
     from time import sleep
 
@@ -79,9 +130,10 @@ if __name__ == '__main__':
             cam.start()
             def gen_frames():
                 while True:
-                    frame = cam.get_frame('stream')
-                    yield frame
-                    sleep(0.02)
+                    frame, rect = cam.get_frame(face_detection=True)
+                    jpeg = cv2.imencode('.jpg', frame)[1].tobytes()
+                    yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + jpeg + b'\r\n')
+                    sleep(1/30)
             return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame') # type: ignore
 
         def shutdown():
@@ -90,7 +142,7 @@ if __name__ == '__main__':
 
         def capture():
             frame = cam.get_frame('jpeg')
-            return Response(frame, mimetype='image/jpeg')
+            return Response(frame, mimetype='image/jpeg') # type: ignore
 
         app.add_url_rule('/', view_func=index)
         app.add_url_rule('/stream', view_func=stream)
@@ -100,3 +152,14 @@ if __name__ == '__main__':
     register_routes()
 
     app.run(host='0.0.0.0', port=5000, debug=False)
+
+def localtest():
+    cam = PiCamera()
+    frame = cam.get_frame()
+    print(frame.shape) # type: ignore
+    print(frame[0][0])
+    cv2.imwrite('frame.jpg', frame) # type: ignore
+    cam.stop()
+    
+if __name__ == '__main__':
+    webtest()

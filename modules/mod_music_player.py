@@ -46,8 +46,8 @@ logger = logging.getLogger("音乐播放器")
 # 获取项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 加载歌曲列表
-music_files = [os.path.join(PROJECT_ROOT, "tools/songs", f) 
-                 for f in os.listdir(os.path.join(PROJECT_ROOT, "tools/songs"))]
+music_files = [os.path.join(PROJECT_ROOT, "files/songs", f) 
+                 for f in os.listdir(os.path.join(PROJECT_ROOT, "files/songs"))]
 
 
 class MusicPlayerThread(threading.Thread):
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     
     import os
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    music_path = os.path.join(project_root, "tools/Creamy.ogg")
+    music_path = os.path.join(project_root, "files/Creamy.ogg")
     
     
     #pygame.mixer.init()
