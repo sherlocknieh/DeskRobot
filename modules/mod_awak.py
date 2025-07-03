@@ -3,26 +3,19 @@
 实现语音唤醒词检测和打断检测功能
 """
 
-import logging
-import threading
 import numpy as np
-from queue import Queue
 from openwakeword.model import Model
 from openwakeword.utils import download_models
-import os
+
 
 from modules.EventBus import EventBus
 
-# 获取项目根目录
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# 获取 PROJECT_ROOT/files 目录下的文件列表, 筛选出.tflite文件
-loacal_models = [os.path.join(PROJECT_ROOT, "files", f) 
-                 for f in os.listdir(os.path.join(PROJECT_ROOT, "files")) 
-                 if f.endswith(".tflite")]
 
-print(loacal_models)
-
+import logging
+import threading
+from queue import Queue
 logger = logging.getLogger("AwakenModule")
+
 
 class AwakenThread(threading.Thread):
     """

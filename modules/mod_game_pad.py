@@ -53,7 +53,8 @@ class GamePad(threading.Thread):
         控制车轮转动
         """
         while True:
-            self.car.steer(self.x, self.y)
+            #self.car.steer(self.x, self.y)
+            self.event_bus.publish("CAR_STEER", {"x": self.x, "y": self.y})
             sleep(1/50) # 控制输出频率
 
 

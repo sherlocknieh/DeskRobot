@@ -21,7 +21,7 @@ class KalmanBoxTracker:
         dt = 1
         for i in range(4):
             self.kalman.transitionMatrix[i, i+4] = dt
-        self.kalman.processNoiseCov = np.eye(8, dtype=np.float32) * 1e-2
+        self.kalman.processNoiseCov = np.eye(8, dtype=np.float32) * 0.01
         self.kalman.measurementNoiseCov = np.eye(4, dtype=np.float32) * 1
         self.kalman.errorCovPost = np.eye(8, dtype=np.float32)
         # 初始状态
@@ -44,6 +44,8 @@ kalman_tracker = KalmanBoxTracker()
 
 
 import threading
+
+
 class PiCamera:
     _instance = None
     _lock = threading.Lock()
@@ -56,49 +58,48 @@ class PiCamera:
         return cls._instance
 
     def __init__(self, resolution=(640, 480)):
-        print("正在加载摄像头")
-        self.picam2 = Picamera2()
-        print("正在配置摄像头")
-        self.picam2.configure(self.picam2.create_video_configuration(main={"size": resolution}))
-        print("正在打开摄像头")
-        self.picam2.start()
-        print("摄像头已启动")
-        self._running = True
+        if not getattr(self, 'picam2', None):
+            print("正在加载摄像头")
+            self.picam2 = Picamera2()
+            print("正在配置摄像头")
+            self.picam2.configure(self.picam2.create_video_configuration(main={"size": resolution}))
+            print("正在打开摄像头")
+            self.picam2.start()
+            print("摄像头已启动")
+            self._running = True
+            # 只初始化一次 FaceDetection 实例
+            self._face_detector = mp.solutions.face_detection.FaceDetection(
+                min_detection_confidence=0.2, # 置信度阈值
+                model_selection=0
+            )
 
     def face_detection(self, BGR_frame):
-
-        mp_face_detection = mp.solutions.face_detection
-        mp_drawing = mp.solutions.drawing_utils
-        x, y, w, h = 0, 0, 0, 0
-        
-        with mp_face_detection.FaceDetection(
-            min_detection_confidence = 0.4,
-            model_selection = 0
-            ) as face_detection:
-            results = face_detection.process(cv2.cvtColor(BGR_frame, cv2.COLOR_BGR2RGB))
-            if results.detections:
-                for detection in results.detections:
-                    #绘制人脸边界框
-                    bbox = detection.location_data.relative_bounding_box
-                    ih, iw, _ = BGR_frame.shape
-                    x, y = int(bbox.xmin * iw), int(bbox.ymin * ih)
-                    w, h = int(bbox.width * iw), int(bbox.height * ih)
-                    x, y, w, h = kalman_tracker.update(x, y, w, h)
-                    cv2.rectangle(BGR_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            return BGR_frame, (x, y, w, h)
+        """人脸检测"""
+        x, y, w, h = 320, 240, 0, 0
+        results = self._face_detector.process(cv2.cvtColor(BGR_frame, cv2.COLOR_BGR2RGB))
+        if results.detections:
+            for detection in results.detections:
+                #绘制人脸边界框
+                bbox = detection.location_data.relative_bounding_box
+                ih, iw, _ = BGR_frame.shape
+                x, y = int(bbox.xmin * iw), int(bbox.ymin * ih)
+                w, h = int(bbox.width * iw), int(bbox.height * ih)
+                x, y, w, h = kalman_tracker.update(x, y, w, h)
+                cv2.rectangle(BGR_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        return BGR_frame, (x, y, w, h)
 
     def get_frame(self, face_detection=False):
         """获取一帧图像
         """
 
-        RGB_frame = self.picam2.capture_array()
-        BGR_frame = cv2.cvtColor(RGB_frame, cv2.COLOR_RGB2BGR) # 转换为 cv2 所需的 BGR 格式
+        frame = self.picam2.capture_array()
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) # 转换为 cv2 所需的 BGR 格式
         
         if face_detection:
-            fram, rect = self.face_detection(BGR_frame)
-            return fram, rect
+            frame, rect = self.face_detection(frame)
+            return frame, rect
         else:
-            return BGR_frame
+            return frame, None
 
     def start(self):
         if not self._running:
@@ -141,8 +142,9 @@ def webtest():
             return jsonify({'status': 'camera stopped'})
 
         def capture():
-            frame = cam.get_frame('jpeg')
-            return Response(frame, mimetype='image/jpeg') # type: ignore
+            frame, rect = cam.get_frame()
+            jpeg = cv2.imencode('.jpg', frame)[1].tobytes() # type: ignore
+            return Response(jpeg, mimetype='image/jpeg') # type: ignore
 
         app.add_url_rule('/', view_func=index)
         app.add_url_rule('/stream', view_func=stream)

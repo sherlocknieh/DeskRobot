@@ -16,7 +16,7 @@ from logging.handlers import RotatingFileHandler
 def setup_logging(level=logging.INFO):
     """配置日志系统"""
 
-    log_dir = os.path.join(PROJECT_ROOT, "files/logs")
+    log_dir = os.path.join(PROJECT_ROOT, "localfiles/logs")
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     

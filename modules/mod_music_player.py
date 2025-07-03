@@ -27,29 +27,27 @@ Publish:
 - MUSIC_STOPPED: 音乐停止时发布
 - ERROR: 发生错误时发布
 """
+# 第三方库
+import pygame
 
+# 本地库
+if __name__ != "__main__":
+    from .EventBus import EventBus
+
+# 标准库
 import logging
 import os
 import threading
 import time
 from queue import Queue
 from urllib.request import urlretrieve
-import pygame
 
-if __name__ != "__main__":
-    from .EventBus import EventBus
-
+# 全局变量
 logger = logging.getLogger("音乐播放器")
+music_files = [os.path.join("localfiles/songs", f) for f in os.listdir("localfiles/songs")]
 
 
-
-# 获取项目根目录
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# 加载歌曲列表
-music_files = [os.path.join(PROJECT_ROOT, "files/songs", f) 
-                 for f in os.listdir(os.path.join(PROJECT_ROOT, "files/songs"))]
-
-
+# 类定义
 class MusicPlayerThread(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True, name="MusicPlayerThread")
@@ -111,8 +109,7 @@ class MusicPlayerThread(threading.Thread):
 
     def _handle_play(self, data):
         source = data.get("path")
-        source = music_files[0] if source is None else source
-        print(f"播放音乐: {source}")
+        source = self.playlist[0] if source is None else source
         self.loop = data.get("loop", False)
     
         # 仅当明确传入新列表时才更新播放列表
@@ -156,6 +153,7 @@ class MusicPlayerThread(threading.Thread):
                 pygame.mixer.music.unpause()
                 self.is_paused = False
                 self.event_bus.publish("MUSIC_RESUMED")
+    
     def _handle_stop(self):
         pygame.mixer.music.stop()
         self.is_playing = False
@@ -178,6 +176,7 @@ class MusicPlayerThread(threading.Thread):
             source = self.playlist[self.current_index]
             print(f"播放歌曲: {source}")
             self._handle_play({"path": source, "loop": self.loop})
+    
     def stop(self):
         """新增清理方法"""
         self._handle_stop()
@@ -188,29 +187,21 @@ class MusicPlayerThread(threading.Thread):
                 os.remove(f)
             except:
                 pass
+
+
+# 测试代码
 if __name__ == "__main__":
-    # 测试代码
-    import numpy as np
     from EventBus import EventBus
-    
-    import os
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    music_path = os.path.join(project_root, "files/Creamy.ogg")
-    
-    
-    #pygame.mixer.init()
-    pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)
     
     # 创建并启动播放器线程
     player = MusicPlayerThread()
     player.start()
 
-    # # 播放列表 
+    # 开始播放
     player.event_bus.publish("PLAY_MUSIC", {"path": music_files})
     time.sleep(3)
 
-
-    # # 切歌控制
+    # 切歌控制
     print("下一首歌")
     player.event_bus.publish("NEXT_SONG")
     time.sleep(4)
@@ -223,17 +214,17 @@ if __name__ == "__main__":
     player.event_bus.publish("PREVIOUS_SONG")
     time.sleep(4)
     
-    # 测试暂停
+    # 暂停
     print("暂停播放")
     player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
-    # 测试恢复
+    # 恢复
     print("恢复播放")
     player.event_bus.publish("PAUSE_MUSIC")
     time.sleep(2)
     
-    # 停止播放
+    # 停止
     print("停止播放")
     player.event_bus.publish("STOP_MUSIC")
 
