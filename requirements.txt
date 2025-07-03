@@ -1,7 +1,7 @@
 # [ Core Framework ]
 python-dotenv
 Pillow
-numpy
+numpy==1.26.4
 requests
 
 # [ AI & LangChain ]
