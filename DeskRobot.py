@@ -3,9 +3,9 @@ import logging
 import queue
 
 
-from configs.config import config       # 导入配置文件
-from modules.EventBus import EventBus   # 导入事件总线
-logger = logging.getLogger("DeskRobot") # 日志工具
+from modules.EventBus import EventBus       # 导入事件总线
+from configs import api_config, log_config  # 导入配置文件
+logger = logging.getLogger("DeskRobot")     # 日志工具
 
 
 class DeskRobot:
@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     # """STT:语音转文字模块"""
     # from modules.mod_voice_stt import STTThread
-    # robot.add_task(STTThread(config=config))
+    # robot.add_task(STTThread(api_config.config))
 
     # """TTS:文字转语音模块"""
     # from modules.mod_voice_tts import TTSThread

@@ -174,7 +174,7 @@ if __name__ == "__main__":
 
     # Add project root to path to allow importing config
     sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    from configs.config import config
+    from configs.api_config import config
 
     def create_video(frames, output_path, fps, size):
         """Creates a video from a list of PIL Images."""

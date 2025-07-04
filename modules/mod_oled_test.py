@@ -273,7 +273,7 @@ if __name__ == "__main__":
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     
     sys.path.insert(0, project_root)  # 添加项目根目录到 sys.path
-    from configs.config import config
+    from configs.api_config import config
     from modules.EventBus import EventBus
     from modules.mod_oled_image import OLEDThread
     from modules.mod_oled_roboeyes import RoboeyesThread
