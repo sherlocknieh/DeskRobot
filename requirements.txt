@@ -2,8 +2,7 @@
 gpiozero; sys_platform == 'linux'
 pigpio; sys_platform == 'linux'
 lgpio; sys_platform == 'linux'
-# sudo systemctl start pigpiod
-# sudo systemctl enable pigpiod
+# sudo systemctl enable --now pigpiod      # 启动 pigpiod 服务
 
 
 # OLED显示
@@ -20,30 +19,34 @@ pygame
 adafruit-circuitpython-dht
 
 
-# 摄像头
-picamera2; sys_platform == 'linux'
-opencv-python
-flask
-# 人脸跟踪
-mediapipe==0.10.9
-simple_pid
-
-
 # 语音相关
+# 语音输入输出
 pyaudio
-torch
-torchaudio
-pydub
-edge-tts  
-websocket # 讯飞stt用到
-requests  # siliconflow stt用到
+torchaudio          # 包含 torch
 # 语音唤醒
-numpy==1.26.4  #pip install --upgrade "numpy<2"
-openwakeword
-speexdsp-ns  # apt-get install libspeex-dev libspeexdsp-dev
+numpy==1.26.4       # pip install "numpy<2"
+openwakeword        # 包含 onnxruntime, tqdm, scipy, requests, numpy>=1.21.6
+# sudo apt install libspeex-dev libspeexdsp-dev
+speexdsp-ns
+# STT:语音转文本
+requests            # siliconflow stt用到
+websocket           # 讯飞stt用到
+# TTS:文本转语音
+pydub
+edge-tts
 
 
 # AI相关
-langchain
-langchain-openai
-langgraph
+langchain-openai     # 包含 langchain-core requests
+langgraph            # 包含 langchain-core requests
+
+
+# 摄像头
+picamera2; sys_platform == 'linux'   # 包含 tqdm
+opencv-python                        # 包含 numpy>=2
+flask
+
+# 人脸跟踪
+mediapipe==0.10.9    # 体积较大, 包含 scipy, matplotlib, numpy<2 等
+simple_pid
+

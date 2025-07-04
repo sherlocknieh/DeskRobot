@@ -1,11 +1,10 @@
 import threading
-import logging
 import queue
 
 
 from modules.EventBus import EventBus       # 导入事件总线
-from configs import api_config, log_config  # 导入配置文件
-logger = logging.getLogger("DeskRobot")     # 日志工具
+from configs.api_config import config       # 导入配置文件
+from configs.log_config import logger       # 导入日志工具
 
 
 class DeskRobot:
@@ -68,83 +67,115 @@ if __name__ == "__main__":
 
     robot = DeskRobot()
 
+    # 导入各模块
+
     # """LED灯模块
-    #    安装依赖: pip install gpiozero pigpio lgpio
+    #    依赖: pip install gpiozero pigpio lgpio
     # """
     # from modules.mod_led_control import LEDControl
     # robot.add_task(LEDControl())
 
-    # """温湿度模块"""
-    # from modules.mod_temperature import Temperature
-    # robot.add_task(Temperature())
-
-    # """小车控制模块"""
+    # """小车控制模块
+    #    依赖: pip install gpiozero pigpio
+    #    依赖: sudo systemctl enable --now pigpiod
+    # """
     # from modules.mod_car_control import CarControl
     # robot.add_task(CarControl())
 
-    # """手柄模块"""
+    # """手柄模块
+    #    依赖: pip install evdev
+    # """
     # from modules.mod_game_pad import GamePad
     # robot.add_task(GamePad())
 
-    # """音乐播放器模块"""
-    # logger.info("依赖的库: pip install pygame")
+    # """音乐播放器模块
+    #    依赖: pip install pygame
+    # """
     # from modules.mod_music_player import MusicPlayerThread
     # robot.add_task(MusicPlayerThread())
 
-    # """语音唤醒模块
-    #    默认唤醒词为: "hey Jarvis"
+    # """温湿度模块
+    #    依赖: pip install adafruit-circuitpython-dht
     # """
-    # from modules.mod_voice_awake import AwakeThread
-    # robot.add_task(AwakeThread())
+    # from modules.mod_temperature import Temperature
+    # robot.add_task(Temperature())
 
-    # """语音输入监听模块"""
-    # from modules.mod_voice_detect import VoiceThread
-    # robot.add_task(VoiceThread())
-
-    # """STT:语音转文字模块"""
-    # from modules.mod_voice_stt import STTThread
-    # robot.add_task(STTThread(api_config.config))
-
-    # """TTS:文字转语音模块"""
-    # from modules.mod_voice_tts import TTSThread
-    # robot.add_task(TTSThread())
 
     # """OLED 基础模块
-    #    安装依赖: pip install luma.oled pillow
+    #    依赖: pip install pillow luma.oled
     # """
     # from modules.mod_oled_image import OLEDThread
     # robot.add_task(OLEDThread())
 
-    # """OLED 表情模块"""
-    # from modules.mod_oled_roboeyes import RoboeyesThread
-    # robot.add_task(RoboeyesThread())
-
     # """OLED 文本模块
     #    安装中文字体: sudo apt install fonts-wqy-microhei
+    #    依赖: pip install pillow
     # """
     # from modules.mod_oled_text import TextDisplayThread
     # robot.add_task(TextDisplayThread())
 
-    # """OLED 动画模块"""
+    # """OLED 表情模块
+    #    依赖: pip install pillow
+    # """
+    # from modules.mod_oled_roboeyes import RoboeyesThread
+    # robot.add_task(RoboeyesThread())
+
+    # """OLED 动画模块
+    #    依赖: pip install pillow
+    # """
     # from modules.mod_oled_animation import ThinkingAnimationThread
     # robot.add_task(ThinkingAnimationThread())
 
+
+    # """语音输入模块
+    #    依赖: pip install pyaudio torchaudio
+    # """
+    # from modules.mod_voice_detect import VoiceThread
+    # robot.add_task(VoiceThread())
+
+    # """语音唤醒模块
+    #    默认唤醒词为: "hey Jarvis"
+    #    依赖: sudo apt install libspeex-dev libspeexdsp-dev
+    #    依赖: pip install pyaudio torchaudio openwakeword speexdsp-ns "numpy<2"
+    # """
+    # from modules.mod_voice_awake import AwakeThread
+    # robot.add_task(AwakeThread())
+
+    # """TTS:文字转语音模块
+    #    依赖: sudo apt install ffmpeg
+    #    依赖: pip install pydub edge-tts
+    # """
+    # from modules.mod_voice_tts import TTSThread
+    # robot.add_task(TTSThread())
+
+    # """STT:语音转文字模块
+    #    依赖: pip install websocket requests
+    #    服务依赖: siliconflow 或 iflytek
+    # """
+    # from modules.mod_voice_stt import STTThread
+    # robot.add_task(STTThread(config))
+
+
     # """AI Agent 模块
-    #    依赖: pip install langchain langchain-openai langgraph
+    #    依赖: pip install langchain-openai langgraph
+    #    依赖服务: siliconflow
     # """
     # from modules.mod_ai_agent import AiThread
-    # robot.add_task(AiThread(
-    #     llm_base_url = config["siliconflow_base_url"],
-    #     llm_api_key = config["siliconflow_api_key"],
-    #     llm_model_name = config["llm_model_name"],
-    # ))
+    # robot.add_task(AiThread(config))
 
-    # """网络摄像头模块"""
+
+    # """网络摄像头模块
+    #    依赖: pip install flask picamera2 opencv-python
+    # """
     # from modules.mod_web_camera import WEBCamera
     # robot.add_task(WEBCamera())
 
-    # """人脸追踪模块"""
+    # """人脸追踪模块
+    #     依赖: pip install opencv-python mediapipe simple_pid
+    # """
     # from modules.mod_face_track import FaceTrack
     # robot.add_task(FaceTrack())
 
+
+    # 开始运行
     robot.run()

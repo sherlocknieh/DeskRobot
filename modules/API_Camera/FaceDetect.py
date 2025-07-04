@@ -41,7 +41,7 @@ class FaceDetector:
     def __init__(self, confidence=0.5):
         self._face_detector = mp.solutions.face_detection.FaceDetection( # type: ignore
             min_detection_confidence=confidence, # 置信度阈值
-            model_selection=1                    # 0:短距离 1:长距离
+            model_selection=0                    # 0:短距离 1:长距离
         )
 
     def detect(self, frame):

@@ -41,3 +41,4 @@ root_logger.addHandler(file_handler)
 logging.info("日志系统配置成功")
 
 
+logger = logging.getLogger("DeskRobot")     # 日志工具

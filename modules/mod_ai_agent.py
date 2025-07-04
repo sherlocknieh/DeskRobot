@@ -46,12 +46,7 @@ logger = logging.getLogger("AI_API")
 
 
 class AiThread(threading.Thread):
-    def __init__(
-        self,
-        llm_base_url: str,
-        llm_api_key: str,
-        llm_model_name: str,
-    ):
+    def __init__(self, config: dict):
         super().__init__()
         self.name = self.__class__.__name__
         self.event_bus = EventBus()
@@ -60,9 +55,9 @@ class AiThread(threading.Thread):
         self._stop_event = threading.Event()  # 用于优雅地停止线程
 
         # 保存LLM配置以备后用
-        self.llm_base_url = llm_base_url
-        self.llm_api_key = llm_api_key
-        self.llm_model_name = llm_model_name
+        self.llm_base_url = config["siliconflow_base_url"]
+        self.llm_api_key = config["siliconflow_api_key"]
+        self.llm_model_name = config["llm_model_name"]
         self.actions_on_speak = []  # 新增：用于暂存待执行的动作
 
         self.event_bus.subscribe("STT_RESULT_RECEIVED", self.event_queue, self.name)

@@ -1,14 +1,6 @@
 """
-模块依赖
-pip install pydub simpleaudio
-
-# Ubuntu
-sudo apt install ffmpeg
-
-# Windows
-winget install ffmpeg
-
 音乐播放模块
+模块依赖: pygame
 
 Subscribe:
 - PLAY_MUSIC: 开始播放音乐
