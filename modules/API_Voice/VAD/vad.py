@@ -17,31 +17,34 @@ class SileroVAD:
     """
 
     def __init__(self, threshold: float = 0.9, sample_rate: int = 16000):
-
-
         if sample_rate not in [8000, 16000]:
             raise ValueError("Silero VAD anly supports 8000 or 16000 sample rate.")
 
-        # 加载模型
-        logger.info("正在从本地缓存加载 Silero VAD 模型...")
         local_model_path = os.path.expanduser("~/.cache/torch/hub/snakers4_silero-vad_master")
+        use_local = os.path.exists(local_model_path)
+        repo_or_dir = local_model_path if use_local else "snakers4/silero-vad"
+        load_kwargs = {
+            "repo_or_dir": repo_or_dir,
+            "model": "silero_vad",
+            "force_reload": False
+        }
+        if use_local:
+            print(f"Silero VAD 模型已从本地加载: {local_model_path}")
+            load_kwargs["source"] = "local"
+        else:
+            print(f"Silero VAD 模型正在从下载...")
+            print(f"如果下载速度过慢，可以浏览器手动下载,手动解压并保存为: {local_model_path}")
         try:
-            model, utils = torch.hub.load(
-                repo_or_dir = local_model_path,
-                model       = "silero_vad",
-                source      = "local",
-                force_reload= False) # type: ignore
-            
+            model, utils = torch.hub.load(**load_kwargs)  # type: ignore
             (get_speech_timestamps,
-            save_audio,
-            read_audio,
-            VADIterator,
-            collect_chunks) = utils
-
+                save_audio,
+                read_audio,
+                VADIterator,
+                collect_chunks) = utils
             self.vad_iterator = VADIterator(model, threshold)
-            logger.info("Silero VAD 模型加载成功。")
+            logger.info(f"Silero VAD 模型{'本地' if use_local else '在线'}加载成功。")
         except Exception as e:
-            logger.error(f"Silero VAD 模型加失败: {e}", exc_info=True)
+            logger.error(f"Silero VAD 模型加载失败: {e}", exc_info=True)
             raise
 
 

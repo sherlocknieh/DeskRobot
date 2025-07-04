@@ -1,6 +1,7 @@
 """
 文本显示线程
 负责处理文本显示请求，支持滚动文本和静态文本显示。
+需安装中文字体: sudo apt install fonts-wqy-microhei
 
 Subscribe:
 - SUB_TEXT_DISPLAY_REQUEST: 滚动文本显示请求
@@ -63,10 +64,10 @@ logger = logging.getLogger("OLED文本模块")
 class TextDisplayThread(threading.Thread):
     def __init__(
         self,
-        font_path,
-        oled_width: int,
-        oled_height: int,
-        oled_fps: int,
+        font_path = "wqy-microhei",
+        oled_width: int = 128,
+        oled_height: int = 64,
+        oled_fps: int = 50,
     ):
         super().__init__(daemon=True, name="TextDisplayThread")
         self.event_bus = EventBus()

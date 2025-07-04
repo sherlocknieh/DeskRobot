@@ -4,6 +4,7 @@
 if __name__ != '__main__':
     from .EventBus import EventBus
     from .API_Camera.PiCamera import PiCamera
+    from .API_Camera.FaceDetect import FaceDetector
     from .API_Servo.Servo import HeadServo
     from .API_Car.Car import Car
 

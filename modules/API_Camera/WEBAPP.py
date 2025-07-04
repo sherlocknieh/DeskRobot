@@ -7,26 +7,24 @@ import cv2
 
 # 标准库
 from time import sleep
-import threading
 
 
-class WEBCamera():
+class WEBAPP():
     def __init__(self, camera=None):
         self.app = Flask(__name__)           # 创建Flask应用
         self.routes()                        # 路由注册
         self.camera = camera                 # 相机对象
+        self.camera_on = True                # 摄像头开关状态
         self.last_frame = np.zeros((3, 4, 3), np.uint8) # 上一帧图像
-        self.camera_on = True  # 新增摄像头开关状态
 
 
     def run(self):
-        thread = threading.Thread(target=self.app.run, kwargs={'host': '0.0.0.0'})
-        thread.start()
+        self.app.run(host='0.0.0.0')
 
 
     def gen_frame(self):
         while True:
-            if self.camera:
+            if self.camera and self.camera_on:
                 self.last_frame = self.camera.get_frame()
             jpeg = cv2.imencode('.jpg', self.last_frame)[1].tobytes()
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + jpeg + b'\r\n')

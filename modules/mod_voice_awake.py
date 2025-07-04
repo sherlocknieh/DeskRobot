@@ -14,10 +14,10 @@ from modules.EventBus import EventBus
 import logging
 import threading
 from queue import Queue
-logger = logging.getLogger("AwakenModule")
+logger = logging.getLogger("AwakeModule")
 
 
-class AwakenThread(threading.Thread):
+class AwakeThread(threading.Thread):
     """
     唤醒词检测线程，集成openWakeWord实现实时唤醒检测
     """
@@ -61,7 +61,7 @@ class AwakenThread(threading.Thread):
             logger.info("模型加载完成")
             
             # 复用现有的音频输入设备
-            from modules.mod_voice import VoiceIO
+            from modules.mod_voice_detect import VoiceIO
             self.voice_io = VoiceIO(
                 rate=16000,
                 channels=1,

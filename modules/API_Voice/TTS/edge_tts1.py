@@ -32,7 +32,8 @@ class EdgeTTS:
 
 if __name__ == "__main__":
     tts = EdgeTTS()
-    text = "你好，世界！"
     output_file = tts.text_to_speech_mp3(
-        text, voice="zh-CN-XiaoxiaoNeural", output_path="output.mp3"
+        text = "你好，世界！",
+        voice="zh-CN-XiaoxiaoNeural",
+        output_path="output.mp3"
     )

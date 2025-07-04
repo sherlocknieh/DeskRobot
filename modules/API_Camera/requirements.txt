@@ -1,3 +1,4 @@
 opencv-python
 picamera2
 flask
+mediapipe

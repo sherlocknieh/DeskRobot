@@ -275,9 +275,9 @@ if __name__ == "__main__":
     sys.path.insert(0, project_root)  # 添加项目根目录到 sys.path
     from configs.config import config
     from modules.EventBus import EventBus
-    from modules.mod_oled import OLEDThread
-    from modules.mod_roboeyes import RoboeyesThread
-    from modules.mod_text_display import TextDisplayThread
+    from modules.mod_oled_image import OLEDThread
+    from modules.mod_oled_roboeyes import RoboeyesThread
+    from modules.mod_oled_text import TextDisplayThread
     sys.path.pop(0)                   # 弹出项目根目录 from sys.path
 
     # 测试任务管理器

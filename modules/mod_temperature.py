@@ -79,7 +79,7 @@ class Temperature(threading.Thread):
             except:
                 print("读取DHT11数据失败")
                 continue
-            time.sleep(10)
+            time.sleep(60)
 
 if __name__ == '__main__':
 
