@@ -52,10 +52,10 @@ class GamePad(threading.Thread):
         获取最新数据
         控制车轮转动
         """
-        while True:
+        while self._gamepad_connected.is_set():
             #self.car.steer(self.x, self.y)
             self.event_bus.publish("CAR_STEER", {"x": self.x, "y": self.y})
-            sleep(1/50) # 控制输出频率
+            sleep(1/40) # 控制输出频率
 
 
     def _gamepad_event_loop(self):
