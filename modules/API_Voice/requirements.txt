@@ -1,7 +1,0 @@
-pyaudio
-torch
-requests
-edge-tts
-pydub
-websocket-client
-numpy

@@ -72,8 +72,8 @@ class VoiceIO:
         logger.info("正在打开音频流...")
 
         # 获取默认设备信息
-        default_input_device_info = self.p.get_default_input_device_info()
-        default_output_device_info = self.p.get_default_output_device_info()
+        default_input_device_info = self.p.get_default_input_device_info()     # type: ignore
+        default_output_device_info = self.p.get_default_output_device_info()  # type: ignore
 
         input_device_index = default_input_device_info["index"]
         output_device_index = default_output_device_info["index"]
@@ -85,23 +85,23 @@ class VoiceIO:
             f"使用默认输出设备: {default_output_device_info['name']} (索引: {output_device_index})"
         )
 
-        self.input_stream = self.p.open(
+        self.input_stream = self.p.open(    # type: ignore
             format=self.format,
             channels=self.channels,
             rate=self.rate,
             input=True,
             frames_per_buffer=self.frames_per_buffer,
-            input_device_index=input_device_index,
+            input_device_index=input_device_index,    # type: ignore
         )
         logger.info("音频输入流已打开。")
 
-        self.output_stream = self.p.open(
+        self.output_stream = self.p.open(    # type: ignore
             format=self.format,
             channels=self.channels,
             rate=self.rate,
             output=True,
             frames_per_buffer=self.frames_per_buffer,
-            output_device_index=output_device_index,
+            output_device_index=output_device_index,    # type: ignore
         )
         logger.info("音频输出流已打开。")
 
@@ -112,7 +112,7 @@ class VoiceIO:
         :return: 音频数据 (bytes)
         """
         try:
-            return self.input_stream.read(self.frames_per_buffer)
+            return self.input_stream.read(self.frames_per_buffer) # type: ignore
 
         except IOError as e:
             logger.error(f"录制音频时发生IO错误: {e}")

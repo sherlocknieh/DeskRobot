@@ -69,8 +69,7 @@ class TextDisplayThread(threading.Thread):
         oled_height: int = 64,
         oled_fps: int = 50,
     ):
-        super().__init__(daemon=True)
-        self.name = "OLED文本"
+        super().__init__(daemon=True, name="OLED文本")
         self.event_bus = EventBus()
         self._stop_event = threading.Event()
         self.active_scrolls = {}

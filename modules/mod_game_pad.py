@@ -16,8 +16,7 @@ logger = logging.getLogger("手柄模块")
 
 class GamePad(threading.Thread):
     def __init__(self):
-        super().__init__()
-        self.name = "手柄模块"
+        super().__init__(daemon=True, name="手柄模块")
         self.gamepad = None
         self.event_queue = Queue()
         self.event_bus = EventBus()
@@ -34,9 +33,9 @@ class GamePad(threading.Thread):
         self.firstpress = True
         self.modes = cycle(['CAR', 'MUSIC', 'LED'])
         self.mode = None
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)    # 订阅总线 "EXIT" 事件
 
     def run(self):
-        self.event_bus.subscribe("EXIT", self.event_queue, self.name)    # 订阅总线 "EXIT" 事件
 
         threading.Thread(target=self._gamepad_connect_loop, daemon=True).start() # 启动手柄连接线程
         threading.Thread(target=self._gamepad_event_loop, daemon=True).start()   # 启动手柄事件线程

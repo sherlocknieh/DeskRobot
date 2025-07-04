@@ -46,7 +46,7 @@ if __name__ != "__main__":
     from .API_Voice.VAD.vad import SileroVAD
     from .EventBus import EventBus
 
-logger = logging.getLogger("VoiceIO模块")
+logger = logging.getLogger("语音监听")
 
 
 class VoiceThread(threading.Thread):
@@ -89,9 +89,7 @@ class VoiceThread(threading.Thread):
         :param vad_threshold: VAD 灵敏度阈值 (0-1)。
         :param frames_per_buffer: 每个音频块的帧数。
         """
-        super().__init__()
-        self.daemon = True
-        self.name = "Voice Thread"
+        super().__init__(daemon=True, name="语音监听")
         self.event_bus = EventBus()
         self.stop_event = threading.Event()
         self.event_queue = Queue()
@@ -109,14 +107,12 @@ class VoiceThread(threading.Thread):
         self.is_speaking_tts = False  # 新增：用于跟踪TTS播放状态
         self.is_detecting_speech = False  # 新增：用于跟踪VAD检测状态
         self.speech_frames = []
-        self.event_bus.subscribe("STT_RESULT_RECEIVED", self.event_queue, "语音模块")
-        self.event_bus.subscribe("TTS_STARTED", self.event_queue, "语音模块")
-        self.event_bus.subscribe("TTS_FINISHED", self.event_queue, "语音模块")
-        self.event_bus.subscribe("EXIT", self.event_queue, "语音模块")
-        self.event_bus.subscribe("WAKE_WORD_DETECTED", self.event_queue, "语音模块")
-        self.event_bus.subscribe("SLEEP_VOICE_MODULE", self.event_queue, "语音模块")
-
-        logger.info("VoiceThread 初始化完成。")
+        self.event_bus.subscribe("STT_RESULT_RECEIVED", self.event_queue, self.name)
+        self.event_bus.subscribe("TTS_STARTED", self.event_queue, self.name)
+        self.event_bus.subscribe("TTS_FINISHED", self.event_queue, self.name)
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
+        self.event_bus.subscribe("WAKE_WORD_DETECTED", self.event_queue, self.name)
+        self.event_bus.subscribe("SLEEP_VOICE_MODULE", self.event_queue, self.name)
 
     def _setup(self):
         """初始化音频IO和VAD实例。"""
@@ -149,12 +145,12 @@ class VoiceThread(threading.Thread):
             self._handle_events()  # 处理来自总线的事件
 
             if self.is_wakened:  # 如果目前处于唤醒状态
-                chunk = self.voice_io.record_chunk()
+                chunk = self.voice_io.record_chunk() # type: ignore
                 if not chunk:
                     logger.info("未获取到音频块，等待0.01秒后重试。")
                     time.sleep(0.01)
                     continue
-                vad_event = self.vad.process_chunk(chunk)
+                vad_event = self.vad.process_chunk(chunk) # type: ignore
 
                 # 统一的语音检测逻辑，无论TTS是否在播放
                 if vad_event:
@@ -177,8 +173,8 @@ class VoiceThread(threading.Thread):
                                 "audio_data": full_speech_audio,
                                 "sample_rate": self.sample_rate,
                                 "channels": self.channels,
-                                "sample_width": self.voice_io.p.get_sample_size(
-                                    self.voice_io.format
+                                "sample_width": self.voice_io.p.get_sample_size(  # type: ignore
+                                    self.voice_io.format  # type: ignore
                                 ),
                             },
                         )
@@ -191,45 +187,40 @@ class VoiceThread(threading.Thread):
 
     def _handle_events(self):
         """处理来自事件总线的事件，用于更新内部状态。"""
-        try:
-            while not self.event_queue.empty():
-                event = self.event_queue.get_nowait()
-                logger.info(f"收到事件: {event}")
-                if event["type"] == "EXIT":
-                    logger.info("收到 EXIT 事件，准备停止线程。")
-                    self.stop()
-                elif event["type"] == "WAKE_WORD_DETECTED":
-                    logger.info("收到 WAKE_WORD_DETECTED 事件，准备唤醒。")
-                    self.is_wakened = True
-                elif event["type"] == "SLEEP_VOICE_MODULE":
-                    logger.info("收到 SLEEP_VOICE_MODULE 事件，准备进入休眠状态。")
-                    self.is_wakened = False
-                elif event["type"] == "TTS_STARTED":
-                    logger.info("收到 TTS_STARTED 事件，进入TTS打断模式。")
-                    self.is_speaking_tts = True
-                    # TTS开始时，如果正在检测语音，应取消
-                    # if self.is_detecting_speech:
-                    #     logger.info("TTS开始，取消当前的语音检测。")
-                    #     self.is_detecting_speech = False
-                    #     self.speech_frames = []
-                elif event["type"] == "TTS_FINISHED":
-                    logger.info("收到 TTS_FINISHED 事件，退出TTS打断模式。")
+        while not self.event_queue.empty():
+            event = self.event_queue.get()
+            if event["type"] == "EXIT":
+                logger.info("收到 EXIT 事件，准备停止线程。")
+                self.stop()
+            elif event["type"] == "WAKE_WORD_DETECTED":
+                logger.info("收到 WAKE_WORD_DETECTED 事件，准备唤醒。")
+                self.is_wakened = True
+            elif event["type"] == "SLEEP_VOICE_MODULE":
+                logger.info("收到 SLEEP_VOICE_MODULE 事件，准备进入休眠状态。")
+                self.is_wakened = False
+            elif event["type"] == "TTS_STARTED":
+                logger.info("收到 TTS_STARTED 事件，进入TTS打断模式。")
+                self.is_speaking_tts = True
+                # TTS开始时，如果正在检测语音，应取消
+                # if self.is_detecting_speech:
+                #     logger.info("TTS开始，取消当前的语音检测。")
+                #     self.is_detecting_speech = False
+                #     self.speech_frames = []
+            elif event["type"] == "TTS_FINISHED":
+                logger.info("收到 TTS_FINISHED 事件，退出TTS打断模式。")
+                self.is_speaking_tts = False
+            elif event["type"] == "STT_RESULT_RECEIVED":
+                if self.is_speaking_tts:
+                    # 在TTS播放期间，收到有效的STT结果，这表示一次成功的打断
+                    logger.info("在TTS播放期间收到STT结果，触发打断...")
+                    # 1. 发布打断事件，让TTS停止
+                    self.event_bus.publish("INTERRUPTION_DETECTED")
+                    # 2. 立即退出TTS模式，因为打断已经发生
                     self.is_speaking_tts = False
-                elif event["type"] == "STT_RESULT_RECEIVED":
-                    if self.is_speaking_tts:
-                        # 在TTS播放期间，收到有效的STT结果，这表示一次成功的打断
-                        logger.info("在TTS播放期间收到STT结果，触发打断...")
-                        # 1. 发布打断事件，让TTS停止
-                        self.event_bus.publish("INTERRUPTION_DETECTED")
-                        # 2. 立即退出TTS模式，因为打断已经发生
-                        self.is_speaking_tts = False
-                        # 3. 清空任何可能残留的音频帧
-                        self.is_detecting_speech = False
-                        self.speech_frames = []
-                        logger.info("打断完成，已重置语音检测状态。")
-        except Queue.Empty:
-            logger.info("事件队列为空。")
-            pass  # 队列为空是正常情况
+                    # 3. 清空任何可能残留的音频帧
+                    self.is_detecting_speech = False
+                    self.speech_frames = []
+                    logger.info("打断完成，已重置语音检测状态。")
 
     def stop(self):
         """设置停止事件以终止线程。"""
@@ -243,7 +234,7 @@ class VoiceThread(threading.Thread):
             self.voice_io.close()
         logger.info("VoiceThread 已成功清理并停止。")
 
-# ...existing code...
+
 
 if __name__ == "__main__":
     # --- 用于测试 VoiceThread 的示例代码 ---
@@ -313,10 +304,10 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print("\n检测到 Ctrl+C，正在优雅地关闭...")
-        eb.publish("EXIT")
+        voice_thread.event_bus.publish("EXIT")
         voice_thread.join(timeout=5)
         print("测试结束。")
     except Exception as e:
         logger.error(f"测试主程序发生错误: {e}", exc_info=True)
-        eb.publish("EXIT")
+        voice_thread.event_bus.publish("EXIT")
         voice_thread.join(timeout=5)

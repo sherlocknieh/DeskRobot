@@ -24,8 +24,7 @@ import time
 
 class Temperature(threading.Thread):
     def __init__(self, pin=board.D25):
-        super().__init__()
-        self.name = "温湿度模块"
+        super().__init__(daemon=True, name="温湿度模块")
         self.dhtDevice = adafruit_dht.DHT11(pin) # DHT11传感器
         self.event_queue = queue.Queue()
         self.event_bus = EventBus()

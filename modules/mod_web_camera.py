@@ -19,8 +19,7 @@ from time import sleep
 class WEBCamera(threading.Thread):
 
     def __init__(self):
-        super().__init__(daemon=True)
-        self.name = "网络摄像头"              # 模块名称
+        super().__init__(daemon=True, name="网络摄像头")
         self.logger = logging.getLogger(self.name) # 日志工具
         self.event_queue = queue.Queue()     # 事件队列
         self.event_bus = EventBus()          # 事件总线

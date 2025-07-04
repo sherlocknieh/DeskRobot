@@ -93,6 +93,13 @@ class EventBus:
             "CAR_STEER",
             "HEAD_ANGLE",
         ]
+        
+        # 丢弃未被订阅的事件, 并打印日志
+        if event_type not in self.listeners:
+            if event_type not in frequent_event_types:
+                logger.info(f'{source} 发布了 {event_type} 消息 (无人订阅)')
+            return
+        
         # 打印事件发布日志
         if event_type not in frequent_event_types:
             logger.info(f'{source} 发布了 {event_type} 消息')
@@ -100,13 +107,6 @@ class EventBus:
                 import json
                 print("data = ",json.dumps(data, indent=4,ensure_ascii=False))
 
-
-        # 丢弃未被订阅的事件, 并打印日志
-        if event_type not in self.listeners:
-            if event_type not in frequent_event_types:
-                logger.info(f'{source} 发布的 {event_type} 消息无人订阅, 已丢弃')
-            return
-        
         # 将事件类型,数据,发布人打包进字典
         event = {"type": event_type, "data": data, "source": source}
 

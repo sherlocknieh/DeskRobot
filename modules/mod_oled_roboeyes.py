@@ -42,8 +42,7 @@ logger = logging.getLogger('OLED表情')
 
 class RoboeyesThread(threading.Thread):
     def __init__(self, frame_rate=50, width=128, height=64):
-        super().__init__(daemon=True, name="RoboeyesThread")
-        self.name = "OLED表情"
+        super().__init__(daemon=True, name="OLED表情")
         self.event_queue = queue.Queue()        # 事件队列
         self.event_bus = EventBus()
         self.api = RoboeyesAPI(frame_rate, width, height)

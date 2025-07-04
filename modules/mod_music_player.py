@@ -17,9 +17,6 @@ Publish:
 - MUSIC_STOPPED: 音乐停止时发布
 - ERROR: 发生错误时发布
 """
-# 第三方库
-import pygame
-
 # 本地库
 if __name__ != "__main__":
     from .EventBus import EventBus
@@ -32,25 +29,21 @@ import time
 from queue import Queue
 from urllib.request import urlretrieve
 
+# 第三方库
+import pygame
+
 # 全局变量
 logger = logging.getLogger("音乐播放器")
 music_files = [os.path.join("localfiles/songs", f) for f in os.listdir("localfiles/songs")]
 
 
 # 类定义
-class MusicPlayerThread(threading.Thread):
+class MusicPlayer(threading.Thread):
     def __init__(self):
-        super().__init__(daemon=True)
-        self.name = "音乐播放器"
+        super().__init__(daemon=True, name="音乐播放器")
         self.event_bus = EventBus()
         self.event_queue = Queue()
         self._stop_event = threading.Event()
-        
-        # 初始化事件订阅
-        self.event_bus.subscribe("PLAY_MUSIC", self.event_queue, self.name)
-        self.event_bus.subscribe("PAUSE_MUSIC", self.event_queue, self.name)
-        self.event_bus.subscribe("STOP_MUSIC", self.event_queue, self.name)
-        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         
         # 播放器状态
         self.playback_thread = None
@@ -59,20 +52,26 @@ class MusicPlayerThread(threading.Thread):
         self.is_paused = False
         self.temp_files = []
         
-        # 新增播放列表相关属性
+        # 播放列表相关属性
         self.playlist = music_files
         self.current_index = 0
         self.volume = 0.5
         
+        # 初始化事件订阅
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
+        self.event_bus.subscribe("PLAY_MUSIC", self.event_queue, self.name)
+        self.event_bus.subscribe("PAUSE_MUSIC", self.event_queue, self.name)
+        self.event_bus.subscribe("STOP_MUSIC", self.event_queue, self.name)
+        self.event_bus.subscribe("NEXT_SONG", self.event_queue, self.name)
+        self.event_bus.subscribe("PREVIOUS_SONG", self.event_queue, self.name)
+        self.event_bus.subscribe("VOLUME_UP", self.event_queue, self.name)
+        self.event_bus.subscribe("VOLUME_DOWN", self.event_queue, self.name)
+
+    def run(self):
         # 初始化pygame mixer
         pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)
         pygame.mixer.music.set_volume(self.volume)
-        
-        # 新增事件订阅
-        self.event_bus.subscribe("NEXT_SONG", self.event_queue, self.name)
-        self.event_bus.subscribe("PREVIOUS_SONG", self.event_queue, self.name)
 
-    def run(self):
         while not self._stop_event.is_set():
             try:
                 event = self.event_queue.get(timeout=1)
@@ -96,6 +95,12 @@ class MusicPlayerThread(threading.Thread):
             self._handle_next()
         elif event_type == "PREVIOUS_SONG":
             self._handle_previous()
+        elif event_type == "VOLUME_UP":
+            self.volume = min(1.0, self.volume + 0.1)
+            pygame.mixer.music.set_volume(self.volume)
+        elif event_type == "VOLUME_DOWN":
+            self.volume = max(0.0, self.volume - 0.1)
+            pygame.mixer.music.set_volume(self.volume)
 
     def _handle_play(self, data):
         source = data.get("path")
@@ -184,7 +189,7 @@ if __name__ == "__main__":
     from EventBus import EventBus
     
     # 创建并启动播放器线程
-    player = MusicPlayerThread()
+    player = MusicPlayer()
     player.start()
 
     # 开始播放

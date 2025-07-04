@@ -12,9 +12,7 @@ import logging
 
 class CarControl(threading.Thread):
     def __init__(self):
-        super().__init__()
-
-        self.name = "小车控制模块"
+        super().__init__(daemon=True, name = "小车模块")
         self.logger = logging.getLogger(self.name)
         self.car = Car()                     # 车轮接口
         self.rgb = RGB(10, 9, 11)            # LED灯接口
@@ -23,9 +21,6 @@ class CarControl(threading.Thread):
         self.event_queue = Queue()
         self.event_bus = EventBus()
         self._stop_event = threading.Event()
-
-
-    def run(self):
 
         self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         self.event_bus.subscribe("CAR_SPEED", self.event_queue, self.name)
@@ -36,6 +31,9 @@ class CarControl(threading.Thread):
         self.event_bus.subscribe("LED_OFF", self.event_queue, self.name)
         self.event_bus.subscribe("LED_FLASH", self.event_queue, self.name)
         self.event_bus.subscribe("LED_BREEZE", self.event_queue, self.name)
+
+
+    def run(self):
 
         x,y,L,R = 0,0,0,0
         while not self._stop_event.is_set():
@@ -78,7 +76,7 @@ class CarControl(threading.Thread):
             elif event['type'] == "LED_BREEZE":  # 接收到"LED_BREEZE"消息
                 speed = event['data'].get("speed", 1)   # 获取事件数据中的speed参数, 若不存在则默认为1
                 self.rgb.breeze(speed)
-        self.logger.info(f"{self.name} 线程退出")
+        self.logger.info(f"{self.name} 已退出")
 
     def stop(self):
         self.car.speed(0, 0)

@@ -32,7 +32,7 @@ class DeskRobot:
             print("格式: 消息类型 [参数=值] [参数:值]")
             print("例如: led_on r=0 g=1 b=0.5")
             print("例如: led_off")
-            print("例如: exit")
+            print("例如: exit\n")
             # 接收指令
             cmd = input('> ').strip().split()
             if not cmd: continue
@@ -69,59 +69,59 @@ if __name__ == "__main__":
 
     # 导入各模块
 
-    """小车控制模块 (包括车轮, 舵机, LED灯)
-       依赖: pip install gpiozero pigpio
-       依赖: sudo systemctl enable --now pigpiod
-    """
-    from modules.mod_car_control import CarControl
-    robot.add_task(CarControl())
+    # """小车模块 (包括车轮, 舵机, LED灯)
+    #    依赖: pip install gpiozero pigpio lgpio
+    #    依赖: sudo systemctl enable --now pigpiod
+    # """
+    # from modules.mod_car_control import CarControl
+    # robot.add_task(CarControl())
 
 
-    """手柄模块
-       依赖: pip install evdev
-    """
-    from modules.mod_game_pad import GamePad
-    robot.add_task(GamePad())
+    # """手柄模块
+    #    依赖: pip install evdev
+    # """
+    # from modules.mod_game_pad import GamePad
+    # robot.add_task(GamePad())
 
 
-    """音乐播放器模块
-       依赖: pip install pygame
-    """
-    from modules.mod_music_player import MusicPlayerThread
-    robot.add_task(MusicPlayerThread())
+    # """温湿度模块
+    #    依赖: pip install RPi.GPIO adafruit-circuitpython-dht
+    # """
+    # from modules.mod_temperature import Temperature
+    # robot.add_task(Temperature())
 
 
-    """温湿度模块
-       依赖: pip install adafruit-circuitpython-dht
-    """
-    from modules.mod_temperature import Temperature
-    robot.add_task(Temperature())
+    # """音乐播放器模块
+    #    依赖: pip install pygame
+    # """
+    # from modules.mod_music_player import MusicPlayer
+    # robot.add_task(MusicPlayer())
 
 
-    """OLED 基础模块
-       依赖: pip install pillow luma.oled
-    """
-    from modules.mod_oled_image import OLEDThread
-    robot.add_task(OLEDThread())
+    # """OLED 基础模块
+    #    依赖: pip install pillow luma.oled
+    # """
+    # from modules.mod_oled_image import OLEDThread
+    # robot.add_task(OLEDThread())
 
-    """OLED 文本模块
-       安装中文字体: sudo apt install fonts-wqy-microhei
-       依赖: pip install pillow
-    """
-    from modules.mod_oled_text import TextDisplayThread
-    robot.add_task(TextDisplayThread())
+    # """OLED 文本模块
+    #    安装中文字体: sudo apt install fonts-wqy-microhei
+    #    依赖: pip install pillow
+    # """
+    # from modules.mod_oled_text import TextDisplayThread
+    # robot.add_task(TextDisplayThread())
 
-    """OLED 表情模块
-       依赖: pip install pillow
-    """
-    from modules.mod_oled_roboeyes import RoboeyesThread
-    robot.add_task(RoboeyesThread())
+    # """OLED 表情模块
+    #    依赖: pip install pillow
+    # """
+    # from modules.mod_oled_roboeyes import RoboeyesThread
+    # robot.add_task(RoboeyesThread())
 
-    """OLED 动画模块
-       依赖: pip install pillow
-    """
-    from modules.mod_oled_animation import ThinkingAnimationThread
-    robot.add_task(ThinkingAnimationThread())
+    # """OLED 动画模块
+    #    依赖: pip install pillow
+    # """
+    # from modules.mod_oled_animation import ThinkingAnimationThread
+    # robot.add_task(ThinkingAnimationThread())
 
 
     # """语音输入模块
@@ -138,12 +138,12 @@ if __name__ == "__main__":
     # from modules.mod_voice_awake import AwakeThread
     # robot.add_task(AwakeThread())
 
-    """TTS:文字转语音模块
-       依赖: sudo apt install ffmpeg
-       依赖: pip install pydub edge-tts
-    """
-    from modules.mod_voice_tts import TTSThread
-    robot.add_task(TTSThread())
+    # """TTS:文字转语音模块
+    #    依赖: sudo apt install ffmpeg
+    #    依赖: pip install pydub edge-tts
+    # """
+    # from modules.mod_voice_tts import TTSThread
+    # robot.add_task(TTSThread())
 
     # """STT:语音转文字模块
     #    依赖: pip install websocket requests

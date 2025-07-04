@@ -39,7 +39,7 @@ from pydub.utils import get_player_name
 from .API_Voice.TTS.edge_tts1 import EdgeTTS
 from .EventBus import EventBus
 
-logger = logging.getLogger("TTS模块")
+logger = logging.getLogger("TTS 模块")
 
 
 class TTSThread(threading.Thread):
@@ -60,9 +60,7 @@ class TTSThread(threading.Thread):
     """
 
     def __init__(self):
-        super().__init__()
-        self.daemon = True
-        self.name = "TTS Thread"
+        super().__init__(daemon=True, name="TTS 模块")
         self.event_bus = EventBus()
         self.event_queue = Queue()
         self.stop_event = threading.Event()
@@ -132,7 +130,7 @@ class TTSThread(threading.Thread):
             # 因此我们添加一个短暂的重试循环来删除文件。
             for i in range(5):  # 重试5次
                 try:
-                    os.remove(self.temp_audio_file_path)
+                    os.remove(self.temp_audio_file_path) # type: ignore
                     logger.info(f"已删除TTS临时文件: {self.temp_audio_file_path}")
                     self.temp_audio_file_path = None
                     return  # 删除成功，退出函数
@@ -176,7 +174,7 @@ class TTSThread(threading.Thread):
 
             if tmp_file_path:
                 logger.info(f"TTS 音频已生成: {tmp_file_path}")
-                self.event_bus.publish("TTS_STARTED")
+                self.event_bus.publish("TTS_STARTED", self.name)
                 self.temp_audio_file_path = tmp_file_path
 
                 # 2. 直接使用 ffplay 播放 MP3 文件，绕过 pydub 的播放问题

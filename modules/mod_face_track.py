@@ -22,8 +22,7 @@ HEIGHT = 480.0
 
 class FaceTrack(threading.Thread):
     def __init__(self):
-        super().__init__(daemon=True)
-        self.name = "人脸追踪"                # 模块名称
+        super().__init__(daemon=True, name="人脸追踪")
         self.event_queue = queue.Queue()     # 事件队列
         self.event_bus = EventBus()          # 事件总线
         self.cam = PiCamera()                # 相机接口

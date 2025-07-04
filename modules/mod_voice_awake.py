@@ -14,7 +14,7 @@ from modules.EventBus import EventBus
 import logging
 import threading
 from queue import Queue
-logger = logging.getLogger("AwakeModule")
+logger = logging.getLogger("语音唤醒")
 
 
 class AwakeThread(threading.Thread):
@@ -22,9 +22,7 @@ class AwakeThread(threading.Thread):
     唤醒词检测线程，集成openWakeWord实现实时唤醒检测
     """
     def __init__(self, wakeword_models=["hey jarvis"], threshold=0.5):
-        super().__init__()
-        self.daemon = True
-        self.name = "AwakenThread"
+        super().__init__(daemon=True, name="语音唤醒")
         self.event_bus = EventBus()
         self.stop_event = threading.Event()
         self.event_queue = Queue()
@@ -120,13 +118,13 @@ class AwakeThread(threading.Thread):
         """处理事件总线消息"""
         while not self.event_queue.empty():
             event = self.event_queue.get()
-            if event.type == "TTS_STARTED":
+            if event["type"] == "TTS_STARTED":
                 self.is_speaking_tts = True
                 logger.debug("进入打断模式")
-            elif event.type == "TTS_FINISHED":
+            elif event["type"] == "TTS_FINISHED":
                 self.is_speaking_tts = False
                 logger.debug("返回监听模式")
-            elif event.type == "EXIT":
+            elif event["type"] == "EXIT":
                 self.stop_event.set()
                 logger.info("收到退出信号")
 

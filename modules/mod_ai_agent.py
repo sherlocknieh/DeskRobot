@@ -47,8 +47,7 @@ logger = logging.getLogger("AI_API")
 
 class AiThread(threading.Thread):
     def __init__(self, config: dict):
-        super().__init__()
-        self.name = self.__class__.__name__
+        super().__init__(daemon=True, name = "AI_API")
         self.event_bus = EventBus()
         self.event_queue = queue.Queue()
         self.api = None  # 在 run 方法中初始化

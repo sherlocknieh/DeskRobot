@@ -31,9 +31,7 @@ class STTThread(threading.Thread):
     """
 
     def __init__(self, config: dict):
-        super().__init__()
-        self.daemon = True
-        self.name = "STT Thread"
+        super().__init__(daemon=True, name="STT 模块")
         self.event_bus = EventBus()
         self.config = config
         self.event_queue = Queue()

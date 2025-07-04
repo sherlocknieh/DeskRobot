@@ -1,52 +1,61 @@
-# 车轮电机, 舵机, OLED屏幕, LED灯, 温湿度传感器
+
+# 车轮, 舵机, LED灯
 gpiozero; sys_platform == 'linux'
 pigpio; sys_platform == 'linux'
 lgpio; sys_platform == 'linux'
-# sudo systemctl enable --now pigpiod      # 启动 pigpiod 服务
 
 
-# OLED显示
+# [手动执行] systemctl enable --now pigpiod      # 启动 pigpiod 服务
+
+
+# OLED屏幕
 pillow
-luma.oled; sys_platform == 'linux'
+luma.oled; sys_platform == 'linux'   # 包含 luma.core, RPi.GPIO
 
-# 手柄控制
+# 手柄
 evdev; sys_platform == 'linux'
 
-# 音乐播放
+# 音乐播放器
 pygame
 
 # 温湿度传感器
+RPi.GPIO
 adafruit-circuitpython-dht
 
 
 # 语音相关
+
 # 语音输入输出
 pyaudio
 torchaudio          # 包含 torch
+
 # 语音唤醒
-numpy==1.26.4       # pip install "numpy<2"
-openwakeword        # 包含 onnxruntime, tqdm, scipy, requests, numpy>=1.21.6
-# sudo apt install libspeex-dev libspeexdsp-dev
+# [手动执行] sudo apt install libspeex-dev libspeexdsp-dev
 speexdsp-ns
-# STT:语音转文本
-requests            # siliconflow stt用到
-websocket           # 讯飞stt用到
-# TTS:文本转语音
+openwakeword        # 包含 onnxruntime, requests
+
+# STT:语音转文字
+websocket           # 讯飞 stt 需要
+requests            # siliconflow stt 需要
+
+# TTS:文字转语音
 pydub
 edge-tts
 
 
 # AI相关
-langchain-openai     # 包含 langchain-core requests
-langgraph            # 包含 langchain-core requests
+langchain-openai    # 包含 langchain-core requests
+langgraph
 
 
 # 摄像头
-picamera2; sys_platform == 'linux'   # 包含 tqdm
-opencv-python                        # 包含 numpy>=2
+picamera2; sys_platform == 'linux'
+opencv-python
 flask
 
+
 # 人脸跟踪
-mediapipe==0.10.9    # 体积较大, 包含 scipy, matplotlib, numpy<2 等
+mediapipe==0.10.9
 simple_pid
+numpy<2
 
