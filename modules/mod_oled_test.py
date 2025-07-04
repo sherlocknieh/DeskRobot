@@ -293,7 +293,7 @@ if __name__ == "__main__":
 
     # 加载 Text Display 模块（包含新的静态文本功能）
     text_display_thread = TextDisplayThread(
-        font_path = config.get("text_renderer_font_path"),
+        font_path = "wqy-microhei",
         oled_width=128,
         oled_height=64,
         oled_fps=30,
