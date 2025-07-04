@@ -37,7 +37,7 @@ if __name__ != '__main__':
 class LEDControl(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
-        self.name = "LED控制"                # 模块名称
+        self.name = "LED灯模块"           # 模块名称
         self.rgb = RGB(10, 9, 11)            # LED 接口
         self.event_queue = queue.Queue()     # 事件队列
         self.event_bus = EventBus()          # 事件总线
@@ -45,11 +45,11 @@ class LEDControl(threading.Thread):
         self.logger = logging.getLogger(self.name) # 日志工具
         self.rgb.on()  # 打开 LED 灯
         # 订阅消息
-        self.event_bus.subscribe("EXIT", self.event_queue, "LED灯模块")
-        self.event_bus.subscribe("LED_ON", self.event_queue, "LED灯模块")
-        self.event_bus.subscribe("LED_OFF", self.event_queue, "LED灯模块")
-        self.event_bus.subscribe("LED_FLASH", self.event_queue, "LED灯模块")
-        self.event_bus.subscribe("LED_BREEZE", self.event_queue, "LED灯模块")
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
+        self.event_bus.subscribe("LED_ON", self.event_queue, self.name)
+        self.event_bus.subscribe("LED_OFF", self.event_queue, self.name)
+        self.event_bus.subscribe("LED_FLASH", self.event_queue, self.name)
+        self.event_bus.subscribe("LED_BREEZE", self.event_queue, self.name)
         
 
     def run(self):

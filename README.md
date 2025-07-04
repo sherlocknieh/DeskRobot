@@ -6,57 +6,53 @@ DeskRobot 是一个树莓派驱动的桌面智能机器人伴侣
 
 ## 运行
 
-1. 项目基于 Python 3.11 开发，请确保系统环境中已安装 Python 3.11+;
+1. 项目使用 Python 3.11 开发，请确保系统中已安装 Python 3.11+;
 
 2. 用 VSCode 打开项目, 打开 DeskRobot.py, 点击右上角运行按钮运行;
-```
-本项目高度模块化;
 
-初始时所有模块都处于关闭状态, 此时不依赖任何第三方库, 可直接运行;
+    - 本项目高度模块化;
+    - 初始时所有模块已关闭, 没有任何功能;
+    - 此时不依赖任何第三方库, 可直接运行;
 
-编辑 DeskRobot.py 底部 if __name__ == "__main__" 区域,
+3. 启用模块:
 
-选中对应模块的代码, 使用 "CTRL+/" 快捷键快速取消注释, 即可开启对应模块; 
-```
+    - 编辑 DeskRobot.py 底部区域;
+    - 使用 "CTRL+/" 快捷键取消注释以启用模块;
+    - 不同的模块依赖于不同的第三方库;
+    - 可按照模块附近的说明文档按需安装;
 
+4. 配置 API_KEY
 
-3. 安装依赖
-```
-pip install -r requirements.txt
-```
-
-3.配置 api_key
-```
-修改 config.py , 填写自己的 api_key
-(目前可以不修改, 直接使用我提供的 api_key)
-```
-
-4.运行
+    - 有的模块依赖于第三方服务, 需要配置 API_KEY;
+    - 修改 config.py, 按指示获取并填写 API_KEY;
+    - (目前可以不修改, 直接使用我提供的 API_KEY)
 
 
+## 项目结构
 
-python DeskRobot.py
-```
+- DeskRobot.py 项目入口。
+- modules 存放各个模块。
+- configs 存放配置文件。
+- localfiles 存放本地资源文件。
+- requirements.txt 项目依赖。
+    - pip install -r requirements.txt 一键安装。
+    - 有些系统依赖无法一键安装, 需按照各模块的说明手动安装。
 
-## 项目架构
+### 关键模块
 
-DeskRobot.py 项目入口。
-
-
-### 主要模块
-
-- 主控模块：使用 EventBus 实现机器人状态控制。
-- 运动控制模块：使用 gpiozero 实现机器人电机控制。
+- EventBus：使用 "事件总线" 实现各模块间的通信。
+- 运动控制模块：使用 gpiozero 控制机器人电机。
 - 语音交互模块：
-    - 语音唤醒| 使用 openwakeword 实现语音唤醒。
-    - 话语检测| 使用 SileroVAD 实现语音断句。
-    - STT| 使用 siliconflow_stt 和 iflytek_stt 实现语音转文字。
-    - TTS| 使用 edge-tts 实现文字转语音。
+    - 语音唤醒: 使用 openwakeword 实现语音唤醒。
+    - 话语检测: 使用 SileroVAD 实现语音监听。
+    - STT: 使用 siliconflow_stt 和 iflytek_stt 实现语音转文字。
+    - TTS: 使用 edge-tts 实现文字转语音。
 - AI对话模块：使用 langchain_openai 和 SiliconFlow API 实现机器人对话。
-- OLED显示模块：输入系统状态, 输出表情/内容。
-- 人脸跟踪模块：使用 opencv 内置 CascadeClassifier + simple_pid 实现人脸跟踪。
+- OLED显示模块：可显示表情, 文字, 简单动画。
+- 人脸跟踪模块：使用 mediapipe 检测人脸, 使用 simple_pid 控制小车跟踪人脸。
 
 ## 引脚使用情况
+
 |  引脚 | 连接 |
 | ----- | --- |
 VCC 3.3V| OLED VCC

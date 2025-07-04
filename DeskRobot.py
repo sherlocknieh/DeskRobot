@@ -15,13 +15,12 @@ class DeskRobot:
         self.event_bus = EventBus()                 # 事件总线
 
     def add_task(self, task: threading.Thread):     # 添加任务
-        logger.info(f"加载 {task.name}")
         self.tasklist.append(task)
 
     def run(self):
-        logger.info("DeskRobot 已启动")
         for task in self.tasklist:                  # 启动所有子任务
             task.start()
+        logger.info("DeskRobot 启动完成")
         try:        
             self.io_loop()                          # 进入终端调试循环
         except KeyboardInterrupt:
@@ -30,8 +29,8 @@ class DeskRobot:
 
     def io_loop(self):
         while True:
-            print("调试终端已启用, 输入指令以发布事件")
-            print("格式: 事件类型 [参数=值] [参数:值]")
+            print("\n调试终端已启用, 输入指令以发布消息")
+            print("格式: 消息类型 [参数=值] [参数:值]")
             print("例如: led_on r=0 g=1 b=0.5")
             print("例如: led_off")
             print("例如: exit")
@@ -69,11 +68,11 @@ if __name__ == "__main__":
 
     robot = DeskRobot()
 
-    """RGB 灯模块
-       依赖的库: pip install gpiozero pigpio lgpio
-    """
-    from modules.mod_led_control import LEDControl
-    robot.add_task(LEDControl())
+    # """LED灯模块
+    #    安装依赖: pip install gpiozero pigpio lgpio
+    # """
+    # from modules.mod_led_control import LEDControl
+    # robot.add_task(LEDControl())
 
     # """温湿度模块"""
     # from modules.mod_temperature import Temperature

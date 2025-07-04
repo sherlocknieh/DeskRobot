@@ -1,12 +1,35 @@
-# [ Core Framework ]
-numpy==1.26.4  #pip install --upgrade "numpy<2"
+# 车轮电机, 舵机, OLED屏幕, LED灯, 温湿度传感器
+gpiozero; sys_platform == 'linux'
+pigpio; sys_platform == 'linux'
+lgpio; sys_platform == 'linux'
+# sudo systemctl start pigpiod
+# sudo systemctl enable pigpiod
 
-# [ AI & LangChain ]
-langchain
-langchain-openai
-langgraph
 
-# [ 语音相关 ]
+# OLED显示
+pillow
+luma.oled; sys_platform == 'linux'
+
+# 手柄控制
+evdev; sys_platform == 'linux'
+
+# 音乐播放
+pygame
+
+# 温湿度传感器
+adafruit-circuitpython-dht
+
+
+# 摄像头
+picamera2; sys_platform == 'linux'
+opencv-python
+flask
+# 人脸跟踪
+mediapipe==0.10.9
+simple_pid
+
+
+# 语音相关
 pyaudio
 torch
 torchaudio
@@ -14,37 +37,13 @@ pydub
 edge-tts  
 websocket # 讯飞stt用到
 requests  # siliconflow stt用到
-
-
-# 车轮电机, 舵机, OLED屏幕, LED灯, 温湿度传感器
-gpiozero; sys_platform == 'linux'
-pigpio; sys_platform == 'linux'
-lgpio; sys_platform == 'linux'  # LED灯需要
-# sudo systemctl start pigpiod
-# sudo systemctl enable pigpiod
-
-# --- OLED 显示 ---
-luma.oled; sys_platform == 'linux'
-pillow
-
-# --- 温湿度传感器 ---
-adafruit-circuitpython-dht
-
-# --- 摄像头 ---
-picamera2; sys_platform == 'linux'
-opencv-python
-flask
-
-# --- 手柄事件监听 ---
-evdev; sys_platform == 'linux'
-
-# --- 音乐播放 ---
-pygame
-
-# --- 语音唤醒 ---
+# 语音唤醒
+numpy==1.26.4  #pip install --upgrade "numpy<2"
 openwakeword
 speexdsp-ns  # apt-get install libspeex-dev libspeexdsp-dev
 
-# --- 人脸跟踪 ---
-simple_pid
-mediapipe==0.10.9
+
+# AI相关
+langchain
+langchain-openai
+langgraph
