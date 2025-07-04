@@ -34,16 +34,16 @@ import queue
 import threading
 import time
 
-from .API_Roboeyes.roboeyes_api import RoboeyesAPI
+from .API_OLED.roboeyes_api import RoboeyesAPI
 from .EventBus import EventBus
 
-logger = logging.getLogger('OLED表情模块')
+logger = logging.getLogger('OLED表情')
 
 
 class RoboeyesThread(threading.Thread):
     def __init__(self, frame_rate=50, width=128, height=64):
         super().__init__(daemon=True, name="RoboeyesThread")
-        self.name = "OLED表情模块"
+        self.name = "OLED表情"
         self.event_queue = queue.Queue()        # 事件队列
         self.event_bus = EventBus()
         self.api = RoboeyesAPI(frame_rate, width, height)

@@ -38,7 +38,7 @@ file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] \t%(m
 file_handler.setFormatter(file_formatter)
 root_logger.addHandler(file_handler)
 
-logging.info("日志系统配置成功")
+logging.info("\t日志系统配置成功")
 
 
 logger = logging.getLogger("DeskRobot")     # 日志工具

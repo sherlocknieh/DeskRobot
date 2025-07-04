@@ -69,62 +69,59 @@ if __name__ == "__main__":
 
     # 导入各模块
 
-    # """LED灯模块
-    #    依赖: pip install gpiozero pigpio lgpio
-    # """
-    # from modules.mod_led_control import LEDControl
-    # robot.add_task(LEDControl())
-
-    # """小车控制模块
-    #    依赖: pip install gpiozero pigpio
-    #    依赖: sudo systemctl enable --now pigpiod
-    # """
-    # from modules.mod_car_control import CarControl
-    # robot.add_task(CarControl())
-
-    # """手柄模块
-    #    依赖: pip install evdev
-    # """
-    # from modules.mod_game_pad import GamePad
-    # robot.add_task(GamePad())
-
-    # """音乐播放器模块
-    #    依赖: pip install pygame
-    # """
-    # from modules.mod_music_player import MusicPlayerThread
-    # robot.add_task(MusicPlayerThread())
-
-    # """温湿度模块
-    #    依赖: pip install adafruit-circuitpython-dht
-    # """
-    # from modules.mod_temperature import Temperature
-    # robot.add_task(Temperature())
+    """小车控制模块 (包括车轮, 舵机, LED灯)
+       依赖: pip install gpiozero pigpio
+       依赖: sudo systemctl enable --now pigpiod
+    """
+    from modules.mod_car_control import CarControl
+    robot.add_task(CarControl())
 
 
-    # """OLED 基础模块
-    #    依赖: pip install pillow luma.oled
-    # """
-    # from modules.mod_oled_image import OLEDThread
-    # robot.add_task(OLEDThread())
+    """手柄模块
+       依赖: pip install evdev
+    """
+    from modules.mod_game_pad import GamePad
+    robot.add_task(GamePad())
 
-    # """OLED 文本模块
-    #    安装中文字体: sudo apt install fonts-wqy-microhei
-    #    依赖: pip install pillow
-    # """
-    # from modules.mod_oled_text import TextDisplayThread
-    # robot.add_task(TextDisplayThread())
 
-    # """OLED 表情模块
-    #    依赖: pip install pillow
-    # """
-    # from modules.mod_oled_roboeyes import RoboeyesThread
-    # robot.add_task(RoboeyesThread())
+    """音乐播放器模块
+       依赖: pip install pygame
+    """
+    from modules.mod_music_player import MusicPlayerThread
+    robot.add_task(MusicPlayerThread())
 
-    # """OLED 动画模块
-    #    依赖: pip install pillow
-    # """
-    # from modules.mod_oled_animation import ThinkingAnimationThread
-    # robot.add_task(ThinkingAnimationThread())
+
+    """温湿度模块
+       依赖: pip install adafruit-circuitpython-dht
+    """
+    from modules.mod_temperature import Temperature
+    robot.add_task(Temperature())
+
+
+    """OLED 基础模块
+       依赖: pip install pillow luma.oled
+    """
+    from modules.mod_oled_image import OLEDThread
+    robot.add_task(OLEDThread())
+
+    """OLED 文本模块
+       安装中文字体: sudo apt install fonts-wqy-microhei
+       依赖: pip install pillow
+    """
+    from modules.mod_oled_text import TextDisplayThread
+    robot.add_task(TextDisplayThread())
+
+    """OLED 表情模块
+       依赖: pip install pillow
+    """
+    from modules.mod_oled_roboeyes import RoboeyesThread
+    robot.add_task(RoboeyesThread())
+
+    """OLED 动画模块
+       依赖: pip install pillow
+    """
+    from modules.mod_oled_animation import ThinkingAnimationThread
+    robot.add_task(ThinkingAnimationThread())
 
 
     # """语音输入模块
@@ -141,12 +138,12 @@ if __name__ == "__main__":
     # from modules.mod_voice_awake import AwakeThread
     # robot.add_task(AwakeThread())
 
-    # """TTS:文字转语音模块
-    #    依赖: sudo apt install ffmpeg
-    #    依赖: pip install pydub edge-tts
-    # """
-    # from modules.mod_voice_tts import TTSThread
-    # robot.add_task(TTSThread())
+    """TTS:文字转语音模块
+       依赖: sudo apt install ffmpeg
+       依赖: pip install pydub edge-tts
+    """
+    from modules.mod_voice_tts import TTSThread
+    robot.add_task(TTSThread())
 
     # """STT:语音转文字模块
     #    依赖: pip install websocket requests
@@ -169,6 +166,7 @@ if __name__ == "__main__":
     # """
     # from modules.mod_web_camera import WEBCamera
     # robot.add_task(WEBCamera())
+
 
     # """人脸追踪模块
     #     依赖: pip install opencv-python mediapipe simple_pid

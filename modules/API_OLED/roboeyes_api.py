@@ -7,7 +7,7 @@ import logging
 
 from .roboeyes import ANGRY, DEFAULT, HAPPY, TIRED, RoboEyes
 
-logger = logging.getLogger("RoboeyesAPI")
+logger = logging.getLogger("Roboeyes")
 
 
 class RoboeyesAPI:
@@ -25,7 +25,7 @@ class RoboeyesAPI:
             "tired": TIRED,
             "default": DEFAULT,
         }
-        logger.info(f"RoboeyesAPI 初始化，帧率={frame_rate}")
+        logger.info(f"Roboeyes 初始化，帧率={frame_rate}")
 
     def update(self):
         """

@@ -4,10 +4,8 @@
 
 Subscribe:
 - PLAY_MUSIC: 开始播放音乐
-    - data格式:
-    {
+   data = {
         "path": str,  # 本地文件路径或URL
-        "loop": bool   # 是否循环播放（可选）
     }
 - PAUSE_MUSIC: 暂停/恢复播放
 - STOP_MUSIC: 停止播放
@@ -42,7 +40,8 @@ music_files = [os.path.join("localfiles/songs", f) for f in os.listdir("localfil
 # 类定义
 class MusicPlayerThread(threading.Thread):
     def __init__(self):
-        super().__init__(daemon=True, name="MusicPlayerThread")
+        super().__init__(daemon=True)
+        self.name = "音乐播放器"
         self.event_bus = EventBus()
         self.event_queue = Queue()
         self._stop_event = threading.Event()
@@ -58,7 +57,6 @@ class MusicPlayerThread(threading.Thread):
         self.current_player = None
         self.is_playing = False
         self.is_paused = False
-        self.loop = False
         self.temp_files = []
         
         # 新增播放列表相关属性
@@ -102,23 +100,23 @@ class MusicPlayerThread(threading.Thread):
     def _handle_play(self, data):
         source = data.get("path")
         source = self.playlist[0] if source is None else source
-        self.loop = data.get("loop", False)
     
-        # 仅当明确传入新列表时才更新播放列表
+        # 传入列表
         if isinstance(source, list):
             self.playlist = source
             self.current_index = 0
-            source = self.playlist[self.current_index]
-        else:
-            # 如果当前播放列表不为空且source在其中，则只切换索引
+        else: # 传入单个文件
+            # 如果文件在当前列表中
             if hasattr(self, "playlist") and source in self.playlist:
                 self.current_index = self.playlist.index(source)
-            else:
+            else: # 全新文件
                 self.playlist = [source]
                 self.current_index = 0
-    
+
+        source = self.playlist[self.current_index] # 从列表中取出歌曲路径
+
         try:
-            # 统一处理本地和网络资源
+            # 处理网络资源
             if source.startswith(("http://", "https://")):
                 filename = os.path.basename(source)
                 local_path, _ = urlretrieve(source, filename)
@@ -128,28 +126,28 @@ class MusicPlayerThread(threading.Thread):
             # 使用pygame加载音乐
             pygame.mixer.music.load(source)
             self.is_playing = True
-            pygame.mixer.music.play(loops=-1 if self.loop else 0)
-            self.event_bus.publish("MUSIC_STARTED", source=source)
+            pygame.mixer.music.play()
+            self.event_bus.publish("MUSIC_STARTED", self.name)
             
         except Exception as e:
             logger.error(f"播放失败: {e}")
-            self.event_bus.publish("ERROR", {"message":str(e)})
+            self.event_bus.publish("ERROR", {"message":str(e)}, self.name)
 
     def _handle_pause(self):
-        if self.is_playing:
-            if not self.is_paused:
-                pygame.mixer.music.pause()
-                self.is_paused = True
-                self.event_bus.publish("MUSIC_PAUSED")
-            else:
-                pygame.mixer.music.unpause()
-                self.is_paused = False
-                self.event_bus.publish("MUSIC_RESUMED")
+        #if self.is_playing:
+        if not self.is_paused:
+            pygame.mixer.music.pause()
+            self.is_paused = True
+            self.event_bus.publish("MUSIC_PAUSED", self.name)
+        else:
+            pygame.mixer.music.unpause()
+            self.is_paused = False
+            self.event_bus.publish("MUSIC_RESUMED", self.name)
     
     def _handle_stop(self):
         pygame.mixer.music.stop()
         self.is_playing = False
-        self.event_bus.publish("MUSIC_STOPPED")
+        self.event_bus.publish("MUSIC_STOPPED", self.name)
 
     def _handle_next(self):
         if len(self.playlist) == 0:
@@ -166,8 +164,8 @@ class MusicPlayerThread(threading.Thread):
     def _play_by_index(self):
         if 0 <= self.current_index < len(self.playlist):
             source = self.playlist[self.current_index]
-            print(f"播放歌曲: {source}")
-            self._handle_play({"path": source, "loop": self.loop})
+            logger.info(f"正在播放: {source}")
+            self._handle_play({"path": source})
     
     def stop(self):
         """新增清理方法"""

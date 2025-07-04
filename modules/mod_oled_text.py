@@ -55,10 +55,10 @@ import uuid
 from queue import Empty, Queue
 
 from .EventBus import EventBus
-from .API_Text.text_renderer import TextRenderer
-from .API_Text.text_scroller import TextScroller
+from .API_OLED.text_renderer import TextRenderer
+from .API_OLED.text_scroller import TextScroller
 
-logger = logging.getLogger("OLED文本模块")
+logger = logging.getLogger("OLED文本")
 
 
 class TextDisplayThread(threading.Thread):
@@ -69,7 +69,8 @@ class TextDisplayThread(threading.Thread):
         oled_height: int = 64,
         oled_fps: int = 50,
     ):
-        super().__init__(daemon=True, name="TextDisplayThread")
+        super().__init__(daemon=True)
+        self.name = "OLED文本"
         self.event_bus = EventBus()
         self._stop_event = threading.Event()
         self.active_scrolls = {}
@@ -84,10 +85,10 @@ class TextDisplayThread(threading.Thread):
             font_path
         )  # Create private queue and subscribe to events
         self.event_queue = Queue()
-        self.event_bus.subscribe("SUB_TEXT_DISPLAY_REQUEST", self.event_queue, "OLED文本模块")
-        self.event_bus.subscribe("SUB_TEXT_DISPLAY_CANCEL", self.event_queue, "OLED文本模块")
-        self.event_bus.subscribe("SUB_TEXT_STATIC_DISPLAY", self.event_queue, "OLED文本模块")  # 新增：静态文本显示
-        self.event_bus.subscribe("EXIT", self.event_queue, "OLED文本模块")
+        self.event_bus.subscribe("SUB_TEXT_DISPLAY_REQUEST", self.event_queue, self.name)
+        self.event_bus.subscribe("SUB_TEXT_DISPLAY_CANCEL", self.event_queue, self.name)
+        self.event_bus.subscribe("SUB_TEXT_STATIC_DISPLAY", self.event_queue, self.name)  # 新增：静态文本显示
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
 
     def run(self):
         logger.info(f"{self.name} started.")

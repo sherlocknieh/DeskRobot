@@ -20,12 +20,12 @@ import time
 from .API_OLED.oled_animation_api import OledAnimationAPI
 from .EventBus import EventBus
 
-logger = logging.getLogger("OLED动画模块")
+logger = logging.getLogger("OLED动画")
 
 
 class ThinkingAnimationThread(threading.Thread):
     def __init__(self, frame_rate=20, width=128, height=64):
-        super().__init__(daemon=True, name="思考中动画")
+        super().__init__(daemon=True, name="OLED动画")
         self.event_bus = EventBus()
         self.api = OledAnimationAPI(width, height)
         self._stop_event = threading.Event()

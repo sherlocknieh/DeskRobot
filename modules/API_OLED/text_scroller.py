@@ -1,7 +1,7 @@
 from PIL import Image
 
 if __name__ == "__main__":
-    from text_renderer import TextRenderer
+    from modules.API_OLED.text_renderer import TextRenderer
 else:
     from .text_renderer import TextRenderer
 

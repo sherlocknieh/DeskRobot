@@ -5,8 +5,8 @@ if __name__ != '__main__':
     from .EventBus import EventBus
     from .API_Camera.PiCamera import PiCamera
     from .API_Camera.FaceDetect import FaceDetector
-    from .API_Servo.Servo import HeadServo
-    from .API_Car.Car import Car
+    from .API_CAR.Servo import HeadServo
+    from .API_CAR.Car import Car
 
 
 from simple_pid import PID
@@ -109,9 +109,9 @@ class FaceTrack(threading.Thread):
 if __name__ == '__main__':
     
     from EventBus import EventBus
-    from API_Servo.Servo import HeadServo
+    from modules.API_CAR.Servo import HeadServo
     from API_Camera.PiCamera import PiCamera
-    from API_Car.Car import Car
+    from API_CAR.Car import Car
     from time import sleep
 
     test = FaceTrack()

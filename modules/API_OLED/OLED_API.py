@@ -20,7 +20,7 @@ OLED显示API
 import logging
 import time
 
-logger = logging.getLogger("OLED_API")
+logger = logging.getLogger("OLED单例")
 
 
 class OLED:

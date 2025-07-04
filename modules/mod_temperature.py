@@ -25,7 +25,7 @@ import time
 class Temperature(threading.Thread):
     def __init__(self, pin=board.D25):
         super().__init__()
-        self.name = "温湿度"
+        self.name = "温湿度模块"
         self.dhtDevice = adafruit_dht.DHT11(pin) # DHT11传感器
         self.event_queue = queue.Queue()
         self.event_bus = EventBus()
@@ -59,7 +59,8 @@ class Temperature(threading.Thread):
                         "font_size": 12,
                         "position": (0, 0),
                         "duration" : 10
-                    }
+                    },
+                    self.name
                 )
                 self.event_bus.publish(
                     "SUB_TEXT_STATIC_DISPLAY",
@@ -68,13 +69,15 @@ class Temperature(threading.Thread):
                         "font_size": 12,
                         "position": (0, 12),
                         "duration" : 10
-                    }
+                    },
+                    self.name
                 )
                 self.event_bus.publish(
                     "SPEAK_TEXT",
                     {
                         "text": f'当前温度 {self.temperature} 度，湿度 {self.humidity} %',
-                    }
+                    },
+                    self.name
                 )
             except:
                 print("读取DHT11数据失败")

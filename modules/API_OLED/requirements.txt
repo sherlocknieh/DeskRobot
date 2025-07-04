@@ -1,6 +1,0 @@
-luma.oled
-luma.core
-Pillow
-opencv-python
-numpy
-rpi-lgpio

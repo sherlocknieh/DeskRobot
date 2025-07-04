@@ -8,10 +8,6 @@ if __name__ != '__main__':
     from .API_Camera.WEBAPP import WEBAPP
 
 
-# 第三方库
-from flask import Flask, render_template, Response, request, jsonify  # 导入Flask相关模块
-import cv2
-
 
 # 标准库
 import queue

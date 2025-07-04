@@ -91,6 +91,7 @@ class EventBus:
             "VOICE_COMMAND_DETECTED",   # VAD检测到语音结束,data较大,不打印
             "NEW_FRAME",
             "CAR_STEER",
+            "HEAD_ANGLE",
         ]
         # 打印事件发布日志
         if event_type not in frequent_event_types:
@@ -103,7 +104,7 @@ class EventBus:
         # 丢弃未被订阅的事件, 并打印日志
         if event_type not in self.listeners:
             if event_type not in frequent_event_types:
-                logger.info(f'{event_type} 消息无人订阅, 已丢弃')
+                logger.info(f'{source} 发布的 {event_type} 消息无人订阅, 已丢弃')
             return
         
         # 将事件类型,数据,发布人打包进字典

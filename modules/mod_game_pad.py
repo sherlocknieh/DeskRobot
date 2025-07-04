@@ -1,5 +1,5 @@
 if __name__ != '__main__':
-    from .API_Car.Car import Car
+    from .API_CAR.Car import Car
     from .EventBus import EventBus
 
 
@@ -8,6 +8,7 @@ import evdev
 from queue import Queue
 from time import sleep
 import logging
+from itertools import cycle
 
 
 logger = logging.getLogger("手柄模块")
@@ -25,18 +26,21 @@ class GamePad(threading.Thread):
 
         self._gamepad_connected = threading.Event()
         self._gamepad_connecting = threading.Event()
+        self._car_control_mode = threading.Event()
         
         self.x = 0
         self.y = 0
+        self.z = 0
         self.firstpress = True
-
+        self.modes = cycle(['CAR', 'MUSIC', 'LED'])
+        self.mode = None
 
     def run(self):
         self.event_bus.subscribe("EXIT", self.event_queue, self.name)    # 订阅总线 "EXIT" 事件
 
         threading.Thread(target=self._gamepad_connect_loop, daemon=True).start() # 启动手柄连接线程
         threading.Thread(target=self._gamepad_event_loop, daemon=True).start()   # 启动手柄事件线程
-        threading.Thread(target=self._control_loop, daemon=True).start()         # 启动控制输出线程
+        threading.Thread(target=self._car_control_loop, daemon=True).start()     # 启动控制输出线程
 
         # 主循环: 事件总线监听
         while True:
@@ -47,94 +51,83 @@ class GamePad(threading.Thread):
         logger.info("手柄模块已退出")
 
 
-    def _control_loop(self):
-        """控制循环
-        获取最新数据
-        控制车轮转动
-        """
-        while self._gamepad_connected.is_set():
-            #self.car.steer(self.x, self.y)
-            self.event_bus.publish("CAR_STEER", {"x": self.x, "y": self.y})
+    def _car_control_loop(self):
+        """控制循环"""
+        while True:
+            self._car_control_mode.wait()
+            if self.mode == 'CAR':
+                #self.car.steer(self.x, self.y)  # 直接控制车轮转动
+                self.event_bus.publish("CAR_STEER", {"x": self.x, "y": self.y}, self.name) # 通过事件总线控制车轮转动
+                self.event_bus.publish("HEAD_ANGLE",{"angle": -self.z*90}, self.name)
             sleep(1/40) # 控制输出频率
 
 
     def _gamepad_event_loop(self):
-        """手柄事件循环
-        """
+        """手柄事件循环"""
         while True:
+            self._gamepad_connected.wait()
             try:
                 for event in self.gamepad.read_loop():  # type: ignore
                     if event.type == evdev.ecodes.EV_ABS:
+                        # 左摇杆横轴
                         if event.code == 0:
                             self.x = event.value/65535*2-1
+                        # 左摇杆纵轴
                         elif event.code == 1:
-                            self.y = -event.value/65535*2+1
+                           self.y = -event.value/65535*2+1
+                        # 水平方向键
                         elif event.code == 16:
                             self.x = event.value
+                            if self.mode == 'MUSIC':
+                                if event.value == 1:
+                                    self.event_bus.publish("NEXT_SONG", self.name)
+                                elif event.value == -1:
+                                    self.event_bus.publish("PREVIOUS_SONG", self.name)
+                        # 竖直方向键
                         elif event.code == 17:
                             self.y = -event.value
+                            if self.mode == 'MUSIC':
+                                if event.value == 1:
+                                    self.event_bus.publish("PAUSE_MUSIC", self.name)
+                                elif event.value == -1:
+                                    self.event_bus.publish("PLAY_MUSIC", self.name)
+                        # 右扳机
                         elif event.code == 9:
-                            z = event.value/1023
-                            logger.info(f'右扳机: {z}')
+                            self.z = -event.value/1023
+                        # 左扳机
                         elif event.code == 10:
-                            z = event.value/1023
-                            logger.info(f'左扳机: {z}')
-                            self.event_bus.publish("HEAD_ANGLE",{"angle": -z*90})
-                        else:
-                            logger.info(f'按键事件: {event.code}; 值: {event.value}')
+                            self.z = event.value/1023
+                        # 右摇杆横轴
+                        elif event.code == 2:
+                            self.rx = event.value/65535*2-1
+                        # 右摇杆纵轴
+                        elif event.code == 5:
+                            self.ry = -event.value/65535*2+1
                     elif event.type == evdev.ecodes.EV_KEY:
-                        logger.info(f'按键事件: {event.code}; 值: {event.value}')
                         if event.code == 304:
                             if event.value == 1:
                                 logger.info(f'A键按下')
-                                if self.firstpress:
-                                    print("开始播放")
-                                    
-                                    self.event_bus.publish("PLAY_MUSIC")
-                                    self.firstpress = False
-                                else:
-                                    print("暂停播放")
-                                    self.event_bus.publish("PAUSE_MUSIC")
-                                    self.firstpress = True
-                            if event.value == 0: logger.info(f'A键放开')
                         if event.code == 305:
                             if event.value == 1:
                                 logger.info(f'B键按下')
-                                print("停止播放")
-                                self.event_bus.publish("STOP_MUSIC")
-                            if event.value == 0: logger.info(f'B键放开')
                         if event.code == 307:
                             if event.value == 1:
                                 logger.info(f'X键按下')
-                                print("上一曲")
-                                self.event_bus.publish("PREVIOUS_SONG")
-                            if event.value == 0: logger.info(f'X键放开')
                         if event.code == 308:
                             if event.value == 1:
                                 logger.info(f'Y键按下')
-                                print("下一曲")
-                                self.event_bus.publish("NEXT_SONG")
-                            if event.value == 0: logger.info(f'Y键放开')
                         if event.code == 310:
                             if event.value == 1:
                                 logger.info(f'LB按下')
-                            if event.value == 0: logger.info(f'LB放开')
                         if event.code == 311:
                             if event.value == 1:
                                 logger.info(f'RB按下')
-                            if event.value == 0: logger.info(f'RB放开')
                         if event.code == 314:
                             if event.value == 1:
-                                logger.info(f'左菜单键按下')
-                            if event.value == 0: logger.info(f'左菜单键放开')
+                                logger.info(f'左选项键按下')
                         if event.code == 315:
                             if event.value == 1:
-                                logger.info(f'右菜单键按下')
-                            if event.value == 0: logger.info(f'右菜单键放开')
-                        if event.code == 316:
-                            if event.value == 1:
-                                logger.info(f'HOME键按下')
-                            if event.value == 0: logger.info(f'HOME键放开')
+                                logger.info(f'右选项键按下')
                         if event.code == 317:
                             if event.value == 1:
                                 logger.info(f'左摇杆按下')
@@ -143,39 +136,34 @@ class GamePad(threading.Thread):
                                 logger.info(f'右摇杆按下')
                         if event.code == 167:
                             if event.value == 1:
-                                logger.info(f'截图键键按下')
-                                if self.firstpress:
-                                    print("开启人脸跟踪")
-                                    self.event_bus.publish("FACE_TRACK_ON")
-                                    self.firstpress = False
+                                #logger.info(f'截图键按下')
+                                self.mode = next(self.modes)
+                                logger.info(f"切换到 {self.mode} 模式")
+                                if self.mode == 'CAR':
+                                    self._car_control_mode.set()
                                 else:
-                                     print("关闭人脸跟踪")
-                                     self.event_bus.publish("FACE_TRACK_OFF")
-                                     self.firstpress = True
+                                    self._car_control_mode.clear()
             except Exception: 
-                logger.info("手柄已断开")
+                logger.info("手柄已断开, 正在尝试重连...")
+                self.gamepad = None
                 self._gamepad_connecting.set()
                 self._gamepad_connected.clear()
-                self._gamepad_connected.wait()
 
 
     def _gamepad_connect_loop(self):
-        """手柄连接与重连
-        """
-        self.gamepad = self.gamepad_connector()
+        """手柄连接任务循环"""
         while True:
             if not self.gamepad:
-                self.gamepad = self.gamepad_connector()
+                self.gamepad = self.gamepad_detector()
             if self.gamepad:
                 self._gamepad_connected.set()
                 self._gamepad_connecting.clear()
                 self._gamepad_connecting.wait()
-            sleep(1)
+            sleep(2)
 
 
-    def gamepad_connector(self):
-        """手柄检测与连接
-        """
+    def gamepad_detector(self):
+        """手柄检测与连接"""
         devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
         for device in devices:
             if "xbox" in device.name.lower():
@@ -185,7 +173,7 @@ class GamePad(threading.Thread):
 
 
 if __name__ == '__main__':
-    from API_Car.Car import Car
+    from API_CAR.Car import Car
     from EventBus import EventBus
     pad = GamePad()
     pad.start()

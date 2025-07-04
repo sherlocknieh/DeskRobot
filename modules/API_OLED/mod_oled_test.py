@@ -8,7 +8,7 @@ import threading
 import time
 
 
-logger = logging.getLogger("OLED测试模块")
+logger = logging.getLogger("OLED测试")
 
 
 class StaticTextTestRig:
@@ -270,14 +270,15 @@ if __name__ == "__main__":
 
     # 将项目根目录添加到 sys.path，以解决模块导入问题
     import os, sys
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     
     sys.path.insert(0, project_root)  # 添加项目根目录到 sys.path
-    from configs.api_config import config
     from modules.EventBus import EventBus
     from modules.mod_oled_image import OLEDThread
     from modules.mod_oled_roboeyes import RoboeyesThread
     from modules.mod_oled_text import TextDisplayThread
+    from configs.log_config import logger
+    logger = logging.getLogger("OLED测试")
     sys.path.pop(0)                   # 弹出项目根目录 from sys.path
 
     # 测试任务管理器
