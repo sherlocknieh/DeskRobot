@@ -32,7 +32,7 @@
 import threading
 import queue
 import logging
-logger = logging.getLogger("事件总线")
+logger = logging.getLogger("消息总线")
 
 
 class EventBus:
@@ -59,7 +59,7 @@ class EventBus:
 
     def subscribe(self, event_type, event_queue, name = ""):
         if not isinstance(event_queue, queue.Queue):
-            raise TypeError(f'{name} 模块使用 subscribe() 时传入了错误的事件容器类型')
+            raise TypeError(f'{name} 模块使用 subscribe() 时传入了错误的容器类型')
 
         # 事件类型转换为大写字符串
         event_type = str(event_type).upper()
@@ -73,7 +73,7 @@ class EventBus:
             self.listeners[event_type].append(event_queue)
 
         # 打印日志
-        logger.info(f'{name} 订阅了 {event_type} 事件')
+        logger.info(f'{name} 订阅了 {event_type} 消息')
 
     def publish(self, event_type, data = {}, source = "未知"):
         # 事件类型转换为大写字符串
@@ -94,7 +94,7 @@ class EventBus:
         ]
         # 打印事件发布日志
         if event_type not in frequent_event_types:
-            logger.info(f'{source} 发布了 {event_type} 事件')
+            logger.info(f'{source} 发布了 {event_type} 消息')
             if data:
                 import json
                 print("data = ",json.dumps(data, indent=4,ensure_ascii=False))
@@ -103,12 +103,12 @@ class EventBus:
         # 丢弃未被订阅的事件, 并打印日志
         if event_type not in self.listeners:
             if event_type not in frequent_event_types:
-                logger.info(f'{event_type} 事件无人订阅, 已丢弃')
+                logger.info(f'{event_type} 消息无人订阅, 已丢弃')
             return
         
         # 将事件类型,数据,发布人打包进字典
         event = {"type": event_type, "data": data, "source": source}
 
         # 发送给所有订阅者
-        for event_queue in self.listeners[event_type]:        
+        for event_queue in self.listeners[event_type]:
             event_queue.put(event)

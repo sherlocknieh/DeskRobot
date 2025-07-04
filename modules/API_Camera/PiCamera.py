@@ -50,7 +50,7 @@ class PiCamera:
 
 
 if __name__ == '__main__':
-    from modules.API_Camera.WEBAPP import WEBCamera
+    from WEBAPP import WEBAPP
     cam = PiCamera()
-    web = WEBCamera(cam)
+    web = WEBAPP(cam)
     web.run()

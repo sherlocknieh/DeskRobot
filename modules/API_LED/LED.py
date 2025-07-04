@@ -3,7 +3,7 @@ LED控制API
 
 依赖的库: 
     gpiozero
-    RPi.GPIO
+    pigpio
     lgpio
 
 可用接口:

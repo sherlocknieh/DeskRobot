@@ -16,8 +16,7 @@ config["iflytek_api_secret"] = "MTZlMjExMGMxN2M4MTgyMjg3Y2E3MTlk"
 
 # Siliconflow 语音合成 API, 在 Siliconflow 开放平台 (https://www.siliconflow.cn/) 获取
 config["llm_model_name"] = "Qwen/Qwen3-32B"
-config["llm_base_url"] = "https://api.siliconflow.cn/v1"
-config["llm_api_key"] = "sk-xgpbdlulapwpsfnzbwoudyzarrzietkkujcajphkvewveykq"
+config["siliconflow_base_url"] = "https://api.siliconflow.cn/v1"
 config["siliconflow_api_key"] = "sk-xgpbdlulapwpsfnzbwoudyzarrzietkkujcajphkvewveykq"
 
 

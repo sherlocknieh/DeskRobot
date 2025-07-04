@@ -70,6 +70,6 @@ if __name__ == '__main__':
     from PiCamera import PiCamera
 
     picamera = PiCamera()
-    web_camera = WEBCamera(picamera)
+    web_camera = WEBAPP(picamera)
     web_camera.run()
     

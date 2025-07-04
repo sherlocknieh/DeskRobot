@@ -43,17 +43,16 @@ class LEDControl(threading.Thread):
         self.event_bus = EventBus()          # 事件总线
         self.thread_flag = threading.Event() # 线程控制标志位
         self.logger = logging.getLogger(self.name) # 日志工具
-        
-
-    def run(self):
-
+        self.rgb.on()  # 打开 LED 灯
         # 订阅消息
         self.event_bus.subscribe("EXIT", self.event_queue, "LED灯模块")
         self.event_bus.subscribe("LED_ON", self.event_queue, "LED灯模块")
         self.event_bus.subscribe("LED_OFF", self.event_queue, "LED灯模块")
         self.event_bus.subscribe("LED_FLASH", self.event_queue, "LED灯模块")
         self.event_bus.subscribe("LED_BREEZE", self.event_queue, "LED灯模块")
+        
 
+    def run(self):
         self.thread_flag.set()              # 线程标志位设为 True
         while self.thread_flag.is_set():     # 线程循环条件: thread_flag 状态为 True
 

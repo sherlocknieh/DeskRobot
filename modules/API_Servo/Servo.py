@@ -1,6 +1,7 @@
 '''
 pip install pigpio gpiozero
-sudo pigpiod
+sudo systemctl enable pigpiod
+sudo systemctl start pigpiod
 '''
 
 from gpiozero import AngularServo

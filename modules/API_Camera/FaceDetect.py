@@ -62,9 +62,9 @@ if __name__ == '__main__':
     import threading
     from time import sleep
     from PiCamera import PiCamera
-    from modules.API_Camera.WEBAPP import WEBCamera
+    from WEBAPP import WEBAPP
     cam = PiCamera()
-    web = WEBCamera()
+    web = WEBAPP()
     app = FaceDetector()
     threading.Thread(target=web.run).start()
     while True:

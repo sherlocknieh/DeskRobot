@@ -1,52 +1,50 @@
 # [ Core Framework ]
-python-dotenv
-Pillow
-numpy==1.26.4
-requests
+numpy==1.26.4  #pip install --upgrade "numpy<2"
 
 # [ AI & LangChain ]
 langchain
 langchain-openai
 langgraph
 
-# [ Voice Processing ]
+# [ 语音相关 ]
 pyaudio
 torch
 torchaudio
-edge-tts
 pydub
-# websocket-client
-websocket 
-# [ Hardware Drivers (Platform-Specific) ]
-# --- General GPIO ---
+edge-tts  
+websocket # 讯飞stt用到
+requests  # siliconflow stt用到
+
+
+# 车轮电机, 舵机, OLED屏幕, LED灯, 温湿度传感器
 gpiozero; sys_platform == 'linux'
-pigpio
-lgpio; sys_platform == 'linux'
+pigpio; sys_platform == 'linux'
+lgpio; sys_platform == 'linux'  # LED灯需要
+# sudo systemctl start pigpiod
+# sudo systemctl enable pigpiod
 
-# RPi.GPIO; sys_platform == 'linux'
-# rpi-lgpio; sys_platform == 'linux'
-
-# --- OLED Display ---
+# --- OLED 显示 ---
 luma.oled; sys_platform == 'linux'
-luma.core; sys_platform == 'linux'
+pillow
 
-# --- Camera ---
+# --- 温湿度传感器 ---
+adafruit-circuitpython-dht
+
+# --- 摄像头 ---
 picamera2; sys_platform == 'linux'
 opencv-python
 flask
 
-# --- Car Control ---
+# --- 手柄事件监听 ---
 evdev; sys_platform == 'linux'
+
+# --- 音乐播放 ---
 pygame
 
 # --- 语音唤醒 ---
 openwakeword
 speexdsp-ns  # apt-get install libspeex-dev libspeexdsp-dev
-#pip install --upgrade "numpy<2"
 
 # --- 人脸跟踪 ---
 simple_pid
 mediapipe==0.10.9
-
-# --- 温湿度传感器 ---
-adafruit-circuitpython-dht

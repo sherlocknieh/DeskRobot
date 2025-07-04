@@ -15,6 +15,7 @@ class DeskRobot:
         self.event_bus = EventBus()                 # 事件总线
 
     def add_task(self, task: threading.Thread):     # 添加任务
+        logger.info(f"加载 {task.name}")
         self.tasklist.append(task)
 
     def run(self):
@@ -63,84 +64,88 @@ class DeskRobot:
             if task.is_alive():
                 logger.warning(f"线程 {task.name} 未正常停止")
 
+
 if __name__ == "__main__":
 
     robot = DeskRobot()
 
-    logger.info("加载 RGB 灯模块")
+    """RGB 灯模块
+       依赖的库: pip install gpiozero pigpio lgpio
+    """
     from modules.mod_led_control import LEDControl
     robot.add_task(LEDControl())
 
-    logger.info("加载温湿度模块")
-    from modules.mod_temperature import Temperature
-    robot.add_task(Temperature())
+    # """温湿度模块"""
+    # from modules.mod_temperature import Temperature
+    # robot.add_task(Temperature())
 
-    logger.info("加载小车控制模块")
-    from modules.mod_car_control import CarControl
-    robot.add_task(CarControl())
+    # """小车控制模块"""
+    # from modules.mod_car_control import CarControl
+    # robot.add_task(CarControl())
 
-    logger.info("加载手柄模块")
-    from modules.mod_game_pad import GamePad
-    robot.add_task(GamePad())
+    # """手柄模块"""
+    # from modules.mod_game_pad import GamePad
+    # robot.add_task(GamePad())
 
-    logger.info("加载音乐播放器模块")
-    logger.info("依赖的库: pip install pygame")
-    from modules.mod_music_player import MusicPlayerThread
-    robot.add_task(MusicPlayerThread())
+    # """音乐播放器模块"""
+    # logger.info("依赖的库: pip install pygame")
+    # from modules.mod_music_player import MusicPlayerThread
+    # robot.add_task(MusicPlayerThread())
 
-    logger.info("加载语音唤醒模块")
-    from modules.mod_voice_awake import AwakeThread
-    robot.add_task(AwakeThread())
+    # """语音唤醒模块
+    #    默认唤醒词为: "hey Jarvis"
+    # """
+    # from modules.mod_voice_awake import AwakeThread
+    # robot.add_task(AwakeThread())
 
-    logger.info("加载语音IO模块")
-    from modules.mod_voice_detect import VoiceThread
-    robot.add_task(VoiceThread())
+    # """语音输入监听模块"""
+    # from modules.mod_voice_detect import VoiceThread
+    # robot.add_task(VoiceThread())
 
-    logger.info("加载 STT 模块")
-    from modules.mod_voice_stt import STTThread
-    robot.add_task(STTThread(config=config))
+    # """STT:语音转文字模块"""
+    # from modules.mod_voice_stt import STTThread
+    # robot.add_task(STTThread(config=config))
 
-    logger.info("加载 TTS 模块")
-    from modules.mod_voice_tts import TTSThread
-    robot.add_task(TTSThread())
+    # """TTS:文字转语音模块"""
+    # from modules.mod_voice_tts import TTSThread
+    # robot.add_task(TTSThread())
 
-    logger.info("加载 OLED 模块")
-    logger.info("依赖: pip install luma.core luma.oled pillow")
-    from modules.mod_oled_image import OLEDThread
-    robot.add_task(OLEDThread())
+    # """OLED 基础模块
+    #    安装依赖: pip install luma.oled pillow
+    # """
+    # from modules.mod_oled_image import OLEDThread
+    # robot.add_task(OLEDThread())
 
-    logger.info("加载 OLED 表情模块")
-    logger.info("依赖: pip install pillow")
-    from modules.mod_oled_roboeyes import RoboeyesThread
-    robot.add_task(RoboeyesThread())
+    # """OLED 表情模块"""
+    # from modules.mod_oled_roboeyes import RoboeyesThread
+    # robot.add_task(RoboeyesThread())
 
-    logger.info("加载 OLED 文本模块")
-    logger.info("需安装中文字体: sudo apt install fonts-wqy-microhei")
-    from modules.mod_oled_text import TextDisplayThread
-    robot.add_task(TextDisplayThread())
+    # """OLED 文本模块
+    #    安装中文字体: sudo apt install fonts-wqy-microhei
+    # """
+    # from modules.mod_oled_text import TextDisplayThread
+    # robot.add_task(TextDisplayThread())
 
-    logger.info("加载 OLED 思考动画模块")
-    from modules.mod_oled_animation import ThinkingAnimationThread
-    robot.add_task(ThinkingAnimationThread())
+    # """OLED 动画模块"""
+    # from modules.mod_oled_animation import ThinkingAnimationThread
+    # robot.add_task(ThinkingAnimationThread())
 
-    logger.info("加载 AI Agent 模块")
-    logger.info("依赖: pip install langchain langchain-openai langgraph")
-    from modules.mod_ai_agent import AiThread
-    robot.add_task(
-        AiThread(
-            llm_base_url = config["llm_base_url"],
-            llm_api_key = config["llm_api_key"],
-            llm_model_name = config["llm_model_name"],
-        )
-    )
+    # """AI Agent 模块
+    #    依赖: pip install langchain langchain-openai langgraph
+    # """
+    # from modules.mod_ai_agent import AiThread
+    # robot.add_task(AiThread(
+    #     llm_base_url = config["siliconflow_base_url"],
+    #     llm_api_key = config["siliconflow_api_key"],
+    #     llm_model_name = config["llm_model_name"],
+    # ))
 
-    # logger.info("加载网页模块")
+    # """网络摄像头模块"""
     # from modules.mod_web_camera import WEBCamera
     # robot.add_task(WEBCamera())
 
-    # logger.info("加载人脸追踪模块")
+    # """人脸追踪模块"""
     # from modules.mod_face_track import FaceTrack
     # robot.add_task(FaceTrack())
-
 
     robot.run()
