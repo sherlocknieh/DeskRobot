@@ -22,15 +22,12 @@ root_logger.addHandler(console_logger)
 
 # 创建一个 RotatingFileHandler, 用于写入日志文件
 # 日志文件路径
-log_dir = "localfiles/logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-log_file_path = os.path.join(log_dir, "desk_robot.log")
+log_file_path = 'localfiles/desk_robot.log'
 
 file_handler = RotatingFileHandler(
     log_file_path,
-    maxBytes=5 * 1024 * 1024,   # 日志文件最大为 5MB
-    backupCount=3,              # 保留3个备份文件
+    maxBytes=10 * 1024,         # 日志文件最大为 10KB
+    backupCount=2,
     encoding="utf-8"
 )
 file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s")

@@ -30,7 +30,7 @@ def insert_blank_lines_by_gap(lines):
     return result
 
 
-log_file = 'localfiles/logs/desk_robot.log'
+log_file = 'localfiles/desk_robot.log'
 
 
 # 读取日志文件
