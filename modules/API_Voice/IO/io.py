@@ -2,7 +2,7 @@ import logging
 import wave
 import numpy as np
 import pyaudio
-logger = logging.getLogger("VoiceIOAPI")
+logger = logging.getLogger("VoiceIO")
 
 
 
@@ -34,7 +34,7 @@ class VoiceIO:
     """
 
     def __init__(
-        self, rate=16000, channels=1, format=pyaudio.paInt16, frames_per_buffer=1024
+        self, rate=16000, channels=1, format=pyaudio.paInt16, frames_per_buffer=512
     ):
         """
         初始化VoiceIO。
@@ -64,8 +64,19 @@ class VoiceIO:
     def _initialize_pyaudio(self):
         """初始化PyAudio实例。"""
         logger.info("正在初始化 PyAudio...")
-        self.p = pyaudio.PyAudio()
+        
+        # 新增错误抑制代码
+        original_stderr = os.dup(2)
+        with open(os.devnull, 'w') as null:
+            os.dup2(null.fileno(), 2)
+        try:
+            self.p = pyaudio.PyAudio()
+        finally:
+            os.dup2(original_stderr, 2)
+            os.close(original_stderr)
+        
         logger.info("PyAudio 初始化完成。")
+
 
     def _open_streams(self):
         """打开音频输入和输出流。"""
@@ -129,7 +140,7 @@ class VoiceIO:
         播放一个音频数据块。
         :param chunk: 要播放的音频数据 (bytes)
         """
-        self.volume = 10
+        self.volume = 5
         if self.output_stream:
             # 音量调整
             if self.volume != 1.0:
@@ -168,7 +179,7 @@ if __name__ == "__main__":
         print("\n准备录音... 请在麦克风前说话。录音将持续5秒。")
 
         frames = []
-        for _ in range(0, int(16000 / 1024 * 5)):
+        for _ in range(0, int(16000 / 512 * 5)):
             data = voice_io.record_chunk()
             frames.append(data)
 

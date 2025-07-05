@@ -35,7 +35,7 @@ speexdsp-ns
 openwakeword        # 包含 onnxruntime, requests
 
 # STT:语音转文字
-websocket           # 讯飞 stt 需要
+websocket-client           # 讯飞 stt 需要
 requests            # siliconflow stt 需要
 
 # TTS:文字转语音

@@ -1,6 +1,9 @@
+import logging
+logger = logging.getLogger("PiCamera")
+
 import sys
-print("正在导入系统库 libcamera")
 sys.path.insert(0, '/usr/lib/python3/dist-packages')
+logger.info("正在导入 Picamera2")
 from picamera2 import Picamera2
 sys.path.pop(0)
 
@@ -19,12 +22,20 @@ class PiCamera:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, resolution=(640, 480)):
+    def __init__(self):
         if not getattr(self, 'picam2', None):
             print("正在加载摄像头")
             self.picam2 = Picamera2()
             print("正在配置摄像头")
-            self.picam2.configure(self.picam2.create_video_configuration(main={"size": resolution}))
+            video_config = self.picam2.create_video_configuration(
+                buffer_count=3,
+                main={"size": (640, 480), 'format': 'XBGR8888'},
+            )
+            self.picam2.configure(video_config)
+            print("配置结果")
+            print(self.picam2.stream_configuration())
+            from pprint import pprint
+            pprint(self.picam2.camera_config)
             print("正在打开摄像头")
             self.picam2.start()
             print("摄像头已启动")

@@ -127,7 +127,7 @@ if __name__ == "__main__":
     # """语音输入模块
     #    依赖: pip install pyaudio torchaudio
     # """
-    # from modules.mod_voice_detect import VoiceThread
+    # from modules.mod_voice_io import VoiceThread
     # robot.add_task(VoiceThread())
 
     # """语音唤醒模块
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # robot.add_task(TTSThread())
 
     # """STT:语音转文字模块
-    #    依赖: pip install websocket requests
+    #    依赖: pip install websocket-client requests
     #    服务依赖: siliconflow 或 iflytek
     # """
     # from modules.mod_voice_stt import STTThread

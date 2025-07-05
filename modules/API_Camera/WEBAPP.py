@@ -19,7 +19,7 @@ class WEBAPP():
 
 
     def run(self):
-        self.app.run(host='0.0.0.0')
+        self.app.run(host='0.0.0.0', port=5000, threaded=True)
 
 
     def gen_frame(self):

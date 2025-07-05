@@ -31,10 +31,10 @@ def insert_blank_lines_by_gap(lines):
 
 
 log_file = 'localfiles/logs/desk_robot.log'
-output_file = 'localfiles/logs/desk_robot_processed.log'
 
 
 # 读取日志文件
+print("正在分析日志:", log_file)
 with open(log_file, 'r', encoding='utf-8') as f:
     lines = f.readlines()
 
@@ -44,3 +44,5 @@ new_lines = insert_blank_lines_by_gap(lines)
 # 保存新日志
 with open(log_file, 'w', encoding='utf-8') as f:
     f.writelines(new_lines)
+
+print('分析结果已保存:', log_file)

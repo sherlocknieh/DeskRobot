@@ -1,12 +1,12 @@
 import logging
 from typing import Dict, Optional
-import numpy as np
-import torch
 import os
-
 
 logger = logging.getLogger("SileroVAD")
 
+import numpy as np
+logger.info("正在导入 torch...")
+import torch
 
 class SileroVAD:
     """
@@ -16,10 +16,10 @@ class SileroVAD:
     来处理音频块，并使用 VADIterator 检测语音的开始和结束。
     """
 
-    def __init__(self, threshold: float = 0.9, sample_rate: int = 16000):
+    def __init__(self, threshold: float = 0.5, sample_rate: int = 16000):
         if sample_rate not in [8000, 16000]:
             raise ValueError("Silero VAD anly supports 8000 or 16000 sample rate.")
-
+        
         local_model_path = os.path.expanduser("~/.cache/torch/hub/snakers4_silero-vad_master")
         use_local = os.path.exists(local_model_path)
         repo_or_dir = local_model_path if use_local else "snakers4/silero-vad"
@@ -29,11 +29,11 @@ class SileroVAD:
             "force_reload": False
         }
         if use_local:
-            print(f"Silero VAD 模型已从本地加载: {local_model_path}")
+            logger.info(f"正在从本地加载 Silero VAD 模型: {local_model_path}")
             load_kwargs["source"] = "local"
         else:
-            print(f"Silero VAD 模型正在从下载...")
-            print(f"如果下载速度过慢，可以浏览器手动下载,手动解压并保存为: {local_model_path}")
+            logger.info(f"正在从源头下载加载 Silero VAD 模型...")
+            logger.info(f"如果下载速度过慢，可以浏览器手动下载,手动解压并保存为: {local_model_path}")
         try:
             model, utils = torch.hub.load(**load_kwargs)  # type: ignore
             (get_speech_timestamps,

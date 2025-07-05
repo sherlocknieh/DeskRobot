@@ -33,13 +33,15 @@ import tempfile
 import threading
 import time
 from queue import Empty, Queue
+logger = logging.getLogger("TTS模块")
 
-from pydub.utils import get_player_name
 
-from .API_Voice.TTS.edge_tts1 import EdgeTTS
+
 from .EventBus import EventBus
+from pydub.utils import get_player_name
+logger.info("正在导入 EdgeTTS ...")
+from .API_Voice.TTS.edge_tts1 import EdgeTTS
 
-logger = logging.getLogger("TTS 模块")
 
 
 class TTSThread(threading.Thread):
@@ -60,7 +62,7 @@ class TTSThread(threading.Thread):
     """
 
     def __init__(self):
-        super().__init__(daemon=True, name="TTS 模块")
+        super().__init__(daemon=True, name="TTS模块")
         self.event_bus = EventBus()
         self.event_queue = Queue()
         self.stop_event = threading.Event()

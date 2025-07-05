@@ -14,17 +14,23 @@ AI 对话模块的 API 接口
 
 这是一个可控的、局部的架构妥协。
 """
+from modules.EventBus import EventBus
 
 import logging
 import re
 
+logger = logging.getLogger("AI_API")
+
+logger.info("正在导入 langchain HumanMessage...")
 from langchain_core.messages import HumanMessage
+logger.info("正在导入 langchain StructuredTool...")
 from langchain_core.tools import StructuredTool
+logger.info("正在导入 langchain ChatOpenAI...")
 from langchain_openai import ChatOpenAI
+logger.info("正在导入 langgraph...")
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 
-from modules.EventBus import EventBus
 
 EMOJI_PATTERN = re.compile(
     "["
@@ -84,12 +90,11 @@ class AiAPI:
         llm_api_key = None,
         llm_model_name = None,
     ):
-        self.logger = logging.getLogger("AI_API")
-        self.logger.info("正在初始化 AiAPI...")
+        logger.info("正在初始化 AiAPI...")
         self.event_bus = EventBus()  # 使用传入的 event_bus 实例
         self.queued_actions = []  # 新增：用于暂存待执行的动作
         self.__initialize_agent(llm_base_url, llm_api_key, llm_model_name)
-        self.logger.info("AiAPI 初始化完成。")
+        logger.info("AiAPI 初始化完成。")
 
     def __initialize_agent(
         self,
@@ -98,7 +103,7 @@ class AiAPI:
         llm_model_name = None,
     ):
         """设置并初始化代理"""
-        self.logger.info("正在设置 LangChain Agent...")
+        logger.info("正在设置 LangChain Agent...")
         llm_base_url = llm_base_url
         llm_api_key = llm_api_key
         llm_model_name = llm_model_name
@@ -107,10 +112,10 @@ class AiAPI:
         }
 
         if not all([llm_base_url, llm_api_key, llm_model_name]):
-            self.logger.critical("一个或多个LLM相关的参数缺失。")
+            logger.critical("一个或多个LLM相关的参数缺失。")
             raise ValueError("LLM 配置参数缺失。请检查配置。")
 
-        self.logger.info(f"LLM 配置: URL='{llm_base_url}', Model='{llm_model_name}'")
+        logger.info(f"LLM 配置: URL='{llm_base_url}', Model='{llm_model_name}'")
 
         model = ChatOpenAI(
             base_url=llm_base_url,
@@ -128,14 +133,14 @@ class AiAPI:
             prompt=SYSTEM_PROMPT,
             debug=False,
         )
-        self.logger.info("LangChain Agent 设置成功。")
+        logger.info("LangChain Agent 设置成功。")
 
     def _tool_set_expression(self, expression: str) -> str:
         """
         【工具逻辑】设置机器人(也就是你自己)的表情。
         可用表情: 'happy', 'angry', 'tired', 'default'
         """
-        self.logger.info(
+        logger.info(
             f"工具[set_robot_expression]被调用，参数: expression='{expression}'"
         )
         # 不再直接发布事件，而是将动作加入队列
@@ -151,7 +156,7 @@ class AiAPI:
         【工具逻辑】触发一个快速的、一次性的表情。
         可用表情: 'laugh', 'confused'
         """
-        self.logger.info(
+        logger.info(
             f"工具[trigger_quick_expression]被调用，参数: expression='{expression}'"
         )
         # 不再直接发布事件，而是将动作加入队列
@@ -166,16 +171,16 @@ class AiAPI:
         """
         【工具逻辑】获取一个秘密数字，这只是一个示例工具。
         """
-        self.logger.info(f"工具[get_secret_number]被调用，参数: a={a}, b={b}")
+        logger.info(f"工具[get_secret_number]被调用，参数: a={a}, b={b}")
         result = a + b
-        self.logger.info(f"计算结果: {result}")
+        logger.info(f"计算结果: {result}")
         return result
 
     def _tool_music_controller_tool(self, action: str) -> str:
         """
         【工具逻辑】控制音乐播放器的播放、暂停、上一曲,下一曲等操作。
         """
-        self.logger.info(f"工具[music_controller]被调用，参数: action='{action}'")
+        logger.info(f"工具[music_controller]被调用，参数: action='{action}'")
         # 不再直接发布事件，而是将动作加入队列
         if action == "play":
             self.event_bus.publish("PLAY_MUSIC")
@@ -244,7 +249,7 @@ class AiAPI:
                  trigger_expr_tool, 
                  get_secret_number_tool,
                  music_controller_tool]
-        self.logger.info(f"成功加载 {len(tools)} 个工具。")
+        logger.info(f"成功加载 {len(tools)} 个工具。")
         return tools
 
     def get_response(self, query: str, thread_id: str = "1"):
@@ -259,7 +264,7 @@ class AiAPI:
             tuple[str, list]: 一个包含(纯文本回复, 待执行动作列表)的元组
         """
         if not self.agent_executor:
-            self.logger.error("Agent Executor 未初始化。")
+            logger.error("Agent Executor 未初始化。")
             return "抱歉，我的大脑好像出了一点问题。", []
 
         # 在每次调用开始时，清空上一轮的动作队列
@@ -267,20 +272,20 @@ class AiAPI:
 
         try:
             config = {"configurable": {"thread_id": thread_id}}
-            self.logger.debug(f"向LLM发送请求: '{query}' (thread_id: {thread_id})")
+            logger.debug(f"向LLM发送请求: '{query}' (thread_id: {thread_id})")
 
             response = self.agent_executor.invoke(
                 {"messages": [HumanMessage(content=query)]}, config
             )
 
             ai_response_text = response["messages"][-1].content
-            self.logger.debug(f"LLM Agent返回原始回复: '{ai_response_text}'")
+            logger.debug(f"LLM Agent返回原始回复: '{ai_response_text}'")
 
             cleaned_text = clean_text_for_tts(ai_response_text)
-            self.logger.info(f"清洗后用于TTS的文本: '{cleaned_text}'")
+            logger.info(f"清洗后用于TTS的文本: '{cleaned_text}'")
             # 返回清理后的文本和待执行的动作
             return cleaned_text, self.queued_actions
 
         except Exception:
-            self.logger.error("调用LLM时发生错误", exc_info=True)
+            logger.error("调用LLM时发生错误", exc_info=True)
             return "抱歉，我在思考的时候遇到了一点麻烦。", []

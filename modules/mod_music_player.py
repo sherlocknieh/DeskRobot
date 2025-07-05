@@ -28,12 +28,13 @@ import threading
 import time
 from queue import Queue
 from urllib.request import urlretrieve
+logger = logging.getLogger("音乐播放器")
 
 # 第三方库
+logger.info("正在导入 pygame...")
 import pygame
 
 # 全局变量
-logger = logging.getLogger("音乐播放器")
 music_files = [os.path.join("localfiles/songs", f) for f in os.listdir("localfiles/songs")]
 
 

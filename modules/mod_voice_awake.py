@@ -3,11 +3,6 @@
 实现语音唤醒词检测和打断检测功能
 """
 
-import numpy as np
-from openwakeword.model import Model
-from openwakeword.utils import download_models
-
-
 from modules.EventBus import EventBus
 
 
@@ -15,6 +10,14 @@ import logging
 import threading
 from queue import Queue
 logger = logging.getLogger("语音唤醒")
+
+
+import numpy as np
+logger.info("正在导入 openWakeWord Model...")
+from openwakeword.model import Model
+from openwakeword.utils import download_models
+
+
 
 
 class AwakeThread(threading.Thread):
@@ -37,9 +40,9 @@ class AwakeThread(threading.Thread):
         self.voice_io = None  # 复用现有的VoiceIO实例
         
         # 事件订阅
-        self.event_bus.subscribe("TTS_STARTED", self.event_queue)
-        self.event_bus.subscribe("TTS_FINISHED", self.event_queue)
-        self.event_bus.subscribe("EXIT", self.event_queue)
+        self.event_bus.subscribe("TTS_STARTED", self.event_queue, self.name)
+        self.event_bus.subscribe("TTS_FINISHED", self.event_queue, self.name)
+        self.event_bus.subscribe("EXIT", self.event_queue, self.name)
         
         logger.info("唤醒模块初始化完成")
 
@@ -59,7 +62,7 @@ class AwakeThread(threading.Thread):
             logger.info("模型加载完成")
             
             # 复用现有的音频输入设备
-            from modules.mod_voice_detect import VoiceIO
+            from modules.mod_voice_io import VoiceIO
             self.voice_io = VoiceIO(
                 rate=16000,
                 channels=1,
