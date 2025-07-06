@@ -4,6 +4,7 @@
 """
 
 from modules.EventBus import EventBus
+from modules.mod_voice_io import VoiceIO
 
 
 import logging
@@ -24,7 +25,7 @@ class AwakeThread(threading.Thread):
     """
     唤醒词检测线程，集成openWakeWord实现实时唤醒检测
     """
-    def __init__(self, wakeword_models=["hey jarvis"], threshold=0.5):
+    def __init__(self, wakeword_models=["hey jarvis"], threshold=0.6):
         super().__init__(daemon=True, name="语音唤醒")
         self.event_bus = EventBus()
         self.stop_event = threading.Event()
@@ -62,7 +63,6 @@ class AwakeThread(threading.Thread):
             logger.info("模型加载完成")
             
             # 复用现有的音频输入设备
-            from modules.mod_voice_io import VoiceIO
             self.voice_io = VoiceIO(
                 rate=16000,
                 channels=1,
@@ -79,12 +79,12 @@ class AwakeThread(threading.Thread):
         """主检测循环"""
         if not self._setup():
             return
-
+        
+        threading.Thread(target=self._event_loop, daemon=True, name="事件处理").start()
+        
         logger.info("开始监听唤醒词...")
+        last_score = 0.0
         while not self.stop_event.is_set():
-            # 处理系统事件
-            self._handle_events()
-            
             # 获取音频数据
             audio_data = self.voice_io.record_chunk()
             if not audio_data:
@@ -94,32 +94,18 @@ class AwakeThread(threading.Thread):
             frame = np.frombuffer(audio_data, dtype=np.int16)
             
             # 获取预测结果
-            predictions = self.oww_model.predict(frame)
+            prediction = self.oww_model.predict(frame)
+            # print(prediction) {'hey_jarvis': 0.0}
             
-            # 检测唤醒词
-            for model_name, score in predictions.items():
-                if score >= self.threshold:
-                    self._handle_activation(model_name, score)
-                    
-    def _handle_activation(self, model_name, score):
-        """处理唤醒事件"""
-        logger.info(f"检测到唤醒词: {model_name} (得分: {score:.2f})")
-        score = float(score)  # 转为原生float，便于json序列化
-        if self.is_speaking_tts:
-            # 打断处理
-            self.event_bus.publish("INTERRUPTION_DETECTED")
-            logger.info("检测到用户打断")
-        else:
-            # 正常唤醒
-            self.event_bus.publish("WAKE_WORD_DETECTED", {
-                "model": model_name,
-                "score": score
-            })
-            logger.info("发布唤醒事件")
+            for name, score in prediction.items():
+                if last_score < self.threshold and score >= self.threshold:
+                    logger.info(f"检测到唤醒词: {name} (得分: {score:.2f})")
+                    self.event_bus.publish("WAKE_WORD_DETECTED", self.name)
+                last_score = score
 
-    def _handle_events(self):
+    def _event_loop(self):
         """处理事件总线消息"""
-        while not self.event_queue.empty():
+        while True:
             event = self.event_queue.get()
             if event["type"] == "TTS_STARTED":
                 self.is_speaking_tts = True
@@ -130,6 +116,7 @@ class AwakeThread(threading.Thread):
             elif event["type"] == "EXIT":
                 self.stop_event.set()
                 logger.info("收到退出信号")
+                break
 
     def stop(self):
         """安全停止线程"""

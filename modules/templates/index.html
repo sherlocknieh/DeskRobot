@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>网络摄像头</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.0/nipplejs.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>网络摄像头</h1>
+    <p>当前在线客户端：<span id="client_count">0</span></p>
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="faceTrackingSwitch">
+        <label class="form-check-label" for="faceTrackingSwitch">人脸跟踪</label>
+    </div> 
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="cameraSwitch" checked >
+        <label class="form-check-label" for="cameraSwitch">相机开关</label>
+    </div>
+    </div>
+    <img id="video" style="aspect-ratio: 4/3; max-width: 640px;">
+    <br>
+    <div id="joystick" style="aspect-ratio: 4/3; max-width: 640px; background-color: aquamarine;">
+        <div id="joystick-values" style="font-size: min(4vw, 16px);">X: 0.00, Y: 0.00</div>
+    </div>
+
+    <script>
+        const socket = io();  // 建立 Socket 连接
+
+        socket.on('video_frame', (frame) => {
+            document.getElementById('video').src = 'data:image/jpeg;base64,' + frame;
+        });
+        socket.on('client_count', (count) => {
+            document.getElementById('client_count').textContent = count;
+        });
+
+        document.getElementById('faceTrackingSwitch').addEventListener('change', function () {
+            socket.emit('face_tracking_toggle', { status: this.checked });
+        });
+        document.getElementById('cameraSwitch').addEventListener('change', function () {
+            socket.emit('camera_toggle', { status: this.checked });
+        });
+
+        // 初始化虚拟摇杆
+        window.addEventListener('load', () => {
+            const joystick = nipplejs.create({
+                zone: document.getElementById('joystick'),
+                mode: 'dynamic',
+                color: 'blue', // 保留颜色设置
+                size: 200, // 设置底盘大小
+                threshold: 0.1 // 灵敏度调整
+            });
+
+            const valueDisplay = document.getElementById('joystick-values');
+            let isMoving = false;
+            let touchStartTime = 0;
+            const tapThreshold = 200; // 点按阈值（毫秒）
+
+            joystick.on('start', (evt, data) => {
+                isMoving = false;
+                touchStartTime = Date.now();
+                // 点按时发送 x:0, y:0
+                socket.emit('joystick', { x: 0, y: 0 });
+                valueDisplay.textContent = 'X: 0.00, Y: 0.00';
+            });
+
+            joystick.on('move', (evt, data) => {
+                if (data.direction) {
+                    isMoving = true;
+                    // 发送滑动时的相对坐标
+                    const x = data.vector.x.toFixed(2);
+                    const y = data.vector.y.toFixed(2);
+                    valueDisplay.textContent = `X: ${x}, Y: ${y}`;
+                    socket.emit('joystick', { x: parseFloat(x), y: parseFloat(y) });
+                }
+            });
+
+            joystick.on('end', () => {
+                const touchDuration = Date.now() - touchStartTime;
+                // 无论点按还是滑动结束，都发送 x:0, y:0 并重置
+                socket.emit('joystick', { x: 0, y: 0 });
+                valueDisplay.textContent = 'X: 0.00, Y: 0.00';
+                isMoving = false;
+            });
+        });
+    </script>
+</body>
+
+</html>

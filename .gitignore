@@ -1,6 +1,6 @@
 __pycache__/
 .env
-*.log
+*.log*
 downloads/
 .python-version
 pyproject.toml

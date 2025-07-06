@@ -46,7 +46,7 @@ if __name__ != "__main__":
     from .API_Voice.VAD.vad import SileroVAD
     from .EventBus import EventBus
 
-logger = logging.getLogger("语音监听")
+logger = logging.getLogger("语音IO模块")
 
 
 class VoiceThread(threading.Thread):
@@ -89,12 +89,11 @@ class VoiceThread(threading.Thread):
         :param vad_threshold: VAD 灵敏度阈值 (0-1)。
         :param frames_per_buffer: 每个音频块的帧数。
         """
-        super().__init__(daemon=True, name="语音监听")
+        super().__init__(daemon=True, name="语音IO模块")
         self.event_bus = EventBus()
         self.stop_event = threading.Event()
         self.event_queue = Queue()
         self.is_wakened = False
-        logger.info("VoiceThread 初始化为休眠状态。")
 
         self.sample_rate = sample_rate
         self.channels = channels
@@ -139,10 +138,11 @@ class VoiceThread(threading.Thread):
             logger.error("由于设置失败，VoiceThread 将不会运行。")
             return
 
-        logger.info("VoiceThread 已启动，开始监听麦克风...")
+        logger.info("VoiceThread 启动事件监听...")
+        threading.Thread(target=self._event_loop, daemon=True, name="事件处理线程").start()
 
+        logger.info("VoiceThread 启动语音监听...")
         while not self.stop_event.is_set():
-            self._handle_events()  # 处理来自总线的事件
 
             if self.is_wakened:  # 如果目前处于唤醒状态
                 chunk = self.voice_io.record_chunk() # type: ignore
@@ -185,9 +185,9 @@ class VoiceThread(threading.Thread):
         logger.info("VoiceThread 循环已结束。")
         self._cleanup()
 
-    def _handle_events(self):
+    def _event_loop(self):
         """处理来自事件总线的事件，用于更新内部状态。"""
-        while not self.event_queue.empty():
+        while True:
             event = self.event_queue.get()
             if event["type"] == "EXIT":
                 logger.info("收到 EXIT 事件，准备停止线程。")

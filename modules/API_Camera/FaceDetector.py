@@ -41,37 +41,21 @@ class FaceDetector:
     def __init__(self, confidence=0.5):
         self._face_detector = mp.solutions.face_detection.FaceDetection( # type: ignore
             min_detection_confidence=confidence, # 置信度阈值
-            model_selection=0                    # 0:短距离 1:长距离
+            model_selection=1                    # 0:短距离 1:长距离
         )
 
     def detect(self, frame):
-        x, y, w, h = 320, 240, 0, 0
-        results = self._face_detector.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        if results.detections:
-            for detection in results.detections:
+        rect = None
+        result = self._face_detector.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        if result.detections:
+            for face in result.detections:
                 #绘制人脸边界框
-                bbox = detection.location_data.relative_bounding_box
+                bbox = face.location_data.relative_bounding_box
                 ih, iw, _ = frame.shape
                 x, y = int(bbox.xmin * iw), int(bbox.ymin * ih)
                 w, h = int(bbox.width * iw), int(bbox.height * ih)
                 x, y, w, h = kalman_tracker.update(x, y, w, h)
-        return (x, y, w, h)
+                rect = (x, y, w, h)
+                frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        return frame, rect
 
-
-if __name__ == '__main__':
-    import threading
-    from time import sleep
-    from PiCamera import PiCamera
-    from WEBAPP import WEBAPP
-    cam = PiCamera()
-    web = WEBAPP()
-    app = FaceDetector()
-    threading.Thread(target=web.run).start()
-    while True:
-        frame = cam.get_frame()
-        rect = app.detect(frame)
-        if rect is not None:
-            x, y, w, h = rect
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        web.last_frame = frame
-        sleep(0.02)

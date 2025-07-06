@@ -89,9 +89,9 @@ class EventBus:
         frequent_event_types = [
             "UPDATE_LAYER",             # OLED屏幕刷新事件,非常频繁
             "VOICE_COMMAND_DETECTED",   # VAD检测到语音结束,data较大,不打印
-            "NEW_FRAME",
             "CAR_STEER",
             "HEAD_ANGLE",
+            "FACE_RECT",
         ]
         
         # 丢弃未被订阅的事件, 并打印日志

@@ -29,13 +29,12 @@ class PiCamera:
             print("正在配置摄像头")
             video_config = self.picam2.create_video_configuration(
                 buffer_count=3,
-                main={"size": (640, 480), 'format': 'XBGR8888'},
+                main={"size": (640, 480), 'format': 'YUYV'},
             )
             self.picam2.configure(video_config)
-            print("配置结果")
-            print(self.picam2.stream_configuration())
-            from pprint import pprint
-            pprint(self.picam2.camera_config)
+            # print("配置详情")
+            # from pprint import pprint
+            # pprint(self.picam2.camera_config)
             print("正在打开摄像头")
             self.picam2.start()
             print("摄像头已启动")
@@ -43,7 +42,8 @@ class PiCamera:
  
     def get_frame(self):
         frame = self.picam2.capture_array()
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) # 转换为 cv2 使用的 BGR 格式
+        #frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) # 转换为 cv2 使用的 BGR 格式
+        frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_YUYV) # 转换为 cv2 使用的 BGR 格式
         return frame
 
     def start(self):
@@ -57,11 +57,3 @@ class PiCamera:
             self.picam2.stop()
             print("摄像头已关闭")
             self._running = False
-
-
-
-if __name__ == '__main__':
-    from WEBAPP import WEBAPP
-    cam = PiCamera()
-    web = WEBAPP(cam)
-    web.run()

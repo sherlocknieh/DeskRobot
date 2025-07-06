@@ -26,7 +26,7 @@ log_file_path = 'localfiles/desk_robot.log'
 
 file_handler = RotatingFileHandler(
     log_file_path,
-    maxBytes=10 * 1024,         # 日志文件最大为 10KB
+    maxBytes=1024 * 1024,         # 日志文件最大为 1MB
     backupCount=2,
     encoding="utf-8"
 )

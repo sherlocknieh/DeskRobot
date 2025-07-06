@@ -29,10 +29,10 @@ class SileroVAD:
             "force_reload": False
         }
         if use_local:
-            logger.info(f"正在从本地加载 Silero VAD 模型: {local_model_path}")
+            logger.info(f"正在从本地加载 Silero VAD 模型")
             load_kwargs["source"] = "local"
         else:
-            logger.info(f"正在从源头下载加载 Silero VAD 模型...")
+            logger.info(f"正在在线下载加载 Silero VAD 模型...")
             logger.info(f"如果下载速度过慢，可以浏览器手动下载,手动解压并保存为: {local_model_path}")
         try:
             model, utils = torch.hub.load(**load_kwargs)  # type: ignore
