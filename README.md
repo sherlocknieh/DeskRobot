@@ -116,3 +116,11 @@ TB6612FNG PWMA  | GPIO 19  | GPIO 16  | 空闲
 
 
 树莓派执行 pinout 命令查看引脚排列; 或者访问 https://pinout.xyz/ 查看详细信息;
+
+
+
+## TODO
+
+- WEBCamera 模块的退出机制
+- 多线程延迟优化
+- 语音识别模块导入使用了VoiceIO模块, 使该模块重复运行
