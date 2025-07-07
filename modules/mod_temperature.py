@@ -55,9 +55,9 @@ class Temperature(threading.Thread):
                     "SUB_TEXT_STATIC_DISPLAY",
                     {
                         "text": f"温度: {self.temperature}",
-                        "font_size": 12,
+                        "font_size": 16,
                         "position": (0, 0),
-                        "duration" : 10
+                        "duration" : 15
                     },
                     self.name
                 )
@@ -65,9 +65,9 @@ class Temperature(threading.Thread):
                     "SUB_TEXT_STATIC_DISPLAY",
                     {
                         "text": f"湿度: {self.humidity}%",
-                        "font_size": 12,
-                        "position": (0, 12),
-                        "duration" : 10
+                        "font_size": 16,
+                        "position": (0, 16),
+                        "duration" : 15
                     },
                     self.name
                 )

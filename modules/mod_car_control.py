@@ -34,7 +34,7 @@ class CarControl(threading.Thread):
 
 
     def run(self):
-
+        self.rgb.on()
         x,y,L,R = 0,0,0,0
         while not self._stop_event.is_set():
             event = self.event_queue.get()
