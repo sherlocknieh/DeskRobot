@@ -1,19 +1,29 @@
 
 # 车轮, 舵机, LED灯
-gpiozero; sys_platform == 'linux'
-pigpio; sys_platform == 'linux'
-lgpio; sys_platform == 'linux'
-
+gpiozero
+pigpio
+lgpio
 
 # [手动执行] systemctl enable --now pigpiod      # 启动 pigpiod 服务
+
+# 摄像头
+opencv-python
+picamera2
+flask
+flask_socketio
+
+# 人脸跟踪
+mediapipe==0.10.9
+simple_pid
+numpy<2
 
 
 # OLED屏幕
 pillow
-luma.oled; sys_platform == 'linux'   # 包含 luma.core, RPi.GPIO
+luma.oled   # 包含 luma.core, RPi.GPIO
 
 # 手柄
-evdev; sys_platform == 'linux'
+evdev
 
 # 音乐播放器
 pygame
@@ -30,7 +40,9 @@ pyaudio
 torchaudio          # 包含 torch
 
 # 语音唤醒
+
 # [手动执行] sudo apt install libspeex-dev libspeexdsp-dev
+
 speexdsp-ns
 openwakeword        # 包含 onnxruntime, requests
 
@@ -46,16 +58,4 @@ edge-tts
 # AI相关
 langchain-openai    # 包含 langchain-core requests
 langgraph
-
-
-# 摄像头
-picamera2; sys_platform == 'linux'
-opencv-python
-flask
-
-
-# 人脸跟踪
-mediapipe==0.10.9
-simple_pid
-numpy<2
 

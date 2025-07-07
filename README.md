@@ -74,8 +74,8 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 - RGB三色灯模块
 
 自费购买:
-商品名 | 实付 |  购买链接  |  店家
-:---              | :---   | :---    | :---
+商品名 | 实付 | 购买链接 | 店家
+:---   | :--- | :---     | :---
 0.96寸OLED显示屏 | ¥5.81| https://detail.tmall.com/item.htm?id=42044259331 | telesky旗舰店
 TB6612FNG电机驱动 | ¥5.95 | https://item.taobao.com/item.htm?id=810403532014 | 树莓派零售商
 录音麦克风小话筒 | ¥7.65 | https://item.taobao.com/item.htm?id=627272507876 | 树莓派零售商

@@ -134,7 +134,7 @@ class FaceTrack(threading.Thread):
                 logger.info("关闭人脸追踪")
             elif event['type'] == "FACE_RECT":       # 接收到"FACE_RECT"消息
                 self.rect = event['data']
-        print(f"{self.name} 线程已停止")
+        logger.info(f"{self.name} 线程已停止")
 
     def stop(self):
         self.car.speed(0, 0)

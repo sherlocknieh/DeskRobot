@@ -20,6 +20,9 @@ import time
 import threading
 import queue
 import time
+import logging
+
+logger = logging.getLogger("温湿度模块")
 
 
 class Temperature(threading.Thread):
@@ -43,7 +46,7 @@ class Temperature(threading.Thread):
                 break
             elif event['type'] == "GET_TEMPERATURE":
                 self.event_bus.publish("TEMPERATURE", {"temperature": self.temperature, "humidity": self.humidity})
-        print("温湿度模块已退出")
+        logger.info(f"{self.name}已退出")
 
     def data_updater(self):
         while True:
@@ -79,7 +82,7 @@ class Temperature(threading.Thread):
                     self.name
                 )
             except:
-                print("读取DHT11数据失败")
+                logger.info("读取DHT11数据失败")
                 continue
             time.sleep(60)
 
