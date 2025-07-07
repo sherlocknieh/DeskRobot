@@ -58,8 +58,8 @@ class Car:
         self.B.speed(R)
 
     def steer(self, x, y):
-        L = (y + x/(1+abs(2*y))) / 1.4
-        R = (y - x/(1+abs(y))) / 1.4
+        L = (y + x/(1+abs(5*y))) / 1.4
+        R = (y - x/(1+abs(5*y))) / 1.4
         self.speed(L, R)
 
     def pause(self):

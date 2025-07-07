@@ -1,14 +1,16 @@
+
+
+if __name__ != '__main__':
+    from .API_Camera.PiCamera import PiCamera
+    from .API_Camera.FaceDetector import FaceDetector
+    from .EventBus import EventBus
+
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 import cv2
 import base64
 import threading
 import numpy as np
-
-if __name__ != '__main__':
-    from .API_Camera.PiCamera import PiCamera
-    from .API_Camera.FaceDetector import FaceDetector
-    from .EventBus import EventBus
 
 class WEBCamera(threading.Thread):
     def __init__(self):
@@ -98,14 +100,14 @@ class WEBCamera(threading.Thread):
 
 
     def run(self, host='0.0.0.0', port=5000):
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-        s.close()
-        print(f"服务已启动: ")
-        print(f"\t访问地址: http://127.0.0.1:{port}")
-        print(f"\t访问地址: http://{ip}:{port}\n")
+        # import socket
+        # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # s.connect(('8.8.8.8', 80))
+        # ip = s.getsockname()[0]
+        # s.close()
+        # print(f"服务已启动: ")
+        # print(f"\t访问地址: http://127.0.0.1:{port}")
+        # print(f"\t访问地址: http://{ip}:{port}\n")
         self.socketio.run(self.app, host=host, port=port)
 
 

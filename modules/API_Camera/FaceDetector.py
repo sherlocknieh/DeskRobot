@@ -54,7 +54,7 @@ class FaceDetector:
                 ih, iw, _ = frame.shape
                 x, y = int(bbox.xmin * iw), int(bbox.ymin * ih)
                 w, h = int(bbox.width * iw), int(bbox.height * ih)
-                x, y, w, h = kalman_tracker.update(x, y, w, h)
+                #x, y, w, h = kalman_tracker.update(x, y, w, h)
                 rect = (x, y, w, h)
                 frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         return frame, rect

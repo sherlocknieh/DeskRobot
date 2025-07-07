@@ -1,26 +1,19 @@
-
 # 车轮, 舵机, LED灯
 gpiozero
 pigpio
 lgpio
 
+
 # [手动执行] systemctl enable --now pigpiod      # 启动 pigpiod 服务
-
-# 摄像头
-opencv-python
-picamera2
-flask
-flask_socketio
-
-# 人脸跟踪
-mediapipe==0.10.9
-simple_pid
-numpy<2
 
 
 # OLED屏幕
 pillow
-luma.oled   # 包含 luma.core, RPi.GPIO
+luma.oled   # 包含 RPi.GPIO
+
+# 温湿度传感器
+RPi.GPIO
+adafruit-circuitpython-dht
 
 # 手柄
 evdev
@@ -28,34 +21,40 @@ evdev
 # 音乐播放器
 pygame
 
-# 温湿度传感器
-RPi.GPIO
-adafruit-circuitpython-dht
+
+
+# 人脸跟踪
+mediapipe==0.10.9   # 包含 opencv-contrib-python, numpy<2
+simple_pid
+
+# 摄像头
+opencv-contrib-python
+picamera2
+flask
+flask_socketio
+
 
 
 # 语音相关
 
-# 语音输入输出
-pyaudio
-torchaudio          # 包含 torch
-
-# 语音唤醒
-
-# [手动执行] sudo apt install libspeex-dev libspeexdsp-dev
-
-speexdsp-ns
-openwakeword        # 包含 onnxruntime, requests
-
-# STT:语音转文字
+    # STT:语音转文字
 websocket-client           # 讯飞 stt 需要
 requests            # siliconflow stt 需要
 
-# TTS:文字转语音
+    # TTS:文字转语音
 pydub
 edge-tts
 
+    # 语音输入输出
+pyaudio
+torchaudio          # 包含 torch
+
+    # 语音唤醒
+# [手动执行] sudo apt install libspeex-dev libspeexdsp-dev
+speexdsp-ns
+openwakeword        # 包含 onnxruntime, requests
+
 
 # AI相关
-langchain-openai    # 包含 langchain-core requests
+langchain-openai
 langgraph
-

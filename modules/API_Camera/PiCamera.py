@@ -3,7 +3,7 @@ logger = logging.getLogger("PiCamera")
 
 import sys
 sys.path.insert(0, '/usr/lib/python3/dist-packages')
-logger.info("正在导入 Picamera2")
+logger.info("正在导入 Picamera2...")
 from picamera2 import Picamera2
 sys.path.pop(0)
 

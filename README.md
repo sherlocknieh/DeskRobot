@@ -23,22 +23,23 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 
 克隆代码到树莓派, 打开项目文件夹, 打开 DeskRobot.py, 点击右上角运行;
 
-    本项目高度模块化;
-
-    初始时所有模块已关闭, 没有多余的功能, 也不依赖任何第三方库, 可直接运行;
+本项目高度模块化, 初始时所有模块已关闭, 没有多余的功能, 不依赖任何第三方库, 可直接运行;
 
 二. 加载各个模块
 
-编辑 DeskRobot.py 底部区域; 选中相关代码块, 使用 "CTRL+/" 快捷键取消注释以启用;
+编辑 DeskRobot.py 底部区域; 选中相关代码块, 使用 "CTRL+/" 快捷键取消注释以启用; 
+
+模块附近的文档已标明该模块的依赖, 按说明安装即可;
     
-    模块附近的文档已标明该模块的依赖, 按说明安装即可;
-    
-    如需一次安装所有依赖, 可以执行:
-        pip install -r requirements.txt
-        注意: requirements.txt 里标注 [手动执行] 的地方是系统依赖, 需手动安装。
+如需一次安装所有依赖, 需要按顺序执行三条命令:
+
+- sudo apt install libspeex-dev libspeexdsp-dev
+- pip install -r requirements.txt
+- systemctl enable --now pigpiod
+
         
-    一次性安装会比较耗时, 需耐心等待。建议使用国内源加速:
-	    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+一次性安装会比较耗时, 需耐心等待。建议使用国内源加速:
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
 
 
 三. 配置 API_KEY
