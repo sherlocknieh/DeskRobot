@@ -69,12 +69,12 @@ if __name__ == "__main__":
 
     # 导入各模块
 
-    """小车模块 (包括车轮, 舵机, LED灯)
-       依赖: pip install gpiozero pigpio lgpio
-       依赖: sudo systemctl enable --now pigpiod
-    """
-    from modules.mod_car_control import CarControl
-    robot.add_task(CarControl())
+    # """小车模块 (包括车轮, 舵机, LED灯)
+    #    依赖: pip install gpiozero pigpio lgpio
+    #    依赖: sudo systemctl enable --now pigpiod
+    # """
+    # from modules.mod_car_control import CarControl
+    # robot.add_task(CarControl())
 
 
     # """手柄模块
@@ -161,18 +161,18 @@ if __name__ == "__main__":
     # robot.add_task(AiThread(config))
 
 
-    """人脸追踪模块
-        依赖: pip install opencv-python mediapipe simple_pid
-    """
-    from modules.mod_face_track import FaceTrack
-    robot.add_task(FaceTrack())
+    # """人脸追踪模块
+    #     依赖: pip install opencv-python mediapipe simple_pid
+    # """
+    # from modules.mod_face_track import FaceTrack
+    # robot.add_task(FaceTrack())
 
 
-    """网络摄像头模块
-       依赖: pip install flask picamera2 opencv-python
-    """
-    from modules.mod_web_camera import WEBCamera
-    robot.add_task(WEBCamera())
+    # """网络摄像头模块
+    #    依赖: pip install flask picamera2 opencv-python
+    # """
+    # from modules.mod_web_camera import WEBCamera
+    # robot.add_task(WEBCamera())
 
 
     # 开始运行

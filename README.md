@@ -2,7 +2,9 @@
 
 DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 
-能够语音对话, 语音控制, OLED显示表情, 自动人脸跟踪
+能够语音对话, OLED显示表情, 人脸跟踪, 网页控制, 手柄控制。
+
+效果展示: https://www.bilibili.com/video/BV1W73AzZEsj/
 
 
 ## 项目结构
@@ -17,36 +19,38 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 
 ## 运行
 
-1. VSCode 连接树莓派, 安装 python 插件, 配置 venv 虚拟环境;
+一. VSCode 连接树莓派, 安装 python 插件, 配置 venv 虚拟环境;
 
-    克隆代码到树莓派, 打开项目文件夹, 打开 DeskRobot.py 点击右上角运行;
+克隆代码到树莓派, 打开项目文件夹, 打开 DeskRobot.py, 点击右上角运行;
 
-    - 本项目高度模块化;
-    - 初始时所有模块已关闭, 没有任何功能;
-    - 此时不依赖任何第三方库, 可直接运行;
+    本项目高度模块化;
 
-2. 加载各个模块
+    初始时所有模块已关闭, 没有多余的功能, 也不依赖任何第三方库, 可直接运行;
 
-    - 编辑 DeskRobot.py 底部区域;
-    - 使用 "CTRL+/" 快捷键取消注释相关代码以启用模块;
-    - 模块附近的文档会标明模块的依赖, 按说明安装即可;
+二. 加载各个模块
+
+编辑 DeskRobot.py 底部区域; 选中相关代码块, 使用 "CTRL+/" 快捷键取消注释以启用;
     
-    如需一次性安装所有依赖, 可以执行 pip install -r requirements.txt 命令。
+    模块附近的文档已标明该模块的依赖, 按说明安装即可;
     
-    注意 requirements.txt 里标注了 [手动执行] 的地方是系统依赖, 需手动安装。
+    如需一次安装所有依赖, 可以执行:
+        pip install -r requirements.txt
+        注意: requirements.txt 里标注 [手动执行] 的地方是系统依赖, 需手动安装。
+        
+    一次性安装会比较耗时, 需耐心等待。建议使用国内源加速:
+	    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+
+
+三. 配置 API_KEY
+
+    部分模块依赖于第三方在线服务, 运行时需要 API_KEY;
     
-    会比较耗时, 请耐心等待。
+	修改 api_config.py, 按指示获取并填写自己 API_KEY;
 
+	目前用我提供的 API_KEY 可以正常运行, 无需修改;
+    
 
-3. 配置 API_KEY
-
-    - 部分模块依赖于第三方在线服务, 运行前需要配置 API_KEY;
-    - 目前可以不修改, 用我提供的 API_KEY 可以正常运行;
-    - 也可以修改 api_config.py, 按指示获取并填写自己 API_KEY;
-
-
-
-### 关键模块
+## 模块结构
 
 - EventBus：使用 "事件总线" 实现各模块间的通信。
 - 运动控制模块：使用 gpiozero 控制机器人电机。
@@ -59,50 +63,55 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 - OLED显示模块：使用 luma.oled + Roboeyes 库实现表情显示, 手写了文字显示。
 - 人脸跟踪模块：使用 mediapipe 检测人脸, 使用 simple_pid 控制小车跟踪人脸。
 
-## 引脚连接情况 (按树莓派4B引脚排列)
 
-|  内侧 | 连接 |
-| ----- | --- |
-VCC 3.3V| OLED VCC
-GPIO 2  | OLED SDA
-GPIO 3  | OLED SCL
-GPIO 4  | 空闲
-GND     | OLED GND
-GPIO 17 | 俯仰舵机 PWM
-GPIO 27 | 空闲
-GPIO 22 | 空闲
-VCC 3.3V| DHT11 VCC
-GPIO 10 | LED_R
-GPIO 9  | LED_G
-GPIO 11 | LED_B
-GND     | LED_GND
-GPIO 0  | 空闲
-GPIO 5  | 空闲
-GPIO 6  | 空闲
-GPIO 13 | 空闲
-GPIO 19 | TB6612FNG PWMA
-GPIO 26 | 空闲
+## 材料清单
+
+学校提供:
+
+- 树莓派4B
+- 舵机云台模块
+- DHT11温湿度模块
+- RGB三色灯模块
+
+自费购买:
+商品名 | 实付 |  购买链接  |  店家
+:---              | :---   | :---    | :---
+0.96寸OLED显示屏 | ¥5.81| https://detail.tmall.com/item.htm?id=42044259331 | telesky旗舰店
+TB6612FNG电机驱动 | ¥5.95 | https://item.taobao.com/item.htm?id=810403532014 | 树莓派零售商
+录音麦克风小话筒 | ¥7.65 | https://item.taobao.com/item.htm?id=627272507876 | 树莓派零售商
+USB线控迷你小音箱 | ¥11.42 | https://item.taobao.com/item.htm?id=640443690438 | 树莓派零售商
+2WD小车底盘(3层) | ¥18.70 | https://item.taobao.com/item.htm?id=696323635690 | 树莓派零售商
+160°鱼眼摄像头 | ¥28.65 | https://item.taobao.com/item.htm?id=603972074124 | 树莓派零售商
+5V移动电源模块 | ¥26.20 | https://detail.tmall.com/item.htm?id=755340651925 | 辰克旗舰店
+合计 | ¥104.38
 
 
-|  外侧 | 连接 |
-| ----- | --- |
-VCC 5V  | TB6612FNG VCC
-VCC 5V  | 俯仰舵机 VCC
-GND     | GND
-GPIO 14 | TB6612FNG BIN2
-GPIO 15 | TB6612FNG BIN1
-GPIO 18 | TB6612FNG PWMB
-GND     | GND
-GPIO 23 | TB6612FNG AIN2
-GPIO 24 | TB6612FNG AIN1
-GND     | DHT11 GND
-GPIO 25 | DHT11 DATA
-GPIO 8  | 空闲
-GPIO 7  | 空闲
-GPIO 1  | 空闲
-GND     | 俯仰舵机 GND
-GPIO 12 | 空闲
-GND     | TB6612FNG GND
-GPIO 16 | 空闲
-GPIO 20 | 空闲
-GPIO 21 | TB6612FNG STBY
+
+## 引脚连接
+
+
+连接            | 内侧引脚 | 外侧引脚 | 连接
+---:            | ---:     | :---     | :---
+OLED VCC        | 3.3V     | 5V       | TB6612FNG VCC
+OLED SDA        | GPIO 2   | 5V       | 俯仰舵机 VCC
+OLED SCL        | GPIO 3   | GND      | 
+空闲            | GPIO 4   | GPIO 14  | TB6612FNG BIN2
+OLED GND        | GND      | GPIO 15  | TB6612FNG BIN1
+俯仰舵机 PWM    | GPIO 17  | GPIO 18  | TB6612FNG PWMB
+空闲            | GPIO 27  | GND      | 
+空闲            | GPIO 22  | GPIO 23  | TB6612FNG AIN2
+DHT11 VCC       | 3.3V     | GPIO 24  | TB6612FNG AIN1
+LED_R           | GPIO 10  | GND      | DHT11 GND
+LED_G           | GPIO 9   | GPIO 25  | DHT11 DATA
+LED_B           | GPIO 11  | GPIO 8   | 空闲
+LED_GND         | GND      | GPIO 7   | 空闲
+空闲            | GPIO 0   | GPIO 1   | 空闲
+空闲            | GPIO 5   | GND      | 俯仰舵机 GND
+空闲            | GPIO 6   | GPIO 12  | 空闲
+空闲            | GPIO 13  | GND      | TB6612FNG GND
+TB6612FNG PWMA  | GPIO 19  | GPIO 16  | 空闲
+空闲            | GPIO 26  | GPIO 20  | 空闲
+空闲            | GND      | GPIO 21  | TB6612FNG STBY
+
+
+树莓派执行 pinout 命令查看引脚排列; 或者访问 https://pinout.xyz/ 查看详细信息;

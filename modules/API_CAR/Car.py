@@ -54,7 +54,7 @@ class Car:
         self.STBY.on()
     
     def speed(self, L, R):
-        self.A.speed(L*1.13)
+        self.A.speed(L*1.1)
         self.B.speed(R)
 
     def steer(self, x, y):

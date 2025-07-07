@@ -32,7 +32,7 @@ class GamePad(threading.Thread):
         self.z = 0
         self.firstpress = True
         self.modes = cycle(['CAR', 'MUSIC', 'LED'])
-        self.mode = None
+        self.mode = next(self.modes)
         self.event_bus.subscribe("EXIT", self.event_queue, self.name)    # 订阅总线 "EXIT" 事件
 
     def run(self):
