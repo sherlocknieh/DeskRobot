@@ -69,103 +69,103 @@ if __name__ == "__main__":
 
     # 导入各模块
 
-    # """小车模块 (包括车轮, 舵机, LED灯)
-    #    依赖: pip install gpiozero pigpio lgpio
-    #    依赖: sudo systemctl enable --now pigpiod
-    # """
-    # from modules.mod_car_control import CarControl
-    # robot.add_task(CarControl())
+    """小车模块 (包括车轮, 舵机, LED灯)
+       依赖: pip install gpiozero pigpio lgpio
+       依赖: sudo systemctl enable --now pigpiod
+    """
+    from modules.mod_car_control import CarControl
+    robot.add_task(CarControl())
 
 
-    # """手柄模块
-    #    依赖: pip install evdev
-    # """
-    # from modules.mod_game_pad import GamePad
-    # robot.add_task(GamePad())
+    """手柄模块
+       依赖: pip install evdev
+    """
+    from modules.mod_game_pad import GamePad
+    robot.add_task(GamePad())
 
 
-    # """温湿度模块
-    #    依赖: pip install RPi.GPIO adafruit-circuitpython-dht
-    # """
-    # from modules.mod_temperature import Temperature
-    # robot.add_task(Temperature())
+    """温湿度模块
+       依赖: pip install RPi.GPIO adafruit-circuitpython-dht
+    """
+    from modules.mod_temperature import Temperature
+    robot.add_task(Temperature())
 
 
-    # """音乐播放器模块
-    #    依赖: pip install pygame
-    # """
-    # from modules.mod_music_player import MusicPlayer
-    # robot.add_task(MusicPlayer())
+    """音乐播放器模块
+       依赖: pip install pygame
+    """
+    from modules.mod_music_player import MusicPlayer
+    robot.add_task(MusicPlayer())
 
 
-    # """OLED 基础模块
-    #    依赖: pip install pillow luma.oled
-    # """
-    # from modules.mod_oled_image import OLEDThread
-    # robot.add_task(OLEDThread())
+    """OLED 基础模块
+       依赖: pip install pillow luma.oled
+    """
+    from modules.mod_oled_image import OLEDThread
+    robot.add_task(OLEDThread())
 
-    # """OLED 文本模块
-    #    安装中文字体: sudo apt install fonts-wqy-microhei
-    #    依赖: pip install pillow
-    # """
-    # from modules.mod_oled_text import TextDisplayThread
-    # robot.add_task(TextDisplayThread())
+    """OLED 文本模块
+       安装中文字体: sudo apt install fonts-wqy-microhei
+       依赖: pip install pillow
+    """
+    from modules.mod_oled_text import TextDisplayThread
+    robot.add_task(TextDisplayThread())
 
-    # """OLED 表情模块
-    #    依赖: pip install pillow
-    # """
-    # from modules.mod_oled_roboeyes import RoboeyesThread
-    # robot.add_task(RoboeyesThread())
+    """OLED 表情模块
+       依赖: pip install pillow
+    """
+    from modules.mod_oled_roboeyes import RoboeyesThread
+    robot.add_task(RoboeyesThread())
 
-    # """OLED 动画模块
-    #    依赖: pip install pillow
-    # """
-    # from modules.mod_oled_animation import ThinkingAnimationThread
-    # robot.add_task(ThinkingAnimationThread())
-
-
-    # """语音输入模块
-    #    依赖: pip install pyaudio torchaudio
-    # """
-    # from modules.mod_voice_io import VoiceThread
-    # robot.add_task(VoiceThread())
-
-    # """语音唤醒模块
-    #    依赖: sudo apt install libspeex-dev libspeexdsp-dev
-    #    依赖: pip install pyaudio torchaudio openwakeword speexdsp-ns "numpy<2"
-    #    默认唤醒词为: "hey Jarvis"
-    # """
-    # from modules.mod_voice_awake import AwakeThread
-    # robot.add_task(AwakeThread())
-
-    # """TTS:文字转语音模块
-    #    依赖: sudo apt install ffmpeg
-    #    依赖: pip install pydub edge-tts
-    # """
-    # from modules.mod_voice_tts import TTSThread
-    # robot.add_task(TTSThread())
-
-    # """STT:语音转文字模块
-    #    依赖: pip install websocket-client requests
-    #    依赖在线服务: siliconflow 或 iflytek, 需在 configs/api_config.py 中配置API_KEY
-    # """
-    # from modules.mod_voice_stt import STTThread
-    # robot.add_task(STTThread(config))
+    """OLED 动画模块
+       依赖: pip install pillow
+    """
+    from modules.mod_oled_animation import ThinkingAnimationThread
+    robot.add_task(ThinkingAnimationThread())
 
 
-    # """AI Agent 模块
-    #    依赖: pip install langchain-openai langgraph
-    #    依赖在线服务: siliconflow, 需在 configs/api_config.py 中配置API_KEY
-    # """
-    # from modules.mod_ai_agent import AiThread
-    # robot.add_task(AiThread(config))
+    """语音输入模块
+       依赖: pip install pyaudio torchaudio
+    """
+    from modules.mod_voice_io import VoiceThread
+    robot.add_task(VoiceThread())
+
+    """语音唤醒模块
+       依赖: sudo apt install libspeex-dev libspeexdsp-dev
+       依赖: pip install pyaudio torchaudio openwakeword speexdsp-ns "numpy<2"
+       默认唤醒词为: "hey Jarvis"
+    """
+    from modules.mod_voice_awake import AwakeThread
+    robot.add_task(AwakeThread())
+
+    """TTS:文字转语音模块
+       依赖: sudo apt install ffmpeg
+       依赖: pip install pydub edge-tts
+    """
+    from modules.mod_voice_tts import TTSThread
+    robot.add_task(TTSThread())
+
+    """STT:语音转文字模块
+       依赖: pip install websocket-client requests
+       依赖在线服务: siliconflow 或 iflytek, 需在 configs/api_config.py 中配置API_KEY
+    """
+    from modules.mod_voice_stt import STTThread
+    robot.add_task(STTThread(config))
 
 
-    # """网络摄像头模块
-    #    依赖: pip install flask flask_socketio picamera2 opencv-contrib-python
-    # """
-    # from modules.mod_web_camera import WEBCamera
-    # robot.add_task(WEBCamera())
+    """AI Agent 模块
+       依赖: pip install langchain-openai langgraph
+       依赖在线服务: siliconflow, 需在 configs/api_config.py 中配置API_KEY
+    """
+    from modules.mod_ai_agent import AiThread
+    robot.add_task(AiThread(config))
+
+
+    """网络摄像头模块
+       依赖: pip install flask flask_socketio picamera2 opencv-contrib-python
+    """
+    from modules.mod_web_camera import WEBCamera
+    robot.add_task(WEBCamera())
 
 
     # """人脸追踪模块
