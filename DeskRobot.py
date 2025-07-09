@@ -38,7 +38,9 @@ class DeskRobot:
             if not cmd: continue
             # 提取类型
             event_type = cmd[0].strip('"').replace('-', '_')
-            if event_type.lower() == 'exit': break
+            if event_type.lower() == 'exit':
+                self.stop()
+                break
             # 提取数据
             data = {}
             for arg in cmd[1:]:
@@ -161,18 +163,18 @@ if __name__ == "__main__":
     # robot.add_task(AiThread(config))
 
 
-    # """网络摄像头模块
-    #    依赖: pip install flask flask_socketio picamera2 opencv-contrib-python
-    # """
-    # from modules.mod_web_camera import WEBCamera
-    # robot.add_task(WEBCamera())
+    """网络摄像头模块
+       依赖: pip install flask flask_socketio picamera2 opencv-contrib-python
+    """
+    from modules.mod_web_camera import WEBCamera
+    robot.add_task(WEBCamera())
 
 
-    # """人脸追踪模块
-    #     依赖: pip install simple_pid mediapipe==0.10.9
-    # """
-    # from modules.mod_face_track import FaceTrack
-    # robot.add_task(FaceTrack())
+    """人脸追踪模块
+        依赖: pip install simple_pid mediapipe==0.10.9
+    """
+    from modules.mod_face_track import FaceTrack
+    robot.add_task(FaceTrack())
 
 
     # 开始运行

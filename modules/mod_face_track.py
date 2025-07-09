@@ -58,13 +58,13 @@ class FaceTrack(threading.Thread):
         self.car = Car()                     # 小车接口
         self.head = HeadServo()              # 舵机接口
 
-        # self.pid_x = PID(0.003, 0.001, 0.005, setpoint=0)   # PID控制: 小车左右旋转
-        # self.pid_y = PID(0.005, 0.001, 0.005, setpoint=0)   # PID控制: 摄像头上下视角
-        # self.pid_z = PID(3.000, 0.100, 0.001, setpoint=0)   # PID控制: 小车前进后退
+        self.pid_x = PID(0.004, 0.002, 0.001, setpoint=0)   # PID控制: 小车左右旋转
+        self.pid_y = PID(0.005, 0.001, 0.005, setpoint=0)   # PID控制: 摄像头上下视角
+        self.pid_z = PID(3.000, 0.100, 0.001, setpoint=0)   # PID控制: 小车前进后退
         
-        self.pid_x = FilteredPID(0.003, 0.002, 0.002)
-        self.pid_y = FilteredPID(0.005, 0.001, 0.005)
-        self.pid_z = FilteredPID(3.000, 0.100, 0.001)
+        # self.pid_x = FilteredPID(0.003, 0.002, 0.001)
+        # self.pid_y = FilteredPID(0.005, 0.001, 0.005)
+        # self.pid_z = FilteredPID(3.000, 0.100, 0.001)
         
         self.rect = None                         # 人脸追踪矩形
         self.trackloop_flag = threading.Event()  # 人脸追踪开关
