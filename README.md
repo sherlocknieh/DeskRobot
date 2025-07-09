@@ -9,12 +9,12 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 
 ## 项目结构
 
-- DeskRobot.py ------- 项目入口
+- DeskRobot.py -------- 项目入口
 - modules ------------- 各个子模块
-- configs -------------- 配置文件
-- localfiles ------------- 本地资源文件
-- requirements.txt ----- 项目依赖
-- README.md --------- 说明文档
+- configs ------------- 配置文件
+- localfiles ---------- 本地资源文件
+- requirements.txt ---- 项目依赖
+- README.md ----------- 说明文档
 
 
 ## 运行
@@ -53,16 +53,16 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 
 ## 模块结构
 
-- EventBus：使用 "事件总线" 实现各模块间的通信。
-- 运动控制模块：使用 gpiozero 控制机器人电机。
-- 语音交互模块：
-    - 语音唤醒: 使用 openwakeword 实现语音唤醒。
-    - 话语检测: 使用 SileroVAD 实现语音监听。
-    - STT: 使用 siliconflow_stt 和 iflytek_stt 实现语音转文字。
-    - TTS: 使用 edge-tts 实现文字转语音。
-- AI对话模块：使用 langchain_openai 和 SiliconFlow API 实现机器人对话。
-- OLED显示模块：使用 luma.oled + Roboeyes 库实现表情显示, 手写了文字显示。
-- 人脸跟踪模块：使用 mediapipe 检测人脸, 使用 simple_pid 控制小车跟踪人脸。
+- EventBus     ：使用 "事件总线" 实现各模块间的通信。
+- 运动控制模块 ：使用 gpiozero 控制机器人电机。
+- 语音交互模块 ：
+    - 语音唤醒 : 使用 openwakeword 实现语音唤醒。
+    - 话语检测 : 使用 SileroVAD 实现语音监听。
+    - STT      : 使用 siliconflow_stt 和 iflytek_stt 实现语音转文字。
+    - TTS      : 使用 edge-tts 实现文字转语音。
+- AI对话模块   ：使用 langchain_openai 和 SiliconFlow API 实现机器人对话。
+- OLED显示模块 ：使用 luma.oled + Roboeyes 库实现表情显示, 手写了文字显示。
+- 人脸跟踪模块 ：使用 mediapipe 检测人脸, 使用 simple_pid 控制小车跟踪人脸。
 
 
 ## 材料清单
@@ -75,16 +75,16 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 - RGB三色灯模块
 
 自费购买:
-商品名 | 实付 | 购买链接 | 店家
-:---   | :--- | :---     | :---
-0.96寸OLED显示屏 | ¥5.81| https://detail.tmall.com/item.htm?id=42044259331 | telesky旗舰店
-TB6612FNG电机驱动 | ¥5.95 | https://item.taobao.com/item.htm?id=810403532014 | 树莓派零售商
-录音麦克风小话筒 | ¥7.65 | https://item.taobao.com/item.htm?id=627272507876 | 树莓派零售商
-USB线控迷你小音箱 | ¥11.42 | https://item.taobao.com/item.htm?id=640443690438 | 树莓派零售商
-2WD小车底盘(3层) | ¥18.70 | https://item.taobao.com/item.htm?id=696323635690 | 树莓派零售商
-160°鱼眼摄像头 | ¥28.65 | https://item.taobao.com/item.htm?id=603972074124 | 树莓派零售商
-5V移动电源模块 | ¥26.20 | https://detail.tmall.com/item.htm?id=755340651925 | 辰克旗舰店
-合计 | ¥104.38
+商品名            | 实付   | 购买链接                                          | 店家
+:---              | :---   | :---                                              | :---
+160°鱼眼摄像头    | ¥28.65 | https://item.taobao.com/item.htm?id=603972074124  | 树莓派零售商
+2WD小车底盘(3层)  | ¥18.04 | https://item.taobao.com/item.htm?id=696323635690  | 树莓派零售商
+TB6612FNG电机驱动 | ¥5.93  | https://item.taobao.com/item.htm?id=810403532014  | 树莓派零售商
+录音麦克风小话筒  | ¥7.38  | https://item.taobao.com/item.htm?id=627272507876  | 树莓派零售商
+5V移动电源模块    | ¥26.20 | https://detail.tmall.com/item.htm?id=755340651925 | 辰克旗舰店
+USB线控迷你小音箱 | ¥11.42 | https://item.taobao.com/item.htm?id=640443690438  | 深圳市56电子
+0.96寸OLED显示屏  | ¥5.81  | https://detail.tmall.com/item.htm?id=42044259331  | telesky旗舰店
+合计              | ¥103.43
 
 
 
