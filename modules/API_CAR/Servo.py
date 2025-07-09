@@ -19,7 +19,7 @@ class HeadServo:
             max_pulse_width=0.0025
         )
         self.current_angle = 0
-        self.set_angle(30)
+        self.set_angle(20)
 
     def get_angle(self):
         return self.current_angle

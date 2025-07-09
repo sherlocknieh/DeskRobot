@@ -3,39 +3,63 @@
 
 <head>
     <title>网络摄像头</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.0/nipplejs.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
-            height: 100vh;
+            min-height: 100vh;
+            /* 替换 height:100vh */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            /* 移除 justify-content:center */
             align-items: center;
             overflow: auto;
+            padding: 20px 0;
+            /* 增加安全间距 */
         }
     </style>
 </head>
 
 <body>
     <h1>网络摄像头</h1>
+
     <p>当前在线客户端：<span id="client_count">0</span></p>
+
     <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" id="faceTrackingSwitch">
         <label class="form-check-label" for="faceTrackingSwitch">人脸跟踪</label>
-    </div> 
+    </div>
+
     <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="cameraSwitch" checked >
+        <input class="form-check-input" type="checkbox" id="cameraSwitch" checked>
         <label class="form-check-label" for="cameraSwitch">相机开关</label>
     </div>
+
+    <img id="video" style="aspect-ratio: 4/3; max-width: 100%;">
+
+    <!-- 新增水平排列容器 -->
+    <div class="align-items-center justify-content-center;" style=" max-width: 100%;">
+        <!-- 仰角滑块容器 -->
+        <div style="margin: 20px;">
+            <label for="tiltSlider">摄像头仰角: <span id="tiltValue">20</span>°</label>
+            <input type="range" class="form-range" id="tiltSlider" min="-45" max="90" value="20"
+                style="transform: rotate(270deg); width: 120px; margin: 60px -30px;">
+        </div>
+        <!-- 摇杆容器 -->
+        <div id="joystick-container"
+            style="border-radius: 50%; aspect-ratio: 1/1; width: 200px; background-color: rgba(23, 69, 209, 0.5); margin: 20px;  position: relative;">
+            <div id="joystick"
+                style="border-radius: 50%; aspect-ratio: 1/1; width: 100px; background-color: rgba(88, 21, 196, 0.664); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            </div>
+        </div>
+        <div>车轮速度控制:</div>
+        <div id="joystick-values" style="font-size: min(4vw, 16px);">转弯: 0.00<br>前进: 0.00</div>
+
     </div>
-    <img id="video" style="aspect-ratio: 4/3; max-width: 640px;">
-    <br>
-    <div id="joystick" style="aspect-ratio: 4/3; max-width: 640px; background-color: aquamarine;">
-        <div id="joystick-values" style="font-size: min(4vw, 16px);">X: 0.00, Y: 0.00</div>
-    </div>
+
 
     <script>
         const socket = io();  // 建立 Socket 连接
@@ -54,10 +78,18 @@
             socket.emit('camera_toggle', { status: this.checked });
         });
 
+        // 添加仰角滑动条事件监听
+        document.getElementById('tiltSlider').addEventListener('input', function () {
+            const value = parseInt(this.value);
+            document.getElementById('tiltValue').textContent = value;
+            socket.emit('camera_tilt', { angle: value });
+        });
+
+
         // 初始化虚拟摇杆
         window.addEventListener('load', () => {
             const joystick = nipplejs.create({
-                zone: document.getElementById('joystick'),
+                zone: document.getElementById('joystick-container'),
                 mode: 'dynamic',
                 color: 'blue', // 保留颜色设置
                 size: 200, // 设置底盘大小
@@ -74,7 +106,7 @@
                 touchStartTime = Date.now();
                 // 点按时发送 x:0, y:0
                 socket.emit('joystick', { x: 0, y: 0 });
-                valueDisplay.textContent = 'X: 0.00, Y: 0.00';
+                valueDisplay.innerHTML = '转弯: 0.00<br>前进: 0.00';
             });
 
             joystick.on('move', (evt, data) => {
@@ -83,7 +115,7 @@
                     // 发送滑动时的相对坐标
                     const x = data.vector.x.toFixed(2);
                     const y = data.vector.y.toFixed(2);
-                    valueDisplay.textContent = `X: ${x}, Y: ${y}`;
+                    valueDisplay.innerHTML = `转弯: ${x}<br>前进: ${y}`;
                     socket.emit('joystick', { x: parseFloat(x), y: parseFloat(y) });
                 }
             });
@@ -92,7 +124,7 @@
                 const touchDuration = Date.now() - touchStartTime;
                 // 无论点按还是滑动结束，都发送 x:0, y:0 并重置
                 socket.emit('joystick', { x: 0, y: 0 });
-                valueDisplay.textContent = 'X: 0.00, Y: 0.00';
+                valueDisplay.innerHTML = '转弯: 0.00<br>前进: 0.00';
                 isMoving = false;
             });
         });

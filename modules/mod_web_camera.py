@@ -78,10 +78,12 @@ class WEBCamera(threading.Thread):
             else:
                 self.camera.stop()
 
-        @self.socketio.on('sliders')
-        def handle_sliders(data):
-            print(f'滑块数据: {data}')
-            self.event_bus.publish('SLIDERS', data, self.name)
+
+        @self.socketio.on('camera_tilt')
+        def handle_camera_tilt(data):
+            angle = data.get('angle', 0)
+            self.event_bus.publish('HEAD_ANGLE', {'angle': angle}, self.name)
+
             
 
     def stream_video(self):
