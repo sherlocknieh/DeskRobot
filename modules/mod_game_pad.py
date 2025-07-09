@@ -1,5 +1,7 @@
 if __name__ != '__main__':
     from .API_CAR.Car import Car
+    from .API_CAR.LED import RGB
+    from .API_CAR.Servo import HeadServo
     from .EventBus import EventBus
 
 
@@ -21,7 +23,9 @@ class GamePad(threading.Thread):
         self.event_queue = Queue()
         self.event_bus = EventBus()
 
-        self.car = Car()
+        self.car = Car()                     # 车轮接口
+        self.head = HeadServo()              # 头部舵机接口
+        self.led = RGB()
 
         self._gamepad_connected = threading.Event()
         self._gamepad_connecting = threading.Event()
@@ -33,6 +37,12 @@ class GamePad(threading.Thread):
         self.firstpress = True
         self.modes = cycle(['CAR', 'MUSIC', 'LED'])
         self.mode = next(self.modes)
+        logger.info(f"切换到 {self.mode} 模式")
+        self._car_control_mode.set()
+
+        self.摇杆精度 = 65535
+        self.扳机精度 = 1023
+
         self.event_bus.subscribe("EXIT", self.event_queue, self.name)    # 订阅总线 "EXIT" 事件
 
     def run(self):
@@ -55,25 +65,26 @@ class GamePad(threading.Thread):
         while True:
             self._car_control_mode.wait()
             if self.mode == 'CAR':
-                #self.car.steer(self.x, self.y)  # 直接控制车轮转动
-                self.event_bus.publish("CAR_STEER", {"x": self.x, "y": self.y}, self.name) # 通过事件总线控制车轮转动
-                self.event_bus.publish("HEAD_ANGLE",{"angle": -self.z*90}, self.name)
+                logger.debug(f"x={self.x}, y={self.y}")
+                self.car.steer(self.x, self.y)  # 直接控制车轮转动
             sleep(1/40) # 控制输出频率
 
 
     def _gamepad_event_loop(self):
         """手柄事件循环"""
         while True:
+            logger.debug("等待手柄连接...")
             self._gamepad_connected.wait()
+            logger.debug("手柄已连接...")
             try:
                 for event in self.gamepad.read_loop():  # type: ignore
                     if event.type == evdev.ecodes.EV_ABS:
                         # 左摇杆横轴
                         if event.code == 0:
-                            self.x = event.value/65535*2-1
+                            self.x = event.value/self.摇杆精度*2-1
                         # 左摇杆纵轴
                         elif event.code == 1:
-                           self.y = -event.value/65535*2+1
+                            self.y = -event.value/self.摇杆精度*2+1
                         # 水平方向键
                         elif event.code == 16:
                             self.x = event.value
@@ -92,16 +103,22 @@ class GamePad(threading.Thread):
                                     self.event_bus.publish("PLAY_MUSIC", self.name)
                         # 右扳机
                         elif event.code == 9:
-                            self.z = -event.value/1023
+                            self.z = -event.value/self.扳机精度
+                            if self.mode == 'CAR':
+                                angle = -self.z*90
+                                self.head.set_angle(angle)
                         # 左扳机
                         elif event.code == 10:
-                            self.z = event.value/1023
+                            self.z = event.value/self.扳机精度
+                            if self.mode == 'CAR':
+                                angle = -self.z*90
+                                self.head.set_angle(angle)
                         # 右摇杆横轴
                         elif event.code == 2:
-                            self.rx = event.value/65535*2-1
+                            self.rx = event.value/self.摇杆精度*2-1
                         # 右摇杆纵轴
                         elif event.code == 5:
-                            self.ry = -event.value/65535*2+1
+                            self.ry = -event.value/self.摇杆精度*2+1
                     elif event.type == evdev.ecodes.EV_KEY:
                         if event.code == 304:
                             if event.value == 1:
@@ -124,6 +141,12 @@ class GamePad(threading.Thread):
                         if event.code == 314:
                             if event.value == 1:
                                 logger.info(f'左选项键按下')
+                                self.mode = next(self.modes)
+                                logger.info(f"切换到 {self.mode} 模式")
+                                if self.mode == 'CAR':
+                                    self._car_control_mode.set()
+                                else:
+                                    self._car_control_mode.clear()
                         if event.code == 315:
                             if event.value == 1:
                                 logger.info(f'右选项键按下')
@@ -135,13 +158,7 @@ class GamePad(threading.Thread):
                                 logger.info(f'右摇杆按下')
                         if event.code == 167:
                             if event.value == 1:
-                                #logger.info(f'截图键按下')
-                                self.mode = next(self.modes)
-                                logger.info(f"切换到 {self.mode} 模式")
-                                if self.mode == 'CAR':
-                                    self._car_control_mode.set()
-                                else:
-                                    self._car_control_mode.clear()
+                                logger.info(f'截图键按下')
             except Exception: 
                 logger.info("手柄已断开, 正在尝试重连...")
                 self.gamepad = None
@@ -152,12 +169,13 @@ class GamePad(threading.Thread):
     def _gamepad_connect_loop(self):
         """手柄连接任务循环"""
         while True:
-            if not self.gamepad:
-                self.gamepad = self.gamepad_detector()
-            if self.gamepad:
+            self.gamepad = self.gamepad_detector()
+            if self.gamepad:    # 连接成功
                 self._gamepad_connected.set()
                 self._gamepad_connecting.clear()
+                logger.debug("等待手柄断开...")
                 self._gamepad_connecting.wait()
+                logger.debug("手柄已断开...")
             sleep(2)
 
 
@@ -166,13 +184,29 @@ class GamePad(threading.Thread):
         devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
         for device in devices:
             if "xbox" in device.name.lower():
+                self.摇杆精度 = 65535
+                self.扳机精度 = 1023
                 logger.info(f"手柄已连接: {device.name}")    
+                return device
+            elif device.name =="GameSir-Nova Lite":
+                self.摇杆精度 = 255
+                self.扳机精度 = 255
+                logger.info(f"手柄已连接: {device.name}")
                 return device
         return None
 
 
 if __name__ == '__main__':
     from API_CAR.Car import Car
+    from API_CAR.Servo import HeadServo
+    from API_CAR.LED import RGB
     from EventBus import EventBus
+    
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] [%(name)s] \t%(message)s",
+    )
+    
     pad = GamePad()
     pad.start()
+    pad.join()
