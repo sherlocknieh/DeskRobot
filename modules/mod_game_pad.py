@@ -1,6 +1,5 @@
 if __name__ != '__main__':
     from .API_CAR.Car import Car
-    from .API_CAR.LED import RGB
     from .API_CAR.Servo import HeadServo
     from .EventBus import EventBus
 
@@ -25,7 +24,6 @@ class GamePad(threading.Thread):
 
         self.car = Car()                     # 车轮接口
         self.head = HeadServo()              # 头部舵机接口
-        self.led = RGB()
 
         self._gamepad_connected = threading.Event()
         self._gamepad_connecting = threading.Event()
@@ -199,7 +197,6 @@ class GamePad(threading.Thread):
 if __name__ == '__main__':
     from API_CAR.Car import Car
     from API_CAR.Servo import HeadServo
-    from API_CAR.LED import RGB
     from EventBus import EventBus
     
     logging.basicConfig(

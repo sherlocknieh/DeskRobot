@@ -1,21 +1,27 @@
-
-
 if __name__ != '__main__':
     from .API_Camera.PiCamera import PiCamera
     from .API_Camera.FaceDetector import FaceDetector
     from .EventBus import EventBus
 
-from flask import Flask, render_template
+
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 import cv2
 import base64
 import threading
 import numpy as np
+from queue import Queue
+import logging
+
+
+logger = logging.getLogger("WebCamera")
+
 
 class WEBCamera(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True, name='WEBCamera')
         self.event_bus = EventBus()
+        self.event_queue = Queue()
         self.app = Flask(__name__)
         self.app.config['SECRET_KEY'] = 'secret!'
         self.socketio = SocketIO(self.app)
@@ -27,6 +33,11 @@ class WEBCamera(threading.Thread):
         self.face_tracking_on = False
         self.last_frame = np.zeros((480, 640, 3), np.uint8)
         self.register_routes()
+
+        self.event_bus.subscribe('EXIT', self.event_queue, self.name)  # 新增订阅
+        self.socketio.start_background_task(self.event_listener)
+
+        self.streaming = True
 
     def register_routes(self):
         @self.app.route('/')
@@ -78,16 +89,35 @@ class WEBCamera(threading.Thread):
             else:
                 self.camera.stop()
 
-
         @self.socketio.on('camera_tilt')
         def handle_camera_tilt(data):
             angle = data.get('angle', 0)
             self.event_bus.publish('HEAD_ANGLE', {'angle': angle}, self.name)
 
-            
+        @self.app.route('/shutdown')
+        def shutdown(): 
+            func = request.environ.get('werkzeug.server.shutdown')
+            if func is None:
+                raise RuntimeError('Not running with the Werkzeug Server')
+            func()
+            return 'Server shutting down...'
+
+    def event_listener(self):
+        while True:
+            event = self.event_queue.get()
+            if event['type'] == 'EXIT':
+                logger.info('关闭视频流')
+                self.streaming = False
+                logger.info('关闭摄像头')
+                self.camera.stop()
+                self.camera_on = False
+                logger.info('关闭 SocketIO 服务器')
+                """TODO: 关闭 SocketIO 服务器"""
+                break
+        logger.info(f'退出事件监听器')
 
     def stream_video(self):
-        while True:
+        while self.streaming:
             if self.camera_on:
                 self.last_frame = self.camera.get_frame()
             else:
@@ -99,9 +129,9 @@ class WEBCamera(threading.Thread):
             frame_base64 = base64.b64encode(JPEG).decode('utf-8')
             self.socketio.emit('video_frame', frame_base64)
             self.socketio.sleep(1/30)
+        logger.info(f'视频流已退出')
 
-
-    def run(self, host='0.0.0.0', port=5000):
+    def start_server(self):
         # import socket
         # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # s.connect(('8.8.8.8', 80))
@@ -110,7 +140,13 @@ class WEBCamera(threading.Thread):
         # print(f"服务已启动: ")
         # print(f"\t访问地址: http://127.0.0.1:{port}")
         # print(f"\t访问地址: http://{ip}:{port}\n")
-        self.socketio.run(self.app, host=host, port=port)
+        self.socketio.run(self.app, host='0.0.0.0', port=5000)
+
+    def run(self):
+        threading.Thread(target=self.start_server, daemon=True).start()
+        self.event_listener()
+        logger.info(f'WebCamera服务器已退出')
+
 
 
 if __name__ == '__main__':
