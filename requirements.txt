@@ -22,17 +22,16 @@ evdev
 pygame
 
 
-
 # 人脸跟踪
 mediapipe==0.10.9   # 包含 opencv-contrib-python, numpy<2
 simple_pid
+
 
 # 摄像头
 opencv-contrib-python
 picamera2
 flask
 flask_socketio
-
 
 
 # 语音相关
