@@ -4,9 +4,9 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 
 能够语音对话, OLED显示表情, 人脸跟踪, 网页控制, 手柄控制。
 
-项目主页: [https://github.com/sherlocknieh/DeskRobot/](https://sherlocknieh.github.io/DeskRobot/)
+项目主页: [https://sherlocknieh.github.io/DeskRobot/](https://sherlocknieh.github.io/DeskRobot/)
 
-效果演示: https://www.bilibili.com/video/BV1W73AzZEsj/
+效果演示: [https://www.bilibili.com/video/BV1W73AzZEsj/](https://www.bilibili.com/video/BV1W73AzZEsj/)
 
 
 ## 项目结构
