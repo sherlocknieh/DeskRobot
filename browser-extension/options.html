@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索引擎设置</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section h2 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .engine-list {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .engine-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background: white;
+        }
+        
+        .engine-item:last-child {
+            border-bottom: none;
+        }
+        
+        .engine-item:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .engine-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+        
+        .engine-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .engine-url {
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .engine-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #007bff;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>搜索引擎设置</h1>
+        </div>
+        
+        <div class="content">
+            <div id="message-area"></div>
+            
+            <div class="section">
+                <h2>添加新搜索引擎</h2>
+                <form id="add-engine-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="engine-name">搜索引擎名称</label>
+                            <input type="text" id="engine-name" placeholder="例如：Google 图片搜索" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="engine-url">搜索URL</label>
+                            <input type="url" id="engine-url" placeholder="https://www.google.com/searchbyimage?image_url=" required>
+                            <div class="help-text">在搜索URL末尾添加图片地址参数位置</div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">添加搜索引擎</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="section">
+                <h2>现有搜索引擎</h2>
+                <div id="engine-list" class="engine-list">
+                    <div class="engine-item">
+                        <div class="engine-info">
+                            <div class="engine-name">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>预设搜索引擎模板</h2>
+                <p>点击下方按钮快速添加常用搜索引擎：</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary btn-small" onclick="addTemplate('google')">Google 图片</button>
+                    <button class="btn btn-primary btn-small" onclick="addTemplate('baidu')">百度识图</button>
+                    <button class="btn btn-primary btn-small" onclick="addTemplate('yandex')">Yandex</button>
+                    <button class="btn btn-primary btn-small" onclick="addTemplate('tineye')">TinEye</button>
+                    <button class="btn btn-primary btn-small" onclick="addTemplate('bing')">Bing 图片</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="options.js"></script>
+</body>
+</html>

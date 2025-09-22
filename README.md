@@ -15,6 +15,7 @@ DeskRobot 是一个树莓派4B驱动的桌面智能机器人伴侣
 - modules ------------- 各个子模块
 - configs ------------- 配置文件
 - localfiles ---------- 本地资源文件
+- browser-extension --- 浏览器扩展 (图片搜索和二维码解析)
 - requirements.txt ---- 项目依赖
 - README.md ----------- 说明文档
 
@@ -128,8 +129,26 @@ TB6612FNG PWMA  | GPIO 19  | GPIO 16  | 空闲
 
 
 
+## 浏览器扩展功能
+
+本项目包含一个功能强大的浏览器扩展，位于 `browser-extension/` 目录：
+
+### 主要功能
+- **右键图片搜索**: 支持Google、百度、Yandex等多个搜索引擎
+- **二维码解析**: 右键解析图片中的二维码内容
+- **搜索引擎管理**: 可自定义添加、编辑、删除搜索引擎
+
+### 安装使用
+1. 打开Chrome浏览器，访问 `chrome://extensions/`
+2. 开启"开发者模式"
+3. 点击"加载已解压的扩展程序"
+4. 选择 `browser-extension` 文件夹
+
+详细说明请查看 `browser-extension/INSTALL.md`
+
 ## TODO
 
 - WEBCamera 模块的退出机制
 - 多线程延迟优化
 - 语音识别模块导入使用了VoiceIO模块, 使该模块重复运行
+- 浏览器扩展的jsQR库集成优化

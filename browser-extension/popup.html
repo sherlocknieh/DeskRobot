@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片搜索与二维码解析</title>
+    <style>
+        body {
+            width: 320px;
+            min-height: 200px;
+            margin: 0;
+            padding: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #007bff;
+        }
+        
+        .section p {
+            margin: 0;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .engine-list {
+            margin-top: 10px;
+        }
+        
+        .engine-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+        }
+        
+        .engine-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .status.enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>图片搜索 & 二维码解析</h1>
+    </div>
+    
+    <div class="section">
+        <h3>使用说明</h3>
+        <p>在任何网页上右键点击图片：</p>
+        <p>• 选择"搜索图片"使用各种搜索引擎</p>
+        <p>• 选择"解析二维码"获取二维码内容</p>
+    </div>
+    
+    <div class="section">
+        <h3>已启用的搜索引擎</h3>
+        <div id="engine-list" class="engine-list">
+            <div class="engine-item">
+                <span>加载中...</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="buttons">
+        <button class="btn btn-primary" id="settings-btn">搜索引擎设置</button>
+        <button class="btn btn-secondary" id="help-btn">使用帮助</button>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
